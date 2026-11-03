@@ -1,15 +1,18 @@
-# MR PRODUCT — starter website
+# MR PRODUCT — updated starter
+
+Responsive black-and-gold storefront with a cart and one combined delivery/order form.
 
 ## Files
-- `index.html` — storefront and single combined order-details form
-- `styles.css` — responsive black-and-gold design
-- `app.js` — sample products, cart, quantity controls and order preview
-- `supabase/README.md` — secure integration checklist
+- `index.html`, `styles.css`, `app.js`: storefront.
+- `config.example.js`: browser-safe Supabase URL + publishable key template.
+- `supabase/migrations/202611030001_mr_product.sql`: starter database schema and sample catalogue.
+- `supabase/functions/place-order/index.ts`: server-side order endpoint. It calculates prices from database records; the browser cannot choose its own price.
 
-## Run
-Open `index.html` in a browser, or upload the files to the root of your GitHub repository and deploy the repository with Vercel.
+## Important setup before accepting real orders
+1. Run the SQL migration in Supabase SQL Editor.
+2. Copy `config.example.js` to `config.js`, then fill in the Project URL and Publishable key. Never use a Secret/service-role key in the browser.
+3. Deploy the `place-order` Edge Function using the Supabase CLI or Dashboard. Set its server-side secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the function environment only.
+4. Ensure the function is deployed and test using a non-live test product/order before public launch.
+5. Add admin authentication and protected admin endpoints before exposing order/customer records to staff. No public admin panel is included yet.
 
-## Important
-This is a front-end starter/demo, not a production store. The order form only previews the entered details; it does not submit or save orders. Admin login, real product management, repeat-customer matching, automatic discounts, payment verification, courier APIs, and logo storage must be implemented securely before launch.
-
-Replace sample products and placeholder artwork with approved product images and real catalogue data. Do not put passwords, private API keys, or Supabase service-role keys in frontend files.
+The starter does NOT yet include admin dashboard, payment verification, COD, courier integrations, stock decrement/transaction locking, rate limiting, CAPTCHA, automatic repeat-order discounts, affiliate tools, or logo upload/storage. Do not claim these features are live. The order endpoint currently accepts bKash/Nagad/bank as selected payment labels only; it does not verify payment.

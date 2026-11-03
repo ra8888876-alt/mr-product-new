@@ -1,41 +1,21 @@
+const SUPABASE_URL = window.MR_PRODUCT_CONFIG?.supabaseUrl || '';
+const SUPABASE_PUBLISHABLE_KEY = window.MR_PRODUCT_CONFIG?.publishableKey || '';
+const money = n => '৳' + Number(n).toLocaleString('en-BD');
 const products = [
-  {id:"watch", name:"Luxury Watch", description:"A refined statement for everyday style.", price:2500, mark:"TIME"},
-  {id:"dress", name:"Premium Dress", description:"An elegant look for special moments.", price:1800, mark:"STYLE"},
-  {id:"beauty", name:"Beauty Collection", description:"A thoughtful addition to your routine.", price:950, mark:"BEAUTY"}
+ {id:'10000000-0000-4000-8000-000000000001',name:'Hydrating Face Serum',price:850,description:'Daily hydration essential.'},
+ {id:'10000000-0000-4000-8000-000000000002',name:'Daily Face Cream',price:650,description:'A simple everyday skincare pick.'},
+ {id:'10000000-0000-4000-8000-000000000003',name:'Luxury Lipstick',price:550,description:'A refined finishing touch.'}
 ];
-const cart = new Map();
-const money = n => "৳" + Number(n).toLocaleString("en-BD");
-const grid = document.getElementById("product-grid");
-grid.innerHTML = products.map(p => `<article class="product-card"><div class="product-image">${p.mark}</div><h3>${p.name}</h3><p>${p.description}</p><div class="product-meta"><span class="price">${money(p.price)}</span><button class="add-button" data-add="${p.id}">ADD TO CART +</button></div></article>`).join("");
-document.getElementById("year").textContent = new Date().getFullYear();
-
-function renderCart(){
-  const entries = [...cart.entries()];
-  const count = entries.reduce((s,[,q])=>s+q,0);
-  const total = entries.reduce((s,[id,q])=>s+products.find(p=>p.id===id).price*q,0);
-  document.getElementById("cart-count").textContent = count;
-  document.getElementById("cart-total").textContent = money(total);
-  document.getElementById("dialog-total").textContent = money(total);
-  document.getElementById("cart-items").innerHTML = entries.length ? entries.map(([id,q])=>{const p=products.find(x=>x.id===id);return `<div class="cart-line"><div><b>${p.name}</b><small>${money(p.price)} each</small></div><div class="qty"><button data-minus="${id}">−</button><span>${q}</span><button data-plus="${id}">+</button></div></div>`}).join("") : '<p class="muted">Your cart is empty.</p>';
-}
-document.addEventListener("click", e=>{
-  const add=e.target.closest("[data-add]"); if(add){const id=add.dataset.add;cart.set(id,(cart.get(id)||0)+1);renderCart();add.textContent="ADDED ✓";setTimeout(()=>add.textContent="ADD TO CART +",900);}
-  const plus=e.target.closest("[data-plus]");if(plus){const id=plus.dataset.plus;cart.set(id,(cart.get(id)||0)+1);renderCart();}
-  const minus=e.target.closest("[data-minus]");if(minus){const id=minus.dataset.minus;const q=(cart.get(id)||0)-1;if(q<=0)cart.delete(id);else cart.set(id,q);renderCart();}
-});
-const drawer=document.getElementById("cart-drawer"), overlay=document.getElementById("overlay");
-function openCart(){drawer.classList.add("open");drawer.setAttribute("aria-hidden","false");overlay.hidden=false;}
-function closeCart(){drawer.classList.remove("open");drawer.setAttribute("aria-hidden","true");overlay.hidden=true;}
-document.getElementById("cart-open").onclick=openCart;
-document.getElementById("cart-close").onclick=closeCart;
-overlay.onclick=closeCart;
-const dialog=document.getElementById("order-dialog");
-document.getElementById("checkout-open").onclick=()=>{if(!cart.size){alert("Please add a product first.");return;}closeCart();dialog.showModal();};
-document.getElementById("order-close").onclick=()=>dialog.close();
-document.getElementById("order-form").addEventListener("submit",e=>{
-  e.preventDefault();
-  const data=Object.fromEntries(new FormData(e.currentTarget).entries());
-  const lines=[...cart.entries()].map(([id,q])=>{const p=products.find(x=>x.id===id);return `${p.name} × ${q} — ${money(p.price*q)}`;});
-  document.getElementById("form-message").textContent="Preview only — no order has been sent or saved. Items: "+lines.join("; ")+". Customer: "+data.name+", "+data.phone+". Connect secure server-side order processing before accepting real orders.";
-});
-renderCart();
+let cart=[];
+const $=s=>document.querySelector(s);
+$('#year').textContent=new Date().getFullYear();
+function renderProducts(){ $('#product-grid').innerHTML=products.map(p=>`<article class="product-card"><div class="product-image">MR</div><h3>${p.name}</h3><p class="muted small">${p.description}</p><div class="price">${money(p.price)}</div><button class="button gold-button" data-add="${p.id}">Add to cart</button></article>`).join(''); }
+function renderCart(){ $('#cart-count').textContent=cart.reduce((n,x)=>n+x.qty,0); $('#cart-items').innerHTML=cart.length?cart.map(x=>`<div class="cart-line"><div><b>${x.name}</b><div class="muted small">${money(x.price)} × ${x.qty}</div></div><div class="qty"><button data-dec="${x.id}">−</button>${x.qty}<button data-inc="${x.id}">+</button></div></div>`).join(''):'<p class="muted">Your cart is empty.</p>';const total=cart.reduce((n,x)=>n+x.price*x.qty,0);$('#cart-total').textContent=money(total);$('#dialog-total').textContent=money(total);}
+function openCart(){ $('#overlay').hidden=false;$('#cart-drawer').classList.add('open');$('#cart-drawer').setAttribute('aria-hidden','false'); }
+function closeCart(){ $('#overlay').hidden=true;$('#cart-drawer').classList.remove('open');$('#cart-drawer').setAttribute('aria-hidden','true'); }
+$('#product-grid').addEventListener('click',e=>{const id=e.target.dataset.add;if(!id)return;const p=products.find(x=>x.id===id);const item=cart.find(x=>x.id===id);item?item.qty++:cart.push({...p,qty:1});renderCart();});
+$('#cart-items').addEventListener('click',e=>{const id=e.target.dataset.inc||e.target.dataset.dec;if(!id)return;const item=cart.find(x=>x.id===id);item.qty+=e.target.dataset.inc?1:-1;if(item.qty<=0)cart=cart.filter(x=>x.id!==id);renderCart();});
+$('#cart-open').onclick=openCart;$('#cart-close').onclick=closeCart;$('#overlay').onclick=closeCart;
+$('#checkout-open').onclick=()=>{if(!cart.length){alert('Your cart is empty.');return;}closeCart();$('#order-dialog').showModal();};$('#order-close').onclick=()=>$('#order-dialog').close();
+$('#order-form').addEventListener('submit',async e=>{e.preventDefault();const msg=$('#form-message');if(!SUPABASE_URL||!SUPABASE_PUBLISHABLE_KEY){msg.textContent='Order submission is not connected yet. Please do not treat this preview as a placed order.';return;}msg.textContent='Submitting your order…';const f=new FormData(e.currentTarget);const payload={customer:{name:f.get('name'),phone:f.get('phone'),whatsapp:f.get('whatsapp'),district:f.get('district'),area:f.get('area'),address:f.get('address')},items:cart.map(x=>({product_id:x.id,quantity:x.qty})),payment_method:f.get('payment'),note:f.get('note')};try{const res=await fetch(`${SUPABASE_URL}/functions/v1/place-order`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':`Bearer ${SUPABASE_PUBLISHABLE_KEY}`},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Order could not be submitted.');msg.textContent=`Order received. Your order number is ${data.order_number}.`;cart=[];renderCart();e.currentTarget.reset();}catch(err){msg.textContent=err.message;}});
+renderProducts();renderCart();
