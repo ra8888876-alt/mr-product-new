@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>MR PRODUCT — Premium Store</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">MR</span><span><b>MR PRODUCT</b><small>PREMIUM STORE</small></span></a>
+    <nav><a href="#shop">Shop</a><a href="#about">About</a><a href="#contact">Contact</a></nav>
+    <button class="cart-pill" id="cart-open" type="button">Cart <span id="cart-count">0</span></button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">THE NEW COLLECTION</p>
+        <h1>Everyday essentials.<br><em>Elevated.</em></h1>
+        <p>Discover thoughtfully selected products with a premium feel.</p>
+        <a class="button gold-button" href="#shop">Explore products</a>
+      </div>
+      <div class="hero-art" aria-label="Decorative gold abstract artwork"><div class="orb"></div><div class="ring"></div><span>MR</span></div>
+    </section>
+
+    <section class="shop-section" id="shop">
+      <div class="section-heading"><div><p class="eyebrow">CURATED FOR YOU</p><h2>Featured products</h2></div><p class="muted">A sample collection — replace with your real products.</p></div>
+      <div class="product-grid" id="product-grid"></div>
+    </section>
+
+    <section class="promise" id="about"><p class="eyebrow">THE MR PRODUCT PROMISE</p><h2>Quality in every detail.</h2><p>We’re building a convenient shopping experience for customers in Bangladesh.</p></section>
+
+    <section class="contact" id="contact"><div><p class="eyebrow">NEED HELP?</p><h2>We’re here for you.</h2></div><p>Store contact details will be added from the admin settings when the secure admin system is connected.</p></section>
+  </main>
+
+  <footer><a class="brand" href="#"><span class="brand-mark">MR</span><span><b>MR PRODUCT</b><small>PREMIUM STORE</small></span></a><span>© <span id="year"></span> MR PRODUCT</span></footer>
+
+  <div class="overlay" id="overlay" hidden></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+    <div class="drawer-head"><h2>Your cart</h2><button class="icon-button" id="cart-close" aria-label="Close cart">×</button></div>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="cart-bottom"><div class="total-row"><span>Subtotal</span><b id="cart-total">৳0</b></div><button class="button gold-button full" id="checkout-open">Continue to order</button></div>
+  </aside>
+
+  <dialog id="order-dialog" class="order-dialog">
+    <form id="order-form">
+      <div class="drawer-head"><div><p class="eyebrow">ONE SIMPLE FORM</p><h2>Delivery details</h2></div><button class="icon-button" type="button" id="order-close" aria-label="Close">×</button></div>
+      <p class="muted small">This starter version previews the order form. Online order submission will be enabled after secure server-side order processing is configured.</p>
+      <label>Full name<input name="name" required autocomplete="name"></label>
+      <label>Mobile number<input name="phone" required inputmode="tel" autocomplete="tel"></label>
+      <label>WhatsApp number (optional)<input name="whatsapp" inputmode="tel"></label>
+      <label>District<input name="district" required></label>
+      <label>Area / Thana<input name="area" required></label>
+      <label>Full delivery address<textarea name="address" rows="3" required></textarea></label>
+      <label>Payment method<select name="payment" required><option value="">Choose payment method</option><option value="bkash">bKash (manual verification to be configured)</option><option value="nagad">Nagad (manual verification to be configured)</option><option value="bank">Bank transfer (to be configured)</option></select></label>
+      <label>Order note (optional)<textarea name="note" rows="2"></textarea></label>
+      <div class="total-row"><span>Estimated subtotal</span><b id="dialog-total">৳0</b></div>
+      <button class="button gold-button full" type="submit">Preview order details</button>
+      <p id="form-message" class="form-message" role="status"></p>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
