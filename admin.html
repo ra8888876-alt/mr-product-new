@@ -1,183 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101010">
-  <title>MR PRODUCT — Admin Login</title>
-  <link rel="stylesheet" href="styles.css">
-
-  <style>
-    body {
-      background: #101010;
-      color: #f5f0e6;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .admin-box {
-      width: 100%;
-      max-width: 430px;
-      padding: 32px;
-      border: 1px solid #b99a55;
-      border-radius: 14px;
-      background: #191919;
-    }
-
-    .admin-box h1 {
-      margin-bottom: 8px;
-    }
-
-    .admin-box label {
-      display: block;
-      margin-top: 18px;
-    }
-
-    .admin-box input {
-      display: block;
-      width: 100%;
-      margin-top: 8px;
-      padding: 13px;
-      border: 1px solid #555;
-      border-radius: 7px;
-      background: #101010;
-      color: white;
-    }
-
-    .admin-box button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 13px;
-      cursor: pointer;
-    }
-
-    #message {
-      margin-top: 18px;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
-
-    .gold {
-      color: #d8b66b;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR PRODUCT Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
+header{background:#181818;padding:20px;border-bottom:1px solid #b99543}
+h1{color:#d6b45b;margin:0}
+main{max-width:1100px;margin:auto;padding:20px}
+.card{background:#1d1d1d;padding:20px;border:1px solid #393126;border-radius:12px;margin:15px 0}
+button{background:#c6a34b;color:#111;border:0;padding:12px 18px;border-radius:6px;cursor:pointer}
+input{padding:12px;width:100%;margin:8px 0;background:#292929;color:white;border:1px solid #555;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{background:#242424;padding:20px;border-radius:10px}
+.gold{color:#d6b45b}
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:12px;border-bottom:1px solid #444}
+.notice{color:#e8c66d}
+.hidden{display:none}
+</style>
 </head>
-
 <body>
 
-  <main class="admin-box">
-    <p class="gold">MR PRODUCT</p>
-    <h1>Admin Login</h1>
-    <p>Authorized administrators only.</p>
+<header>
+<h1>MR PRODUCT</h1>
+<p>Admin Dashboard</p>
+</header>
 
-    <form id="login-form">
-      <label>
-        Email
-        <input
-          type="email"
-          id="email"
-          autocomplete="username"
-          required
-        >
-      </label>
+<main>
+<div id="loading" class="card">Checking admin access...</div>
 
-      <label>
-        Password
-        <input
-          type="password"
-          id="password"
-          autocomplete="current-password"
-          required
-        >
-      </label>
+<div id="login" class="card hidden">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="loginAdmin()">Login</button>
+<p id="message"></p>
+</div>
 
-      <button type="submit" class="gold-button">
-        Login
-      </button>
-    </form>
+<div id="dashboard" class="hidden">
+<div class="card">
+<h2>Welcome, <span class="gold">Admin</span></h2>
+<button onclick="logoutAdmin()">Logout</button>
+</div>
 
-    <div id="message" role="status"></div>
+<div class="grid">
+<div class="stat"><h3>Products</h3><h2 id="productCount">0</h2></div>
+<div class="stat"><h3>Orders</h3><h2>Not connected</h2></div>
+<div class="stat"><h3>Customers</h3><h2>Not connected</h2></div>
+<div class="stat"><h3>Sales</h3><h2>Not connected</h2></div>
+</div>
 
-    <button
-      id="logout"
-      type="button"
-      hidden
-    >
-      Logout
-    </button>
+<div class="card">
+<h2>Product Management</h2>
+<p class="notice">Product list is currently read-only.</p>
+<div id="products">Loading products...</div>
+</div>
 
-    <p style="margin-top:24px">
-      <a href="index.html">← Back to Store</a>
-    </p>
-  </main>
+<div class="card">
+<h2>Order Management</h2>
+<p class="notice">Order management will be enabled after secure admin API setup.</p>
+</div>
 
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="card">
+<h2>Payment Settings</h2>
+<p class="notice">Payment settings are not connected yet.</p>
+</div>
+</div>
+</main>
 
-  <script>
-    const config = window.MR_PRODUCT_CONFIG || {};
+<script>
+const cfg = window.MR_PRODUCT_CONFIG;
+const db = window.supabase.createClient(
+  cfg.supabaseUrl,
+  cfg.publishableKey
+);
 
-    const client = window.supabase.createClient(
-      config.supabaseUrl,
-      config.publishableKey
-    );
+async function checkAdmin(){
+  const {data:{session}} = await db.auth.getSession();
+  if(!session){
+    showLogin();
+    return;
+  }
+  const {data,error} = await db
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id',session.user.id)
+    .eq('is_active',true)
+    .maybeSingle();
 
-    const form = document.getElementById("login-form");
-    const message = document.getElementById("message");
-    const logoutButton = document.getElementById("logout");
+  if(error || !data){
+    await db.auth.signOut();
+    showLogin();
+    return;
+  }
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  loadProducts();
+}
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+function showLogin(){
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+}
 
-      message.textContent = "Checking login...";
+async function loginAdmin(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const msg=document.getElementById('message');
+  msg.textContent='Checking...';
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){
+    msg.textContent='Login failed. Check your email and password.';
+    return;
+  }
+  await checkAdmin();
+}
 
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password
-      });
+async function logoutAdmin(){
+  await db.auth.signOut();
+  location.reload();
+}
 
-      if (error) {
-        message.textContent = "Login failed. Check your email and password.";
-        return;
-      }
+async function loadProducts(){
+  const box=document.getElementById('products');
+  const {data,error}=await db
+    .from('products')
+    .select('name,price,discount_price,stock,is_active')
+    .eq('is_active',true);
 
-      const { data: admin, error: adminError } = await client
-        .from("admin_users")
-        .select("user_id, role, is_active")
-        .eq("user_id", data.user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+  if(error){
+    box.textContent='Could not load products.';
+    return;
+  }
 
-      if (adminError || !admin || admin.role !== "admin") {
-        await client.auth.signOut();
-        message.textContent = "Access denied. This account is not an active admin.";
-        return;
-      }
+  document.getElementById('productCount').textContent=data.length;
+  if(!data.length){
+    box.textContent='No products found.';
+    return;
+  }
 
-      form.hidden = true;
-      logoutButton.hidden = false;
+  let html='<table><tr><th>Product</th><th>Price</th><th>Stock</th></tr>';
+  data.forEach(p=>{
+    const price=p.discount_price>0 && p.discount_price<p.price
+      ? p.discount_price : p.price;
+    html+=`<tr>
+      <td>${escapeHTML(p.name)}</td>
+      <td>৳${price}</td>
+      <td>${p.stock}</td>
+    </tr>`;
+  });
+  box.innerHTML=html+'</table>';
+}
 
-      message.textContent = "Admin login verified. Admin dashboard features are not enabled yet.";
-    });
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#39;'
+  }[c]));
+}
 
-    logoutButton.addEventListener("click", async () => {
-      await client.auth.signOut();
-      form.hidden = false;
-      logoutButton.hidden = true;
-      message.textContent = "You have logged out.";
-    });
-
-    client.auth.getSession().then(async ({ data }) => {
-      if (data.session) {
-        await client.auth.signOut();
-      }
-    });
-  </script>
-
+checkAdmin();
+</script>
 </body>
 </html>
