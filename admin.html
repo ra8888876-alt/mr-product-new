@@ -26,10 +26,12 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 </style>
 </head>
 <body>
+
 <header>
 <h1>MR PRODUCT</h1>
 <p>Admin Dashboard</p>
 </header>
+
 <main>
 <div id="loading" class="card">Checking admin access...</div>
 
@@ -42,6 +44,7 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 </div>
 
 <div id="dashboard" class="hidden">
+
 <div class="card">
 <h2>Welcome, Admin</h2>
 <button onclick="logoutAdmin()">Logout</button>
@@ -76,170 +79,261 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 <h2>Order Management</h2>
 <p>Not connected yet. Orders are not managed here.</p>
 </div>
+
 <div class="card">
 <h2>Payment Settings</h2>
 <p>Not connected yet.</p>
 </div>
+
 </div>
 </main>
 
 <script>
-const cfg=window.MR_PRODUCT_CONFIG;
-const db=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey);
+const cfg = window.MR_PRODUCT_CONFIG;
+const db = window.supabase.createClient(
+  cfg.supabaseUrl,
+  cfg.publishableKey
+);
 
-function msg(t){
- document.getElementById("message").textContent=t;
+function msg(t) {
+  document.getElementById("message").textContent = t;
 }
 
-async function checkAdmin(){
- const {data:{session}}=await db.auth.getSession();
- if(!session){showLogin();return;}
+async function checkAdmin() {
+  const {data:{session}} = await db.auth.getSession();
 
- const {data,error}=await db.from("admin_users")
- .select("user_id").eq("user_id",session.user.id)
- .eq("is_active",true).maybeSingle();
+  if (!session) {
+    showLogin();
+    return;
+  }
 
- if(error||!data){
+  const {data,error} = await db.from("admin_users")
+    .select("user_id")
+    .eq("user_id",session.user.id)
+    .eq("is_active",true)
+    .maybeSingle();
+
+  if (error || !data) {
+    await db.auth.signOut();
+    showLogin();
+    return;
+  }
+
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  await loadProducts();
+}
+
+function showLogin() {
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+}
+
+async function loginAdmin() {
+  msg("Checking...");
+
+  const {error} = await db.auth.signInWithPassword({
+    email:document.getElementById("email").value.trim(),
+    password:document.getElementById("password").value
+  });
+
+  if (error) {
+    msg("Login failed. Check your details.");
+    return;
+  }
+
+  await checkAdmin();
+}
+
+async function logoutAdmin() {
   await db.auth.signOut();
-  showLogin();
-  return;
- }
- document.getElementById("loading").classList.add("hidden");
- document.getElementById("login").classList.add("hidden");
- document.getElementById("dashboard").classList.remove("hidden");
- await loadProducts();
+  location.reload();
 }
 
-function showLogin(){
- document.getElementById("loading").classList.add("hidden");
- document.getElementById("dashboard").classList.add("hidden");
- document.getElementById("login").classList.remove("hidden");
-}
-
-async function loginAdmin(){
- msg("Checking...");
- const {error}=await db.auth.signInWithPassword({
-  email:document.getElementById("email").value.trim(),
-  password:document.getElementById("password").value
- });
- if(error){msg("Login failed. Check your details.");return;}
- await checkAdmin();
-}
-
-async function logoutAdmin(){
- await db.auth.signOut();
- location.reload();
-}
-
-async function api(method,body){
- const {data,error}=await db.functions.invoke("admin-products",{
-  method,
-  body
- });
- if(error) throw error;
- if(data?.error) throw new Error(data.error);
- return data;
-}
-
-async function loadProducts(){
- const box=document.getElementById("products");
- box.textContent="Loading products...";
- try{
-  const result=await api("GET");
-  const list=result.products||[];
-  document.getElementById("productCount").textContent=list.length;
-  if(!list.length){box.textContent="No products found.";return;}
-
-  let html="<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
-  list.forEach(p=>{
-   const price=Number(p.discount_price)>0 && Number(p.discount_price)<Number(p.price)
-    ? p.discount_price:p.price;
-   html+=`<tr>
-    <td>${esc(p.name)}</td>
-    <td>৳${esc(price)}</td>
-    <td>${esc(p.stock)}</td>
-    <td>
-     <button onclick="editProduct('${p.id}',${JSON.stringify(p.name).replace(/'/g,"&#39;")},${Number(p.price)},${Number(p.discount_price)||0},${Number(p.stock)})">Edit</button>
-     <button class="danger" onclick="deleteProduct('${p.id}')">Delete</button>
-    </td>
-   </tr>`;
+async function api(method,body) {
+  const {data,error} = await db.functions.invoke("admin-products",{
+    method,
+    body
   });
-  box.innerHTML=html+"</table>";
- }catch(e){
-  box.textContent="Could not load products: "+e.message;
- }
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+
+  return data;
 }
 
-function esc(v){
- return String(v??"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
 }
 
-async function addProduct(){
- try{
-  const name=document.getElementById("name").value.trim();
-  const price=Number(document.getElementById("price").value);
-  const discount=document.getElementById("discount").value;
-  const stock=Number(document.getElementById("stock").value);
+async function loadProducts() {
+  const box = document.getElementById("products");
+  box.textContent = "Loading products...";
 
-  if(!name||!price||price<=0||!Number.isInteger(stock)||stock<0){
-   alert("Enter a valid name, price and stock.");return;
+  try {
+    const result = await api("GET");
+    const list = result.products || [];
+
+    document.getElementById("productCount").textContent = list.length;
+
+    if (!list.length) {
+      box.textContent = "No products found.";
+      return;
+    }
+
+    let html = "<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
+
+    list.forEach(p => {
+      const price =
+        Number(p.discount_price) > 0 &&
+        Number(p.discount_price) < Number(p.price)
+        ? p.discount_price
+        : p.price;
+
+      html += `<tr>
+        <td>${esc(p.name)}</td>
+        <td>৳${esc(price)}</td>
+        <td>${esc(p.stock)}</td>
+        <td>
+          <button
+            class="edit-btn"
+            data-id="${esc(p.id)}"
+            data-name="${esc(p.name)}"
+            data-price="${Number(p.price)}"
+            data-discount="${Number(p.discount_price)||0}"
+            data-stock="${Number(p.stock)}">
+            Edit
+          </button>
+
+          <button class="danger"
+            onclick="deleteProduct('${esc(p.id)}')">
+            Delete
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    box.innerHTML = html + "</table>";
+
+    box.querySelectorAll(".edit-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        editProduct(
+          button.dataset.id,
+          button.dataset.name,
+          Number(button.dataset.price),
+          Number(button.dataset.discount),
+          Number(button.dataset.stock)
+        );
+      });
+    });
+
+  } catch(e) {
+    box.textContent = "Could not load products: " + e.message;
   }
-  if(discount!=="" && (Number(discount)<=0||Number(discount)>=price)){
-   alert("Discount must be less than regular price.");return;
+}
+
+async function addProduct() {
+  try {
+    const name = document.getElementById("name").value.trim();
+    const price = Number(document.getElementById("price").value);
+    const discount = document.getElementById("discount").value;
+    const stock = Number(document.getElementById("stock").value);
+
+    if (!name || !price || price <= 0 ||
+        !Number.isInteger(stock) || stock < 0) {
+      alert("Enter a valid name, price and stock.");
+      return;
+    }
+
+    if (discount !== "" &&
+        (Number(discount) <= 0 || Number(discount) >= price)) {
+      alert("Discount must be less than regular price.");
+      return;
+    }
+
+    await api("POST",{
+      name,
+      description:document.getElementById("description").value,
+      price,
+      discount_price:discount === "" ? null : Number(discount),
+      stock,
+      category:document.getElementById("category").value,
+      image_url:document.getElementById("image").value
+    });
+
+    alert("Product added.");
+
+    ["name","description","price","discount","stock","category","image"]
+      .forEach(id => document.getElementById(id).value = "");
+
+    await loadProducts();
+
+  } catch(e) {
+    alert("Could not add product: " + e.message);
+  }
+}
+
+async function editProduct(id,name,price,discount,stock) {
+  const newName = prompt("Product name:",name);
+  if (newName === null) return;
+
+  const newPrice = prompt("Regular price:",price);
+  if (newPrice === null) return;
+
+  const newDiscount = prompt("Discount price (0 for none):",discount);
+  if (newDiscount === null) return;
+
+  const newStock = prompt("Stock quantity:",stock);
+  if (newStock === null) return;
+
+  const p = Number(newPrice);
+  const d = Number(newDiscount);
+  const s = Number(newStock);
+
+  if (!newName.trim() || !Number.isFinite(p) || p <= 0 ||
+      !Number.isFinite(d) || d < 0 || (d > 0 && d >= p) ||
+      !Number.isInteger(s) || s < 0) {
+    alert("Invalid product information.");
+    return;
   }
 
-  await api("POST",{
-   name,
-   description:document.getElementById("description").value,
-   price,
-   discount_price:discount===""?null:Number(discount),
-   stock,
-   category:document.getElementById("category").value,
-   image_url:document.getElementById("image").value
-  });
+  try {
+    await api("PATCH",{
+      id,
+      name:newName.trim(),
+      price:p,
+      discount_price:d === 0 ? null : d,
+      stock:s
+    });
 
-  alert("Product added.");
-  ["name","description","price","discount","stock","category","image"]
-   .forEach(id=>document.getElementById(id).value="");
-  await loadProducts();
- }catch(e){alert("Could not add product: "+e.message);}
+    alert("Product updated.");
+    await loadProducts();
+
+  } catch(e) {
+    alert("Update failed: " + e.message);
+  }
 }
 
-async function editProduct(id,name,price,discount,stock){
- const newName=prompt("Product name:",name);
- if(newName===null)return;
- const newPrice=prompt("Regular price:",price);
- if(newPrice===null)return;
- const newDiscount=prompt("Discount price (0 for none):",discount);
- if(newDiscount===null)return;
- const newStock=prompt("Stock quantity:",stock);
- if(newStock===null)return;
+async function deleteProduct(id) {
+  if (!confirm("Hide this product from the store?")) return;
 
- const p=Number(newPrice),d=Number(newDiscount),s=Number(newStock);
- if(!newName.trim()||!Number.isFinite(p)||p<=0||
-    !Number.isFinite(d)||d<0||(d>0&&d>=p)||
-    !Number.isInteger(s)||s<0){
-  alert("Invalid product information.");return;
- }
- try{
-  await api("PATCH",{
-   id,name:newName.trim(),price:p,
-   discount_price:d===0?null:d,stock:s
-  });
-  alert("Product updated.");
-  await loadProducts();
- }catch(e){alert("Update failed: "+e.message);}
-}
+  try {
+    await api("DELETE",{id});
+    alert("Product hidden.");
+    await loadProducts();
 
-async function deleteProduct(id){
- if(!confirm("Hide this product from the store?"))return;
- try{
-  await api("DELETE",{id});
-  alert("Product hidden.");
-  await loadProducts();
- }catch(e){alert("Delete failed: "+e.message);}
+  } catch(e) {
+    alert("Delete failed: " + e.message);
+  }
 }
 
 checkAdmin();
