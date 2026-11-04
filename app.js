@@ -25,9 +25,7 @@ function getProductPrice(product) {
   const price = Number(product.price || 0);
   const discount = Number(product.discount_price || 0);
 
-  return discount > 0 && discount < price
-    ? discount
-    : price;
+  return discount > 0 && discount < price ? discount : price;
 }
 
 async function loadProducts() {
@@ -60,8 +58,7 @@ async function loadProducts() {
 
   } catch (error) {
     console.error(error);
-    grid.textContent =
-      "Products could not be loaded. Please try again later.";
+    grid.textContent = "Products could not be loaded. Please try again later.";
   }
 }
 
@@ -76,6 +73,7 @@ function renderProducts() {
   grid.innerHTML = products.map((product) => {
     const oldPrice = Number(product.price || 0);
     const currentPrice = getProductPrice(product);
+
     const image = product.image_url
       ? `<img src="${escapeHTML(product.image_url)}"
           alt="${escapeHTML(product.name)}"
@@ -85,16 +83,11 @@ function renderProducts() {
     return `
       <article class="product-card">
         ${image}
-
         <h3>${escapeHTML(product.name)}</h3>
-
         <p class="muted small">
           ${escapeHTML(product.description || "")}
         </p>
-
-        <div class="price">
-          ${money(currentPrice)}
-        </div>
+        <div class="price">${money(currentPrice)}</div>
 
         ${
           currentPrice < oldPrice
@@ -229,15 +222,110 @@ $("#order-close").addEventListener("click", () => {
   $("#order-dialog").close();
 });
 
-// Real order submission remains disabled until
-// server-side discount calculation and payment verification
-// are completed and tested.
+// Submit order securely through Supabase Edge Function
 
-$("#order-form").addEventListener("submit", (event) => {
+$("#order-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  $("#form-message").textContent =
-    "Order submission is not enabled yet. This is a preview only. Please do not make a payment.";
+  const form = event.currentTarget;
+  const message = $("#form-message");
+  const submitButton = form.querySelector('[type="submit"]');
+
+  if (!cart.length) {
+    message.textContent = "Your cart is empty.";
+    return;
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    message.textContent = "Store database is not configured.";
+    return;
+  }
+
+  const formData = new FormData(form);
+
+  const customer = {
+    name: String(formData.get("name") || "").trim(),
+    phone: String(formData.get("phone") || "").trim(),
+    whatsapp: String(formData.get("whatsapp") || "").trim(),
+    district: String(formData.get("district") || "").trim(),
+    area: String(formData.get("area") || "").trim(),
+    address: String(formData.get("address") || "").trim()
+  };
+
+  const paymentMethod = String(
+    formData.get("payment_method") || ""
+  );
+
+  const note = String(formData.get("note") || "").trim();
+
+  if (
+    !customer.name ||
+    !customer.phone ||
+    !customer.district ||
+    !customer.area ||
+    !customer.address
+  ) {
+    message.textContent = "Please complete all required fields.";
+    return;
+  }
+
+  if (!["bkash", "nagad", "bank"].includes(paymentMethod)) {
+    message.textContent = "Please select a valid payment method.";
+    return;
+  }
+
+  const orderItems = cart.map((item) => ({
+    product_id: item.id,
+    quantity: item.qty
+  }));
+
+  submitButton.disabled = true;
+  message.textContent = "Submitting your order...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/place-order`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          customer,
+          payment_method: paymentMethod,
+          items: orderItems,
+          note
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.ok !== true) {
+      throw new Error(
+        result.error || "Order could not be completed."
+      );
+    }
+
+    const orderNumber = result.order_number || result.order_id || "";
+
+    cart = [];
+    renderCart();
+    form.reset();
+
+    message.textContent =
+      `Order submitted successfully! Order number: ${orderNumber}. Total: ${money(result.total)}.`;
+
+  } catch (error) {
+    console.error("Order submission error:", error);
+
+    message.textContent =
+      error.message || "Something went wrong. Please try again.";
+  } finally {
+    submitButton.disabled = false;
+  }
 });
 
 renderCart();
