@@ -6,33 +6,39 @@
 <title>MR PRODUCT Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
 header{padding:20px;background:#181818;border-bottom:1px solid #c6a34b}
 h1,.gold{color:#d6b45b}
-main{max-width:1100px;margin:auto;padding:18px}
+main{max-width:1200px;margin:auto;padding:18px}
 .card{background:#1d1d1d;padding:18px;border:1px solid #393126;border-radius:12px;margin:15px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .stat{background:#292929;padding:18px;border-radius:10px}
-input,textarea{width:100%;padding:12px;margin:7px 0;background:#292929;color:white;border:1px solid #555;border-radius:6px}
+input,textarea,select{
+width:100%;padding:12px;margin:7px 0;background:#292929;
+color:white;border:1px solid #555;border-radius:6px
+}
 button{background:#c6a34b;color:#111;border:0;padding:11px 15px;border-radius:6px;margin:4px;cursor:pointer}
 .danger{background:#a83232;color:white}
-table{width:100%;border-collapse:collapse;min-width:550px}
-td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
+table{width:100%;border-collapse:collapse;min-width:700px}
+td,th{text-align:left;padding:11px;border-bottom:1px solid #444;vertical-align:top}
 .table-wrap{overflow-x:auto}
 .hidden{display:none}
-#message{color:#e8c66d}
+.muted{color:#aaa}
+.status{min-width:130px}
 </style>
 </head>
-<body>
 
+<body>
 <header>
 <h1>MR PRODUCT</h1>
 <p>Admin Dashboard</p>
 </header>
 
 <main>
+
 <div id="loading" class="card">Checking admin access...</div>
 
 <div id="login" class="card hidden">
@@ -40,21 +46,23 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 <input id="email" type="email" placeholder="Admin email">
 <input id="password" type="password" placeholder="Password">
 <button onclick="loginAdmin()">Login</button>
-<p id="message"></p>
+<p id="loginMessage"></p>
 </div>
 
 <div id="dashboard" class="hidden">
 
 <div class="card">
-<h2>Welcome, Admin</h2>
+<h2 class="gold">Welcome, Admin</h2>
 <button onclick="logoutAdmin()">Logout</button>
+<button onclick="refreshAll()">Refresh Dashboard</button>
+<p id="message"></p>
 </div>
 
 <div class="grid">
 <div class="stat">Products<h2 id="productCount">0</h2></div>
-<div class="stat">Orders<h2>Not connected</h2></div>
-<div class="stat">Customers<h2>Not connected</h2></div>
-<div class="stat">Sales<h2>Not connected</h2></div>
+<div class="stat">Orders<h2 id="orderCount">0</h2></div>
+<div class="stat">Customers<h2 id="customerCount">0</h2></div>
+<div class="stat">Order Value<h2 id="salesTotal">৳0</h2></div>
 </div>
 
 <div class="card">
@@ -67,7 +75,6 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 <input id="category" placeholder="Category">
 <input id="image" placeholder="Image URL">
 <button onclick="addProduct()">Add Product</button>
-<p id="message"></p>
 </div>
 
 <div class="card">
@@ -76,13 +83,20 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 </div>
 
 <div class="card">
-<h2>Order Management</h2>
-<p>Not connected yet. Orders are not managed here.</p>
+<h2 class="gold">Order Management</h2>
+<button onclick="loadOrders()">Refresh Orders</button>
+<div class="table-wrap" id="orders">Loading orders...</div>
 </div>
 
 <div class="card">
-<h2>Payment Settings</h2>
-<p>Not connected yet.</p>
+<h2 class="gold">Payment Overview</h2>
+<p class="muted">Payment status is manually managed. This does not verify whether money was actually received.</p>
+<div class="table-wrap" id="payments">Loading...</div>
+</div>
+
+<div class="card">
+<h2 class="gold">Customer Overview</h2>
+<div class="table-wrap" id="customers">Loading...</div>
 </div>
 
 </div>
@@ -90,30 +104,41 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444}
 
 <script>
 const cfg = window.MR_PRODUCT_CONFIG;
+
 const db = window.supabase.createClient(
   cfg.supabaseUrl,
   cfg.publishableKey
 );
 
-function msg(t) {
-  document.getElementById("message").textContent = t;
+function showMessage(text){
+  document.getElementById("message").textContent=text;
 }
 
-async function checkAdmin() {
-  const {data:{session}} = await db.auth.getSession();
+function money(value){
+  return "৳" + Number(value || 0).toLocaleString("en-BD");
+}
 
-  if (!session) {
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+async function checkAdmin(){
+  const {data:{session}}=await db.auth.getSession();
+
+  if(!session){
     showLogin();
     return;
   }
 
-  const {data,error} = await db.from("admin_users")
+  const {data,error}=await db.from("admin_users")
     .select("user_id")
     .eq("user_id",session.user.id)
     .eq("is_active",true)
     .maybeSingle();
 
-  if (error || !data) {
+  if(error || !data){
     await db.auth.signOut();
     showLogin();
     return;
@@ -123,109 +148,93 @@ async function checkAdmin() {
   document.getElementById("login").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
 
-  await loadProducts();
+  await refreshAll();
 }
 
-function showLogin() {
+function showLogin(){
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("dashboard").classList.add("hidden");
   document.getElementById("login").classList.remove("hidden");
 }
 
-async function loginAdmin() {
-  msg("Checking...");
+async function loginAdmin(){
+  document.getElementById("loginMessage").textContent="Checking...";
 
-  const {error} = await db.auth.signInWithPassword({
+  const {error}=await db.auth.signInWithPassword({
     email:document.getElementById("email").value.trim(),
     password:document.getElementById("password").value
   });
 
-  if (error) {
-    msg("Login failed. Check your details.");
+  if(error){
+    document.getElementById("loginMessage").textContent="Login failed.";
     return;
   }
 
   await checkAdmin();
 }
 
-async function logoutAdmin() {
+async function logoutAdmin(){
   await db.auth.signOut();
   location.reload();
 }
 
-async function api(method,body) {
-  const {data,error} = await db.functions.invoke("admin-products",{
+async function api(functionName,method,body){
+  const {data,error}=await db.functions.invoke(functionName,{
     method,
     body
   });
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  if(error) throw error;
+  if(data?.error) throw new Error(data.error);
 
   return data;
 }
 
-function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  }[c]));
-}
+/* PRODUCTS */
 
-async function loadProducts() {
-  const box = document.getElementById("products");
-  box.textContent = "Loading products...";
+async function loadProducts(){
+  const box=document.getElementById("products");
+  box.textContent="Loading products...";
 
-  try {
-    const result = await api("GET");
-    const list = result.products || [];
+  try{
+    const result=await api("admin-products","GET");
+    const list=result.products || [];
 
-    document.getElementById("productCount").textContent = list.length;
+    document.getElementById("productCount").textContent=list.length;
 
-    if (!list.length) {
-      box.textContent = "No products found.";
+    if(!list.length){
+      box.textContent="No products found.";
       return;
     }
 
-    let html = "<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
+    let html="<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
 
-    list.forEach(p => {
-      const price =
-        Number(p.discount_price) > 0 &&
-        Number(p.discount_price) < Number(p.price)
-        ? p.discount_price
-        : p.price;
+    list.forEach(p=>{
+      const price=Number(p.discount_price)>0 &&
+        Number(p.discount_price)<Number(p.price)
+        ? p.discount_price:p.price;
 
-      html += `<tr>
+      html+=`<tr>
         <td>${esc(p.name)}</td>
-        <td>৳${esc(price)}</td>
+        <td>${money(price)}</td>
         <td>${esc(p.stock)}</td>
         <td>
-          <button
-            class="edit-btn"
+          <button class="edit-btn"
             data-id="${esc(p.id)}"
             data-name="${esc(p.name)}"
             data-price="${Number(p.price)}"
             data-discount="${Number(p.discount_price)||0}"
-            data-stock="${Number(p.stock)}">
-            Edit
-          </button>
-
-          <button class="danger"
-            onclick="deleteProduct('${esc(p.id)}')">
-            Delete
-          </button>
+            data-stock="${Number(p.stock)}">Edit</button>
+          <button class="danger delete-btn"
+            data-id="${esc(p.id)}">Hide</button>
         </td>
       </tr>`;
     });
 
-    box.innerHTML = html + "</table>";
+    box.innerHTML=html+"</table>";
 
-    box.querySelectorAll(".edit-btn").forEach(button => {
-      button.addEventListener("click", () => {
+    box.querySelectorAll(".edit-btn").forEach(button=>{
+      button.addEventListener("click",()=>{
         editProduct(
           button.dataset.id,
           button.dataset.name,
@@ -236,35 +245,42 @@ async function loadProducts() {
       });
     });
 
-  } catch(e) {
-    box.textContent = "Could not load products: " + e.message;
+    box.querySelectorAll(".delete-btn").forEach(button=>{
+      button.addEventListener("click",()=>{
+        deleteProduct(button.dataset.id);
+      });
+    });
+
+  }catch(e){
+    box.textContent="Could not load products: "+e.message;
   }
 }
 
-async function addProduct() {
-  try {
-    const name = document.getElementById("name").value.trim();
-    const price = Number(document.getElementById("price").value);
-    const discount = document.getElementById("discount").value;
-    const stock = Number(document.getElementById("stock").value);
+async function addProduct(){
+  try{
+    const name=document.getElementById("name").value.trim();
+    const price=Number(document.getElementById("price").value);
+    const discount=document.getElementById("discount").value;
+    const stock=Number(document.getElementById("stock").value);
 
-    if (!name || !price || price <= 0 ||
-        !Number.isInteger(stock) || stock < 0) {
-      alert("Enter a valid name, price and stock.");
+    if(!name || !Number.isFinite(price) || price<=0 ||
+       !Number.isInteger(stock) || stock<0){
+      alert("Enter valid product information.");
       return;
     }
 
-    if (discount !== "" &&
-        (Number(discount) <= 0 || Number(discount) >= price)) {
+    if(discount!=="" &&
+      (!Number.isFinite(Number(discount)) ||
+       Number(discount)<=0 || Number(discount)>=price)){
       alert("Discount must be less than regular price.");
       return;
     }
 
-    await api("POST",{
+    await api("admin-products","POST",{
       name,
       description:document.getElementById("description").value,
       price,
-      discount_price:discount === "" ? null : Number(discount),
+      discount_price:discount===""?null:Number(discount),
       stock,
       category:document.getElementById("category").value,
       image_url:document.getElementById("image").value
@@ -273,67 +289,241 @@ async function addProduct() {
     alert("Product added.");
 
     ["name","description","price","discount","stock","category","image"]
-      .forEach(id => document.getElementById(id).value = "");
+      .forEach(id=>document.getElementById(id).value="");
 
     await loadProducts();
 
-  } catch(e) {
-    alert("Could not add product: " + e.message);
+  }catch(e){
+    alert("Could not add product: "+e.message);
   }
 }
 
-async function editProduct(id,name,price,discount,stock) {
-  const newName = prompt("Product name:",name);
-  if (newName === null) return;
+async function editProduct(id,name,price,discount,stock){
+  const newName=prompt("Product name:",name);
+  if(newName===null)return;
 
-  const newPrice = prompt("Regular price:",price);
-  if (newPrice === null) return;
+  const newPrice=prompt("Regular price:",price);
+  if(newPrice===null)return;
 
-  const newDiscount = prompt("Discount price (0 for none):",discount);
-  if (newDiscount === null) return;
+  const newDiscount=prompt("Discount price (0 for none):",discount);
+  if(newDiscount===null)return;
 
-  const newStock = prompt("Stock quantity:",stock);
-  if (newStock === null) return;
+  const newStock=prompt("Stock quantity:",stock);
+  if(newStock===null)return;
 
-  const p = Number(newPrice);
-  const d = Number(newDiscount);
-  const s = Number(newStock);
+  const p=Number(newPrice);
+  const d=Number(newDiscount);
+  const s=Number(newStock);
 
-  if (!newName.trim() || !Number.isFinite(p) || p <= 0 ||
-      !Number.isFinite(d) || d < 0 || (d > 0 && d >= p) ||
-      !Number.isInteger(s) || s < 0) {
+  if(!newName.trim() || !Number.isFinite(p) || p<=0 ||
+     !Number.isFinite(d) || d<0 || (d>0 && d>=p) ||
+     !Number.isInteger(s) || s<0){
     alert("Invalid product information.");
     return;
   }
 
-  try {
-    await api("PATCH",{
+  try{
+    await api("admin-products","PATCH",{
       id,
       name:newName.trim(),
       price:p,
-      discount_price:d === 0 ? null : d,
+      discount_price:d===0?null:d,
       stock:s
     });
 
     alert("Product updated.");
     await loadProducts();
 
-  } catch(e) {
-    alert("Update failed: " + e.message);
+  }catch(e){
+    alert("Update failed: "+e.message);
   }
 }
 
-async function deleteProduct(id) {
-  if (!confirm("Hide this product from the store?")) return;
+async function deleteProduct(id){
+  if(!confirm("Hide this product from the store?"))return;
 
-  try {
-    await api("DELETE",{id});
+  try{
+    await api("admin-products","DELETE",{id});
     alert("Product hidden.");
     await loadProducts();
-
-  } catch(e) {
-    alert("Delete failed: " + e.message);
+  }catch(e){
+    alert("Delete failed: "+e.message);
   }
+}
+
+/* ORDERS */
+
+let orderData=[];
+
+async function loadOrders(){
+  const box=document.getElementById("orders");
+  box.textContent="Loading orders...";
+
+  try{
+    const result=await api("admin-orders","GET");
+    orderData=result.orders || [];
+
+    document.getElementById("orderCount").textContent=orderData.length;
+
+    const customers=new Set();
+    let total=0;
+
+    orderData.forEach(o=>{
+      if(o.customer_id)customers.add(o.customer_id);
+      total+=Number(o.grand_total || 0);
+    });
+
+    document.getElementById("customerCount").textContent=customers.size;
+    document.getElementById("salesTotal").textContent=money(total);
+
+    if(!orderData.length){
+      box.textContent="No orders found.";
+      document.getElementById("payments").textContent="No payment records.";
+      document.getElementById("customers").textContent="No customers found.";
+      return;
+    }
+
+    let html=`<table>
+      <tr>
+        <th>Order</th><th>Customer</th><th>Items</th>
+        <th>Total</th><th>Order Status</th><th>Payment</th><th>Update</th>
+      </tr>`;
+
+    orderData.forEach(o=>{
+      const customer=o.customers || {};
+      const items=o.order_items || [];
+
+      const itemText=items.map(i=>
+        `${esc(i.product_name)} × ${esc(i.quantity)}`
+      ).join("<br>");
+
+      html+=`<tr>
+        <td>
+          <b>${esc(o.order_number || o.id)}</b><br>
+          <small>${esc(o.created_at || "")}</small>
+        </td>
+        <td>
+          ${esc(customer.name)}<br>
+          ${esc(customer.phone)}<br>
+          ${esc(customer.address)}
+        </td>
+        <td>${itemText || "No items"}</td>
+        <td>${money(o.grand_total)}</td>
+        <td>
+          <select class="status order-status" data-id="${esc(o.id)}">
+            ${statusOptions(
+              ["pending","confirmed","processing","shipped","delivered","cancelled"],
+              o.order_status
+            )}
+          </select>
+        </td>
+        <td>
+          <select class="status payment-status" data-id="${esc(o.id)}">
+            ${statusOptions(
+              ["pending","paid","failed","refunded"],
+              o.payment_status
+            )}
+          </select>
+        </td>
+        <td>
+          <button class="save-order" data-id="${esc(o.id)}">Save</button>
+        </td>
+      </tr>`;
+    });
+
+    box.innerHTML=html+"</table>";
+
+    box.querySelectorAll(".save-order").forEach(button=>{
+      button.addEventListener("click",()=>{
+        updateOrder(button.dataset.id);
+      });
+    });
+
+    loadCustomerAndPaymentViews();
+
+  }catch(e){
+    box.textContent="Could not load orders: "+e.message;
+  }
+}
+
+function statusOptions(values,current){
+  return values.map(v=>
+    `<option value="${v}" ${v===current?"selected":""}>${v}</option>`
+  ).join("");
+}
+
+async function updateOrder(id){
+  const row=document.querySelector(`.save-order[data-id="${CSS.escape(id)}"]`).closest("tr");
+
+  const order_status=row.querySelector(".order-status").value;
+  const payment_status=row.querySelector(".payment-status").value;
+
+  if(!confirm("Update this order and payment status?"))return;
+
+  try{
+    await api("admin-orders","PATCH",{
+      id,
+      order_status,
+      payment_status
+    });
+
+    alert("Order updated.");
+    await loadOrders();
+
+  }catch(e){
+    alert("Could not update order: "+e.message);
+  }
+}
+
+function loadCustomerAndPaymentViews(){
+  const customers={};
+
+  orderData.forEach(o=>{
+    const c=o.customers || {};
+    const key=o.customer_id || o.id;
+
+    if(!customers[key]){
+      customers[key]={
+        name:c.name || "Unknown",
+        phone:c.phone || "",
+        address:c.address || "",
+        orders:0
+      };
+    }
+
+    customers[key].orders++;
+  });
+
+  const customerList=Object.values(customers);
+
+  document.getElementById("customers").innerHTML=
+    customerList.length
+    ? `<table><tr><th>Name</th><th>Phone</th><th>Address</th><th>Orders</th></tr>${
+      customerList.map(c=>`<tr>
+        <td>${esc(c.name)}</td>
+        <td>${esc(c.phone)}</td>
+        <td>${esc(c.address)}</td>
+        <td>${c.orders}</td>
+      </tr>`).join("")
+    }</table>`
+    : "No customers found.";
+
+  document.getElementById("payments").innerHTML=
+    `<table><tr><th>Order</th><th>Method</th><th>Amount</th><th>Status</th></tr>${
+      orderData.map(o=>`<tr>
+        <td>${esc(o.order_number || o.id)}</td>
+        <td>${esc(o.payment_method)}</td>
+        <td>${money(o.grand_total)}</td>
+        <td>${esc(o.payment_status)}</td>
+      </tr>`).join("")
+    }</table>`;
+}
+
+async function refreshAll(){
+  showMessage("Refreshing...");
+  await loadProducts();
+  await loadOrders();
+  showMessage("Dashboard refreshed.");
 }
 
 checkAdmin();
