@@ -28,6 +28,7 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444;vertical-align:t
 .hidden{display:none}
 .muted{color:#aaa}
 .status{min-width:130px}
+label{display:block;margin-top:12px;color:#d6b45b}
 </style>
 </head>
 
@@ -86,6 +87,39 @@ td,th{text-align:left;padding:11px;border-bottom:1px solid #444;vertical-align:t
 <h2 class="gold">Order Management</h2>
 <button onclick="loadOrders()">Refresh Orders</button>
 <div class="table-wrap" id="orders">Loading orders...</div>
+</div>
+
+<!-- PAYMENT SETTINGS -->
+<div class="card">
+<h2 class="gold">Payment Settings</h2>
+
+<p class="muted">
+Set your payment details once. Customers can use these details when placing orders.
+</p>
+
+<label>bKash Number</label>
+<input id="bkashNumber" type="text" maxlength="100"
+placeholder="Enter bKash number">
+
+<label>Nagad Number</label>
+<input id="nagadNumber" type="text" maxlength="100"
+placeholder="Enter Nagad number">
+
+<label>Bank Details</label>
+<textarea id="bankDetails" rows="4" maxlength="2000"
+placeholder="Bank name, account name, account number, branch"></textarea>
+
+<label>Payment Instructions</label>
+<textarea id="paymentInstructions" rows="4" maxlength="2000"
+placeholder="Write payment instructions for customers"></textarea>
+
+<button id="savePaymentButton" onclick="savePaymentSettings()">
+Save Payment Settings
+</button>
+
+<button onclick="loadPaymentSettings()">Reload Settings</button>
+
+<p id="paymentMessage" class="muted" role="status"></p>
 </div>
 
 <div class="card">
@@ -188,6 +222,77 @@ async function api(functionName,method,body){
   if(data?.error) throw new Error(data.error);
 
   return data;
+}
+
+/* PAYMENT SETTINGS */
+
+async function loadPaymentSettings(){
+  const message=document.getElementById("paymentMessage");
+  message.textContent="Loading payment settings...";
+
+  try{
+    const result=await api("admin-settings","GET");
+    const settings=result.settings || {};
+
+    document.getElementById("bkashNumber").value=
+      settings.bkash_number || "";
+
+    document.getElementById("nagadNumber").value=
+      settings.nagad_number || "";
+
+    document.getElementById("bankDetails").value=
+      settings.bank_details || "";
+
+    document.getElementById("paymentInstructions").value=
+      settings.payment_instructions || "";
+
+    message.textContent="Payment settings loaded.";
+
+  }catch(e){
+    message.textContent="Could not load settings: "+e.message;
+  }
+}
+
+async function savePaymentSettings(){
+  const button=document.getElementById("savePaymentButton");
+  const message=document.getElementById("paymentMessage");
+
+  const payload={
+    bkash_number:document.getElementById("bkashNumber").value.trim(),
+    nagad_number:document.getElementById("nagadNumber").value.trim(),
+    bank_details:document.getElementById("bankDetails").value.trim(),
+    payment_instructions:document.getElementById("paymentInstructions").value.trim()
+  };
+
+  if(
+    payload.bkash_number.length>100 ||
+    payload.nagad_number.length>100 ||
+    payload.bank_details.length>2000 ||
+    payload.payment_instructions.length>2000
+  ){
+    message.textContent="One or more fields are too long.";
+    return;
+  }
+
+  if(!confirm("Save these payment settings?"))return;
+
+  button.disabled=true;
+  button.textContent="Saving...";
+  message.textContent="Saving payment settings...";
+
+  try{
+    await api("admin-settings","PATCH",payload);
+
+    message.textContent="Payment settings saved successfully.";
+    alert("Payment settings saved.");
+
+  }catch(e){
+    message.textContent="Save failed: "+e.message;
+
+  }finally{
+    button.disabled=false;
+    button.textContent="Save Payment Settings";
+  }
 }
 
 /* PRODUCTS */
@@ -453,7 +558,10 @@ function statusOptions(values,current){
 }
 
 async function updateOrder(id){
-  const row=document.querySelector(`.save-order[data-id="${CSS.escape(id)}"]`).closest("tr");
+  const button=document.querySelector(`.save-order[data-id="${CSS.escape(id)}"]`);
+  if(!button)return;
+
+  const row=button.closest("tr");
 
   const order_status=row.querySelector(".order-status").value;
   const payment_status=row.querySelector(".payment-status").value;
@@ -523,6 +631,7 @@ async function refreshAll(){
   showMessage("Refreshing...");
   await loadProducts();
   await loadOrders();
+  await loadPaymentSettings();
   showMessage("Dashboard refreshed.");
 }
 
