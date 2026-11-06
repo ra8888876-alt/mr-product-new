@@ -10,136 +10,28 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  background:#101010;
-  color:#eee;
-  font-family:Arial,sans-serif;
-}
-
-header{
-  padding:20px;
-  background:#181818;
-  border-bottom:1px solid #c6a34b;
-}
-
+body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
+header{padding:20px;background:#181818;border-bottom:1px solid #c6a34b}
 h1,.gold{color:#d6b45b}
-
-main{
-  max-width:1200px;
-  margin:auto;
-  padding:18px;
-}
-
-.card{
-  background:#1d1d1d;
-  padding:18px;
-  border:1px solid #393126;
-  border-radius:12px;
-  margin:15px 0;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:12px;
-}
-
-.stat{
-  background:#292929;
-  padding:18px;
-  border-radius:10px;
-}
-
-input,textarea,select{
-  width:100%;
-  padding:12px;
-  margin:7px 0;
-  background:#292929;
-  color:white;
-  border:1px solid #555;
-  border-radius:6px;
-}
-
-button{
-  background:#c6a34b;
-  color:#111;
-  border:0;
-  padding:11px 15px;
-  border-radius:6px;
-  margin:4px;
-  cursor:pointer;
-}
-
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-
-.danger{
-  background:#a83232;
-  color:white;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:700px;
-}
-
-td,th{
-  text-align:left;
-  padding:11px;
-  border-bottom:1px solid #444;
-  vertical-align:top;
-}
-
+main{max-width:1200px;margin:auto;padding:18px}
+.card{background:#1d1d1d;padding:18px;border:1px solid #393126;border-radius:12px;margin:15px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:#292929;padding:18px;border-radius:10px}
+input,textarea,select{width:100%;padding:12px;margin:7px 0;background:#292929;color:white;border:1px solid #555;border-radius:6px}
+button{background:#c6a34b;color:#111;border:0;padding:11px 15px;border-radius:6px;margin:4px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.danger{background:#a83232;color:white}
+table{width:100%;border-collapse:collapse;min-width:700px}
+td,th{text-align:left;padding:11px;border-bottom:1px solid #444;vertical-align:top}
 .table-wrap{overflow-x:auto}
-
 .hidden{display:none}
-
 .muted{color:#aaa}
-
 .status{min-width:130px}
-
-label{
-  display:block;
-  margin-top:12px;
-  color:#d6b45b;
-}
-
-.preview-image{
-  display:block;
-  max-width:100%;
-  max-height:180px;
-  object-fit:contain;
-  background:#111;
-  border:1px solid #555;
-  border-radius:8px;
-  padding:8px;
-  margin:10px 0;
-}
-
-.upload-box{
-  background:#292929;
-  padding:12px;
-  border-radius:8px;
-  margin:10px 0;
-}
-
-input[type="color"]{
-  height:55px;
-  padding:5px;
-  cursor:pointer;
-}
-
-.section-note{
-  color:#aaa;
-  font-size:13px;
-  line-height:1.6;
-}
-
+label{display:block;margin-top:12px;color:#d6b45b}
+.preview-image{display:block;max-width:100%;max-height:180px;object-fit:contain;background:#111;border:1px solid #555;border-radius:8px;padding:8px;margin:10px 0}
+.upload-box{background:#292929;padding:12px;border-radius:8px;margin:10px 0}
+input[type="color"]{height:55px;padding:5px;cursor:pointer}
+.section-note{color:#aaa;font-size:13px;line-height:1.6}
 </style>
 </head>
 
@@ -152,36 +44,30 @@ input[type="color"]{
 
 <main>
 
-<div id="loading" class="card">
-Checking admin access...
-</div>
+<div id="loading" class="card">Checking admin access...</div>
 
 <div id="login" class="card hidden">
-
 <h2>Admin Login</h2>
-
 <input id="email" type="email" placeholder="Admin email">
-
 <input id="password" type="password" placeholder="Password">
-
 <button onclick="loginAdmin()">Login</button>
-
 <p id="loginMessage"></p>
-
 </div>
 
 <div id="dashboard" class="hidden">
 
 <div class="card">
-
 <h2 class="gold">Welcome, Admin</h2>
 
 <button onclick="logoutAdmin()">Logout</button>
-
 <button onclick="refreshAll()">Refresh Dashboard</button>
 
-<p id="message"></p>
+<!-- AFFILIATE MANAGEMENT BUTTON -->
+<button onclick="location.href='admin-affiliates.html'">
+Affiliate Management
+</button>
 
+<p id="message"></p>
 </div>
 
 <!-- DASHBOARD -->
@@ -210,7 +96,6 @@ Order Value
 
 </div>
 
-
 <!-- STORE PROFILE SETTINGS -->
 
 <div class="card">
@@ -223,49 +108,19 @@ homepage banner and brand color.
 </p>
 
 <label>Store Name</label>
-
-<input
-id="storeName"
-type="text"
-maxlength="150"
-placeholder="MR PRODUCT"
->
+<input id="storeName" type="text" maxlength="150" placeholder="MR PRODUCT">
 
 <label>Store Description</label>
-
-<textarea
-id="storeDescription"
-rows="4"
-maxlength="2000"
-placeholder="Write about your store..."
-></textarea>
+<textarea id="storeDescription" rows="4" maxlength="2000" placeholder="Write about your store..."></textarea>
 
 <label>Phone Number</label>
-
-<input
-id="storePhone"
-type="text"
-maxlength="100"
-placeholder="Store phone number"
->
+<input id="storePhone" type="text" maxlength="100" placeholder="Store phone number">
 
 <label>WhatsApp Number</label>
-
-<input
-id="storeWhatsapp"
-type="text"
-maxlength="100"
-placeholder="WhatsApp number"
->
+<input id="storeWhatsapp" type="text" maxlength="100" placeholder="WhatsApp number">
 
 <label>Email Address</label>
-
-<input
-id="storeEmail"
-type="email"
-maxlength="200"
-placeholder="Store email"
->
+<input id="storeEmail" type="email" maxlength="200" placeholder="Store email">
 
 <hr style="border-color:#393126;margin:25px 0">
 
@@ -273,33 +128,16 @@ placeholder="Store email"
 
 <div class="upload-box">
 
-<input
-id="logoFile"
-type="file"
-accept="image/png,image/jpeg,image/webp"
->
+<input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp">
 
-<button
-id="uploadLogoButton"
-onclick="uploadStoreImage('logo')"
->
+<button id="uploadLogoButton" onclick="uploadStoreImage('logo')">
 Upload Logo
 </button>
 
-<img
-id="logoPreview"
-class="preview-image hidden"
-alt="Store logo preview"
->
+<img id="logoPreview" class="preview-image hidden" alt="Store logo preview">
 
 <label>Logo Image URL</label>
-
-<input
-id="logoUrl"
-type="url"
-readonly
-placeholder="Uploaded logo URL"
->
+<input id="logoUrl" type="url" readonly placeholder="Uploaded logo URL">
 
 </div>
 
@@ -309,33 +147,16 @@ placeholder="Uploaded logo URL"
 
 <div class="upload-box">
 
-<input
-id="bannerFile"
-type="file"
-accept="image/png,image/jpeg,image/webp"
->
+<input id="bannerFile" type="file" accept="image/png,image/jpeg,image/webp">
 
-<button
-id="uploadBannerButton"
-onclick="uploadStoreImage('banner')"
->
+<button id="uploadBannerButton" onclick="uploadStoreImage('banner')">
 Upload Banner
 </button>
 
-<img
-id="bannerPreview"
-class="preview-image hidden"
-alt="Store banner preview"
->
+<img id="bannerPreview" class="preview-image hidden" alt="Store banner preview">
 
 <label>Banner Image URL</label>
-
-<input
-id="bannerUrl"
-type="url"
-readonly
-placeholder="Uploaded banner URL"
->
+<input id="bannerUrl" type="url" readonly placeholder="Uploaded banner URL">
 
 </div>
 
@@ -344,32 +165,16 @@ placeholder="Uploaded banner URL"
 <h3 class="gold">Brand Color</h3>
 
 <label>Primary Color</label>
+<input id="primaryColor" type="color" value="#c6a34b">
 
-<input
-id="primaryColor"
-type="color"
-value="#c6a34b"
->
+<p class="section-note">Choose your store's primary brand color.</p>
 
-<p class="section-note">
-Choose your store's primary brand color.
-</p>
-
-<button
-id="saveStoreButton"
-onclick="saveStoreSettings()"
->
-Save Store Settings
-</button>
-
-<button onclick="loadStoreSettings()">
-Reload Store Settings
-</button>
+<button id="saveStoreButton" onclick="saveStoreSettings()">Save Store Settings</button>
+<button onclick="loadStoreSettings()">Reload Store Settings</button>
 
 <p id="storeMessage" class="muted" role="status"></p>
 
 </div>
-
 
 <!-- ADD PRODUCT -->
 
@@ -378,72 +183,31 @@ Reload Store Settings
 <h2 class="gold">Add New Product</h2>
 
 <input id="name" placeholder="Product name">
-
-<textarea
-id="description"
-placeholder="Description"
-></textarea>
-
-<input
-id="price"
-type="number"
-min="0.01"
-step="0.01"
-placeholder="Regular price (BDT)"
->
-
-<input
-id="discount"
-type="number"
-min="0"
-step="0.01"
-placeholder="Discount price (optional)"
->
-
-<input
-id="stock"
-type="number"
-min="0"
-step="1"
-placeholder="Stock quantity"
->
-
+<textarea id="description" placeholder="Description"></textarea>
+<input id="price" type="number" min="0.01" step="0.01" placeholder="Regular price (BDT)">
+<input id="discount" type="number" min="0" step="0.01" placeholder="Discount price (optional)">
+<input id="stock" type="number" min="0" step="1" placeholder="Stock quantity">
 <input id="category" placeholder="Category">
-
 <input id="image" placeholder="Image URL">
 
 <button onclick="addProduct()">Add Product</button>
 
 </div>
 
-
 <!-- PRODUCT MANAGEMENT -->
 
 <div class="card">
-
 <h2 class="gold">Product Management</h2>
-
-<div class="table-wrap" id="products">
-Loading...
+<div class="table-wrap" id="products">Loading...</div>
 </div>
-
-</div>
-
 
 <!-- ORDER MANAGEMENT -->
 
 <div class="card">
-
 <h2 class="gold">Order Management</h2>
-
 <button onclick="loadOrders()">Refresh Orders</button>
-
-<div class="table-wrap" id="orders">
-Loading orders...
+<div class="table-wrap" id="orders">Loading orders...</div>
 </div>
-
-</div>
-
 
 <!-- PAYMENT SETTINGS -->
 
@@ -456,89 +220,43 @@ Set your payment details once. Customers can use these details when placing orde
 </p>
 
 <label>bKash Number</label>
-
-<input
-id="bkashNumber"
-type="text"
-maxlength="100"
-placeholder="Enter bKash number"
->
+<input id="bkashNumber" type="text" maxlength="100" placeholder="Enter bKash number">
 
 <label>Nagad Number</label>
-
-<input
-id="nagadNumber"
-type="text"
-maxlength="100"
-placeholder="Enter Nagad number"
->
+<input id="nagadNumber" type="text" maxlength="100" placeholder="Enter Nagad number">
 
 <label>Bank Details</label>
-
-<textarea
-id="bankDetails"
-rows="4"
-maxlength="2000"
-placeholder="Bank name, account name, account number, branch"
-></textarea>
+<textarea id="bankDetails" rows="4" maxlength="2000" placeholder="Bank name, account name, account number, branch"></textarea>
 
 <label>Payment Instructions</label>
+<textarea id="paymentInstructions" rows="4" maxlength="2000" placeholder="Write payment instructions for customers"></textarea>
 
-<textarea
-id="paymentInstructions"
-rows="4"
-maxlength="2000"
-placeholder="Write payment instructions for customers"
-></textarea>
-
-<button
-id="savePaymentButton"
-onclick="savePaymentSettings()"
->
-Save Payment Settings
-</button>
-
-<button onclick="loadPaymentSettings()">
-Reload Settings
-</button>
+<button id="savePaymentButton" onclick="savePaymentSettings()">Save Payment Settings</button>
+<button onclick="loadPaymentSettings()">Reload Settings</button>
 
 <p id="paymentMessage" class="muted" role="status"></p>
 
 </div>
 
-
 <!-- PAYMENT OVERVIEW -->
 
 <div class="card">
-
 <h2 class="gold">Payment Overview</h2>
-
 <p class="muted">
 Payment status is manually managed. This does not verify whether money was actually received.
 </p>
-
-<div class="table-wrap" id="payments">
-Loading...
+<div class="table-wrap" id="payments">Loading...</div>
 </div>
-
-</div>
-
 
 <!-- CUSTOMER OVERVIEW -->
 
 <div class="card">
-
 <h2 class="gold">Customer Overview</h2>
-
-<div class="table-wrap" id="customers">
-Loading...
-</div>
-
+<div class="table-wrap" id="customers">Loading...</div>
 </div>
 
 </div>
 </main>
-
 
 <script>
 
@@ -552,7 +270,6 @@ const db = window.supabase.createClient(
   cfg.supabaseUrl,
   cfg.publishableKey
 );
-
 
 // GENERAL FUNCTIONS
 
@@ -573,7 +290,6 @@ function esc(value){
     "'":"&#39;"
   }[c]));
 }
-
 
 // ADMIN AUTHENTICATION
 
@@ -599,104 +315,75 @@ async function checkAdmin(){
   }
 
   document.getElementById("loading").classList.add("hidden");
-
   document.getElementById("login").classList.add("hidden");
-
   document.getElementById("dashboard").classList.remove("hidden");
 
   await refreshAll();
 }
 
-
 function showLogin(){
 
   document.getElementById("loading").classList.add("hidden");
-
   document.getElementById("dashboard").classList.add("hidden");
-
   document.getElementById("login").classList.remove("hidden");
 
 }
-
 
 async function loginAdmin(){
 
   document.getElementById("loginMessage").textContent="Checking...";
 
   const {error}=await db.auth.signInWithPassword({
-
     email:document.getElementById("email").value.trim(),
-
     password:document.getElementById("password").value
-
   });
 
   if(error){
-
     document.getElementById("loginMessage").textContent="Login failed.";
-
     return;
   }
 
   await checkAdmin();
 }
 
-
 async function logoutAdmin(){
-
   await db.auth.signOut();
-
   location.reload();
-
 }
-
 
 // EDGE FUNCTION API
 
 async function api(functionName,method,body){
 
   const {data,error}=await db.functions.invoke(functionName,{
-
     method,
-
     body
-
   });
 
   if(error) throw error;
-
   if(data?.error) throw new Error(data.error);
 
   return data;
 }
-
 
 // STORE PROFILE SETTINGS
 
 async function loadStoreSettings(){
 
   const message=document.getElementById("storeMessage");
-
   message.textContent="Loading store settings...";
 
   try{
 
     const result=await api("admin-settings","GET");
-
     const s=result.settings || {};
 
     document.getElementById("storeName").value=s.store_name || "";
-
     document.getElementById("storeDescription").value=s.description || "";
-
     document.getElementById("storePhone").value=s.phone || "";
-
     document.getElementById("storeWhatsapp").value=s.whatsapp || "";
-
     document.getElementById("storeEmail").value=s.email || "";
-
     document.getElementById("logoUrl").value=s.logo_url || "";
-
     document.getElementById("bannerUrl").value=s.banner_url || "";
 
     document.getElementById("primaryColor").value=
@@ -705,18 +392,14 @@ async function loadStoreSettings(){
       : "#c6a34b";
 
     showImagePreview("logo",s.logo_url);
-
     showImagePreview("banner",s.banner_url);
 
     message.textContent="Store settings loaded successfully.";
 
   }catch(e){
-
     message.textContent="Could not load store settings: "+e.message;
-
   }
 }
-
 
 function showImagePreview(type,url){
 
@@ -725,21 +408,13 @@ function showImagePreview(type,url){
   );
 
   if(url){
-
     img.src=url;
-
     img.classList.remove("hidden");
-
   }else{
-
     img.removeAttribute("src");
-
     img.classList.add("hidden");
-
   }
-
 }
-
 
 // IMAGE UPLOAD
 
@@ -756,40 +431,27 @@ async function uploadStoreImage(type){
   );
 
   const message=document.getElementById("storeMessage");
-
   const file=fileInput.files[0];
 
   if(!file){
-
     message.textContent="Please select an image first.";
-
     return;
   }
 
-  const allowedTypes=[
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
+  const allowedTypes=["image/jpeg","image/png","image/webp"];
 
   if(!allowedTypes.includes(file.type)){
-
     message.textContent="Only JPG, PNG and WEBP images are allowed.";
-
     return;
   }
 
   if(file.size>5*1024*1024){
-
     message.textContent="Image size must be 5 MB or less.";
-
     return;
   }
 
   button.disabled=true;
-
   button.textContent="Uploading...";
-
   message.textContent="Uploading image...";
 
   try{
@@ -797,9 +459,7 @@ async function uploadStoreImage(type){
     const {data:{session}}=await db.auth.getSession();
 
     if(!session){
-
       throw new Error("Please login again.");
-
     }
 
     const extension=file.type==="image/jpeg"
@@ -826,71 +486,49 @@ async function uploadStoreImage(type){
     const url=publicData.publicUrl;
 
     if(isLogo){
-
       document.getElementById("logoUrl").value=url;
-
     }else{
-
       document.getElementById("bannerUrl").value=url;
-
     }
 
     showImagePreview(type,url);
-
     fileInput.value="";
 
     message.textContent=
       (isLogo ? "Logo":"Banner")+" uploaded successfully. Now save Store Settings.";
 
   }catch(e){
-
     message.textContent="Upload failed: "+e.message;
-
   }finally{
 
     button.disabled=false;
-
-    button.textContent=isLogo
-      ? "Upload Logo"
-      : "Upload Banner";
+    button.textContent=isLogo ? "Upload Logo":"Upload Banner";
 
   }
-
 }
-
 
 // SAVE STORE SETTINGS
 
 async function saveStoreSettings(){
 
   const button=document.getElementById("saveStoreButton");
-
   const message=document.getElementById("storeMessage");
 
   const payload={
 
     store_name:document.getElementById("storeName").value.trim(),
-
     description:document.getElementById("storeDescription").value.trim(),
-
     phone:document.getElementById("storePhone").value.trim(),
-
     whatsapp:document.getElementById("storeWhatsapp").value.trim(),
-
     email:document.getElementById("storeEmail").value.trim(),
-
     logo_url:document.getElementById("logoUrl").value.trim(),
-
     banner_url:document.getElementById("bannerUrl").value.trim(),
-
     primary_color:document.getElementById("primaryColor").value
 
   };
 
   if(!payload.store_name){
-
     message.textContent="Store name is required.";
-
     return;
   }
 
@@ -901,16 +539,13 @@ async function saveStoreSettings(){
      payload.email.length>200){
 
     message.textContent="One or more fields are too long.";
-
     return;
   }
 
   if(!confirm("Save Store Profile Settings?"))return;
 
   button.disabled=true;
-
   button.textContent="Saving...";
-
   message.textContent="Saving store settings...";
 
   try{
@@ -918,75 +553,52 @@ async function saveStoreSettings(){
     await api("admin-settings","PATCH",payload);
 
     message.textContent="Store settings saved successfully.";
-
     alert("Store settings saved successfully.");
 
   }catch(e){
-
     message.textContent="Save failed: "+e.message;
-
   }finally{
 
     button.disabled=false;
-
     button.textContent="Save Store Settings";
 
   }
-
 }
-
 
 // PAYMENT SETTINGS
 
 async function loadPaymentSettings(){
 
   const message=document.getElementById("paymentMessage");
-
   message.textContent="Loading payment settings...";
 
   try{
 
     const result=await api("admin-settings","GET");
-
     const settings=result.settings || {};
 
-    document.getElementById("bkashNumber").value=
-      settings.bkash_number || "";
-
-    document.getElementById("nagadNumber").value=
-      settings.nagad_number || "";
-
-    document.getElementById("bankDetails").value=
-      settings.bank_details || "";
-
-    document.getElementById("paymentInstructions").value=
-      settings.payment_instructions || "";
+    document.getElementById("bkashNumber").value=settings.bkash_number || "";
+    document.getElementById("nagadNumber").value=settings.nagad_number || "";
+    document.getElementById("bankDetails").value=settings.bank_details || "";
+    document.getElementById("paymentInstructions").value=settings.payment_instructions || "";
 
     message.textContent="Payment settings loaded.";
 
   }catch(e){
-
     message.textContent="Could not load settings: "+e.message;
-
   }
-
 }
-
 
 async function savePaymentSettings(){
 
   const button=document.getElementById("savePaymentButton");
-
   const message=document.getElementById("paymentMessage");
 
   const payload={
 
     bkash_number:document.getElementById("bkashNumber").value.trim(),
-
     nagad_number:document.getElementById("nagadNumber").value.trim(),
-
     bank_details:document.getElementById("bankDetails").value.trim(),
-
     payment_instructions:document.getElementById("paymentInstructions").value.trim()
 
   };
@@ -999,16 +611,13 @@ async function savePaymentSettings(){
   ){
 
     message.textContent="One or more fields are too long.";
-
     return;
   }
 
   if(!confirm("Save these payment settings?"))return;
 
   button.disabled=true;
-
   button.textContent="Saving...";
-
   message.textContent="Saving payment settings...";
 
   try{
@@ -1016,44 +625,34 @@ async function savePaymentSettings(){
     await api("admin-settings","PATCH",payload);
 
     message.textContent="Payment settings saved successfully.";
-
     alert("Payment settings saved.");
 
   }catch(e){
-
     message.textContent="Save failed: "+e.message;
-
   }finally{
 
     button.disabled=false;
-
     button.textContent="Save Payment Settings";
 
   }
-
 }
-
 
 // PRODUCTS
 
 async function loadProducts(){
 
   const box=document.getElementById("products");
-
   box.textContent="Loading products...";
 
   try{
 
     const result=await api("admin-products","GET");
-
     const list=result.products || [];
 
     document.getElementById("productCount").textContent=list.length;
 
     if(!list.length){
-
       box.textContent="No products found.";
-
       return;
     }
 
@@ -1067,13 +666,9 @@ async function loadProducts(){
         : p.price;
 
       html+=`<tr>
-
         <td>${esc(p.name)}</td>
-
         <td>${money(price)}</td>
-
         <td>${esc(p.stock)}</td>
-
         <td>
 
           <button class="edit-btn"
@@ -1091,7 +686,6 @@ async function loadProducts(){
           </button>
 
         </td>
-
       </tr>`;
 
     });
@@ -1117,39 +711,29 @@ async function loadProducts(){
     box.querySelectorAll(".delete-btn").forEach(button=>{
 
       button.addEventListener("click",()=>{
-
         deleteProduct(button.dataset.id);
-
       });
 
     });
 
   }catch(e){
-
     box.textContent="Could not load products: "+e.message;
-
   }
-
 }
-
 
 async function addProduct(){
 
   try{
 
     const name=document.getElementById("name").value.trim();
-
     const price=Number(document.getElementById("price").value);
-
     const discount=document.getElementById("discount").value;
-
     const stock=Number(document.getElementById("stock").value);
 
     if(!name || !Number.isFinite(price) || price<=0 ||
        !Number.isInteger(stock) || stock<0){
 
       alert("Enter valid product information.");
-
       return;
     }
 
@@ -1158,24 +742,17 @@ async function addProduct(){
        Number(discount)<=0 || Number(discount)>=price)){
 
       alert("Discount must be less than regular price.");
-
       return;
     }
 
     await api("admin-products","POST",{
 
       name,
-
       description:document.getElementById("description").value,
-
       price,
-
       discount_price:discount===""?null:Number(discount),
-
       stock,
-
       category:document.getElementById("category").value,
-
       image_url:document.getElementById("image").value
 
     });
@@ -1183,48 +760,33 @@ async function addProduct(){
     alert("Product added.");
 
     [
-      "name",
-      "description",
-      "price",
-      "discount",
-      "stock",
-      "category",
-      "image"
+      "name","description","price","discount",
+      "stock","category","image"
     ].forEach(id=>document.getElementById(id).value="");
 
     await loadProducts();
 
   }catch(e){
-
     alert("Could not add product: "+e.message);
-
   }
-
 }
-
 
 async function editProduct(id,name,price,discount,stock){
 
   const newName=prompt("Product name:",name);
-
   if(newName===null)return;
 
   const newPrice=prompt("Regular price:",price);
-
   if(newPrice===null)return;
 
   const newDiscount=prompt("Discount price (0 for none):",discount);
-
   if(newDiscount===null)return;
 
   const newStock=prompt("Stock quantity:",stock);
-
   if(newStock===null)return;
 
   const p=Number(newPrice);
-
   const d=Number(newDiscount);
-
   const s=Number(newStock);
 
   if(!newName.trim() || !Number.isFinite(p) || p<=0 ||
@@ -1232,7 +794,6 @@ async function editProduct(id,name,price,discount,stock){
      !Number.isInteger(s) || s<0){
 
     alert("Invalid product information.");
-
     return;
   }
 
@@ -1241,29 +802,20 @@ async function editProduct(id,name,price,discount,stock){
     await api("admin-products","PATCH",{
 
       id,
-
       name:newName.trim(),
-
       price:p,
-
       discount_price:d===0?null:d,
-
       stock:s
 
     });
 
     alert("Product updated.");
-
     await loadProducts();
 
   }catch(e){
-
     alert("Update failed: "+e.message);
-
   }
-
 }
-
 
 async function deleteProduct(id){
 
@@ -1274,66 +826,50 @@ async function deleteProduct(id){
     await api("admin-products","DELETE",{id});
 
     alert("Product hidden.");
-
     await loadProducts();
 
   }catch(e){
-
     alert("Delete failed: "+e.message);
-
   }
-
 }
-
 
 // ORDERS
 
 let orderData=[];
 
-
 async function loadOrders(){
 
   const box=document.getElementById("orders");
-
   box.textContent="Loading orders...";
 
   try{
 
     const result=await api("admin-orders","GET");
-
     orderData=result.orders || [];
 
     document.getElementById("orderCount").textContent=orderData.length;
 
     const customers=new Set();
-
     let total=0;
 
     orderData.forEach(o=>{
-
       if(o.customer_id)customers.add(o.customer_id);
-
       total+=Number(o.grand_total || 0);
-
     });
 
     document.getElementById("customerCount").textContent=customers.size;
-
     document.getElementById("salesTotal").textContent=money(total);
 
     if(!orderData.length){
 
       box.textContent="No orders found.";
-
       document.getElementById("payments").textContent="No payment records.";
-
       document.getElementById("customers").textContent="No customers found.";
 
       return;
     }
 
     let html=`<table>
-
       <tr>
         <th>Order</th>
         <th>Customer</th>
@@ -1347,7 +883,6 @@ async function loadOrders(){
     orderData.forEach(o=>{
 
       const customer=o.customers || {};
-
       const items=o.order_items || [];
 
       const itemText=items.map(i=>
@@ -1372,37 +907,25 @@ async function loadOrders(){
         <td>${money(o.grand_total)}</td>
 
         <td>
-
           <select class="status order-status" data-id="${esc(o.id)}">
-
             ${statusOptions(
               ["pending","confirmed","processing","shipped","delivered","cancelled"],
               o.order_status
             )}
-
           </select>
-
         </td>
 
         <td>
-
           <select class="status payment-status" data-id="${esc(o.id)}">
-
             ${statusOptions(
               ["pending","paid","failed","refunded"],
               o.payment_status
             )}
-
           </select>
-
         </td>
 
         <td>
-
-          <button class="save-order" data-id="${esc(o.id)}">
-            Save
-          </button>
-
+          <button class="save-order" data-id="${esc(o.id)}">Save</button>
         </td>
 
       </tr>`;
@@ -1412,36 +935,25 @@ async function loadOrders(){
     box.innerHTML=html+"</table>";
 
     box.querySelectorAll(".save-order").forEach(button=>{
-
       button.addEventListener("click",()=>{
-
         updateOrder(button.dataset.id);
-
       });
-
     });
 
     loadCustomerAndPaymentViews();
 
   }catch(e){
-
     box.textContent="Could not load orders: "+e.message;
-
   }
-
 }
-
 
 function statusOptions(values,current){
 
   return values.map(v=>
-
     `<option value="${v}" ${v===current?"selected":""}>${v}</option>`
-
   ).join("");
 
 }
-
 
 async function updateOrder(id){
 
@@ -1454,7 +966,6 @@ async function updateOrder(id){
   const row=button.closest("tr");
 
   const order_status=row.querySelector(".order-status").value;
-
   const payment_status=row.querySelector(".payment-status").value;
 
   if(!confirm("Update this order and payment status?"))return;
@@ -1462,27 +973,18 @@ async function updateOrder(id){
   try{
 
     await api("admin-orders","PATCH",{
-
       id,
-
       order_status,
-
       payment_status
-
     });
 
     alert("Order updated.");
-
     await loadOrders();
 
   }catch(e){
-
     alert("Could not update order: "+e.message);
-
   }
-
 }
-
 
 function loadCustomerAndPaymentViews(){
 
@@ -1491,21 +993,15 @@ function loadCustomerAndPaymentViews(){
   orderData.forEach(o=>{
 
     const c=o.customers || {};
-
     const key=o.customer_id || o.id;
 
     if(!customers[key]){
 
       customers[key]={
-
         name:c.name || "Unknown",
-
         phone:c.phone || "",
-
         address:c.address || "",
-
         orders:0
-
       };
 
     }
@@ -1521,7 +1017,6 @@ function loadCustomerAndPaymentViews(){
     customerList.length
 
     ? `<table>
-
         <tr>
           <th>Name</th>
           <th>Phone</th>
@@ -1531,15 +1026,10 @@ function loadCustomerAndPaymentViews(){
 
         ${
           customerList.map(c=>`<tr>
-
             <td>${esc(c.name)}</td>
-
             <td>${esc(c.phone)}</td>
-
             <td>${esc(c.address)}</td>
-
             <td>${c.orders}</td>
-
           </tr>`).join("")
         }
 
@@ -1547,11 +1037,9 @@ function loadCustomerAndPaymentViews(){
 
     : "No customers found.";
 
-
   document.getElementById("payments").innerHTML=
 
     `<table>
-
       <tr>
         <th>Order</th>
         <th>Method</th>
@@ -1561,22 +1049,16 @@ function loadCustomerAndPaymentViews(){
 
       ${
         orderData.map(o=>`<tr>
-
           <td>${esc(o.order_number || o.id)}</td>
-
           <td>${esc(o.payment_method)}</td>
-
           <td>${money(o.grand_total)}</td>
-
           <td>${esc(o.payment_status)}</td>
-
         </tr>`).join("")
       }
 
     </table>`;
 
 }
-
 
 // REFRESH DASHBOARD
 
@@ -1585,17 +1067,13 @@ async function refreshAll(){
   showMessage("Refreshing...");
 
   await loadProducts();
-
   await loadOrders();
-
   await loadStoreSettings();
-
   await loadPaymentSettings();
 
   showMessage("Dashboard refreshed.");
 
 }
-
 
 // START
 
