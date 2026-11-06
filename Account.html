@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101010">
+<title>My Account | MR PRODUCT</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#101010;
+  color:#f4efe4;
+  font-family:Arial,sans-serif;
+}
+header{
+  padding:20px;
+  border-bottom:1px solid #34302a;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header a{color:#d6b15e;text-decoration:none}
+.brand{font-size:22px;font-weight:bold;color:#d6b15e}
+main{
+  max-width:520px;
+  margin:35px auto;
+  padding:20px;
+}
+.card{
+  background:#171717;
+  border:1px solid #34302a;
+  border-radius:14px;
+  padding:24px;
+}
+h1{color:#d6b15e}
+input{
+  width:100%;
+  padding:13px;
+  margin:7px 0 15px;
+  background:#101010;
+  color:white;
+  border:1px solid #49443a;
+  border-radius:7px;
+}
+label{font-size:14px;color:#d6b15e}
+button{
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:7px;
+  background:#d6b15e;
+  color:#101010;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:10px;
+}
+.secondary{
+  background:transparent;
+  color:#d6b15e;
+  border:1px solid #d6b15e;
+}
+.message{
+  margin-top:15px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+.hidden{display:none}
+.muted{color:#aaa}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">MR PRODUCT</div>
+  <a href="index.html">← Back to Store</a>
+</header>
+
+<main>
+
+  <section class="card" id="auth-section">
+
+    <h1>My Account</h1>
+    <p class="muted">Login or create your customer account.</p>
+
+    <form id="signup-form">
+      <h3>Create Account</h3>
+
+      <label>Email</label>
+      <input type="email" id="signup-email" required>
+
+      <label>Password</label>
+      <input type="password" id="signup-password"
+        minlength="8" required>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <hr style="border-color:#34302a;margin:25px 0">
+
+    <form id="login-form">
+      <h3>Login</h3>
+
+      <label>Email</label>
+      <input type="email" id="login-email" required>
+
+      <label>Password</label>
+      <input type="password" id="login-password" required>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <button class="secondary" id="reset-password">
+      Forgot Password?
+    </button>
+
+    <div class="message" id="auth-message"></div>
+
+  </section>
+
+
+  <section class="card hidden" id="profile-section">
+
+    <h1>My Profile</h1>
+
+    <p class="muted" id="user-email"></p>
+
+    <form id="profile-form">
+
+      <label>Full Name</label>
+      <input id="profile-name" required>
+
+      <label>Phone Number</label>
+      <input id="profile-phone" required>
+
+      <label>WhatsApp Number</label>
+      <input id="profile-whatsapp">
+
+      <label>District</label>
+      <input id="profile-district" required>
+
+      <label>Area</label>
+      <input id="profile-area" required>
+
+      <label>Full Delivery Address</label>
+      <input id="profile-address" required>
+
+      <button type="submit">Save Profile</button>
+
+    </form>
+
+    <div class="message" id="profile-message"></div>
+
+    <button class="secondary" id="logout-button">
+      Logout
+    </button>
+
+  </section>
+
+</main>
+
+<script>
+const CONFIG = window.MR_PRODUCT_CONFIG || {};
+
+const SUPABASE_URL = CONFIG.supabaseUrl || "";
+const SUPABASE_KEY = CONFIG.publishableKey || "";
+
+const authMessage = document.getElementById("auth-message");
+const profileMessage = document.getElementById("profile-message");
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  authMessage.textContent = "Database configuration is missing.";
+  throw new Error("Supabase configuration missing");
+}
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let currentUser = null;
+
+function showMessage(element, message, error = false) {
+  element.textContent = message;
+  element.style.color = error ? "#ff7777" : "#d6b15e";
+}
+
+function showProfile() {
+  document.getElementById("auth-section").classList.add("hidden");
+  document.getElementById("profile-section").classList.remove("hidden");
+}
+
+function showAuth() {
+  document.getElementById("profile-section").classList.add("hidden");
+  document.getElementById("auth-section").classList.remove("hidden");
+}
+
+// REGISTER
+
+document.getElementById("signup-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+
+  showMessage(authMessage, "Creating your account...");
+
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + "/account.html"
+    }
+  });
+
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
+
+  if (data.session) {
+    await checkSession();
+  } else {
+    showMessage(
+      authMessage,
+      "Registration successful! Please check your email and confirm your account before logging in."
+    );
+  }
+});
+
+// LOGIN
+
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+
+  showMessage(authMessage, "Logging in...");
+
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
+
+  await checkSession();
+});
+
+// FORGOT PASSWORD
+
+document.getElementById("reset-password").addEventListener("click", async () => {
+  const email = document.getElementById("login-email").value.trim();
+
+  if (!email) {
+    showMessage(authMessage, "Enter your email in the Login section first.", true);
+    return;
+  }
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/account.html"
+  });
+
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
+
+  showMessage(authMessage, "Password reset instructions sent to your email.");
+});
+
+// CHECK SESSION
+
+async function checkSession() {
+  const { data, error } = await db.auth.getSession();
+
+  if (error || !data.session) {
+    currentUser = null;
+    showAuth();
+    return;
+  }
+
+  currentUser = data.session.user;
+
+  // Prevent active admin account from using customer profile page.
+  const { data: admin, error: adminError } = await db
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", currentUser.id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (adminError) {
+    showMessage(authMessage, "Could not verify account permissions.", true);
+    return;
+  }
+
+  if (admin) {
+    await db.auth.signOut();
+    currentUser = null;
+    showAuth();
+    showMessage(authMessage, "Admin accounts must use the Admin Panel.", true);
+    return;
+  }
+
+  document.getElementById("user-email").textContent =
+    "Email: " + currentUser.email;
+
+  showProfile();
+
+  await loadProfile();
+}
+
+// LOAD PROFILE
+
+async function loadProfile() {
+  const { data, error } = await db
+    .from("customers")
+    .select("*")
+    .eq("auth_user_id", currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    showMessage(profileMessage, error.message, true);
+    return;
+  }
+
+  if (!data) {
+    showMessage(profileMessage, "Please complete your customer profile.");
+    return;
+  }
+
+  document.getElementById("profile-name").value = data.name || "";
+  document.getElementById("profile-phone").value = data.phone || "";
+  document.getElementById("profile-whatsapp").value = data.whatsapp || "";
+  document.getElementById("profile-district").value = data.district || "";
+  document.getElementById("profile-area").value = data.area || "";
+  document.getElementById("profile-address").value = data.address || "";
+}
+
+// SAVE PROFILE
+
+document.getElementById("profile-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!currentUser) return;
+
+  const profile = {
+    auth_user_id: currentUser.id,
+    email: currentUser.email,
+    name: document.getElementById("profile-name").value.trim(),
+    phone: document.getElementById("profile-phone").value.trim(),
+    whatsapp: document.getElementById("profile-whatsapp").value.trim(),
+    district: document.getElementById("profile-district").value.trim(),
+    area: document.getElementById("profile-area").value.trim(),
+    address: document.getElementById("profile-address").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+
+  showMessage(profileMessage, "Saving profile...");
+
+  const { error } = await db
+    .from("customers")
+    .upsert(profile, {
+      onConflict: "auth_user_id"
+    });
+
+  if (error) {
+    showMessage(profileMessage, error.message, true);
+    return;
+  }
+
+  showMessage(profileMessage, "Profile saved successfully!");
+});
+
+// LOGOUT
+
+document.getElementById("logout-button").addEventListener("click", async () => {
+  await db.auth.signOut();
+
+  currentUser = null;
+
+  showAuth();
+
+  showMessage(authMessage, "You have logged out.");
+});
+
+// INITIAL CHECK
+
+checkSession();
+
+// AUTH STATE CHANGE
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    currentUser = null;
+    showAuth();
+  }
+});
+</script>
+
+</body>
+</html>
