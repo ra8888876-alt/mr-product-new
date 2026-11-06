@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>Track Your Order | MR PRODUCT</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #101010;
+      color: #f4efe4;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      padding: 20px;
+      border-bottom: 1px solid #383027;
+      text-align: center;
+    }
+
+    header a {
+      color: #d6b15e;
+      text-decoration: none;
+      font-size: 23px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .container {
+      width: min(92%, 560px);
+      margin: 55px auto;
+      padding: 28px;
+      background: #191919;
+      border: 1px solid #3b3327;
+      border-radius: 14px;
+    }
+
+    h1 {
+      color: #d6b15e;
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .subtitle {
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      margin: 17px 0 8px;
+      color: #ddd;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      background: #101010;
+      color: white;
+      border: 1px solid #51452f;
+      border-radius: 7px;
+      outline: none;
+      font-size: 16px;
+    }
+
+    input:focus {
+      border-color: #d6b15e;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 15px;
+      background: #d6b15e;
+      color: #101010;
+      border: none;
+      border-radius: 7px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    #message {
+      margin-top: 18px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .error {
+      color: #ff7777;
+    }
+
+    .success {
+      color: #83d69a;
+    }
+
+    #result {
+      display: none;
+      margin-top: 28px;
+      border-top: 1px solid #51452f;
+      padding-top: 22px;
+    }
+
+    .status {
+      padding: 14px;
+      margin: 16px 0;
+      background: #292317;
+      border: 1px solid #8b713b;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .status strong {
+      display: block;
+      color: #d6b15e;
+      font-size: 20px;
+      margin-top: 7px;
+      text-transform: capitalize;
+    }
+
+    .details p {
+      color: #ddd;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .items {
+      margin-top: 20px;
+      border-top: 1px solid #383027;
+      padding-top: 15px;
+    }
+
+    .item {
+      padding: 12px 0;
+      border-bottom: 1px solid #383027;
+      line-height: 1.6;
+    }
+
+    .total {
+      color: #d6b15e !important;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .back {
+      display: block;
+      margin-top: 28px;
+      text-align: center;
+      color: #d6b15e;
+      text-decoration: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #777;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="index.html">MR PRODUCT</a>
+</header>
+
+<main class="container">
+
+  <h1>Track Your Order</h1>
+
+  <p class="subtitle">
+    Enter your order number and the phone number used
+    when placing your order.
+  </p>
+
+  <form id="trackForm">
+
+    <label for="orderNumber">Order Number</label>
+    <input
+      id="orderNumber"
+      type="text"
+      placeholder="Example: MR261104082651F1B0"
+      required
+      autocomplete="off"
+    >
+
+    <label for="phone">Phone Number</label>
+    <input
+      id="phone"
+      type="tel"
+      placeholder="Enter your order phone number"
+      required
+      autocomplete="tel"
+    >
+
+    <button id="trackButton" type="submit">
+      Track My Order
+    </button>
+
+  </form>
+
+  <div id="message" role="status" aria-live="polite"></div>
+
+  <section id="result">
+
+    <h2 style="color:#d6b15e">Order Details</h2>
+
+    <div class="status">
+      Order Status
+      <strong id="orderStatus"></strong>
+    </div>
+
+    <div class="details">
+      <p><b>Order Number:</b> <span id="resultNumber"></span></p>
+      <p><b>Payment Method:</b> <span id="paymentMethod"></span></p>
+      <p><b>Payment Status:</b> <span id="paymentStatus"></span></p>
+      <p><b>Order Date:</b> <span id="orderDate"></span></p>
+      <p><b>Subtotal:</b> ৳<span id="subtotal"></span></p>
+      <p><b>Discount:</b> ৳<span id="discount"></span></p>
+      <p><b>Delivery Charge:</b> ৳<span id="delivery"></span></p>
+      <p class="total">
+        Total: ৳<span id="total"></span>
+      </p>
+    </div>
+
+    <div class="items">
+      <h3 style="color:#d6b15e">Products</h3>
+      <div id="itemsList"></div>
+    </div>
+
+  </section>
+
+  <a class="back" href="index.html">← Back to Store</a>
+
+</main>
+
+<footer>
+  © MR PRODUCT — Premium Store
+</footer>
+
+<script>
+  const config = window.MR_PRODUCT_CONFIG;
+
+  if (!config || !config.supabaseUrl || !config.publishableKey) {
+    document.getElementById("message").textContent =
+      "Store configuration is missing.";
+  }
+
+  const supabaseClient =
+    config && config.supabaseUrl && config.publishableKey
+      ? window.supabase.createClient(
+          config.supabaseUrl,
+          config.publishableKey
+        )
+      : null;
+
+  const form = document.getElementById("trackForm");
+  const button = document.getElementById("trackButton");
+  const message = document.getElementById("message");
+  const result = document.getElementById("result");
+
+  function money(value) {
+    return Number(value || 0).toFixed(2);
+  }
+
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = type || "";
+  }
+
+  function safeText(value) {
+    return String(value ?? "");
+  }
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    if (!supabaseClient) {
+      showMessage("Store configuration is missing.", "error");
+      return;
+    }
+
+    const orderNumber =
+      document.getElementById("orderNumber").value.trim();
+
+    const phone =
+      document.getElementById("phone").value.trim();
+
+    if (!orderNumber || !phone) {
+      showMessage("Please enter both details.", "error");
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Checking Order...";
+    result.style.display = "none";
+    showMessage("Please wait...", "");
+
+    try {
+      const { data, error } =
+        await supabaseClient.functions.invoke("track-order", {
+          body: {
+            order_number: orderNumber,
+            phone: phone
+          }
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || !data.ok || !data.order) {
+        showMessage(
+          data?.error || "Order could not be found.",
+          "error"
+        );
+        return;
+      }
+
+      const order = data.order;
+
+      document.getElementById("orderStatus").textContent =
+        safeText(order.order_status || "Pending");
+
+      document.getElementById("resultNumber").textContent =
+        safeText(order.order_number);
+
+      document.getElementById("paymentMethod").textContent =
+        safeText(order.payment_method);
+
+      document.getElementById("paymentStatus").textContent =
+        safeText(order.payment_status);
+
+      document.getElementById("orderDate").textContent =
+        order.created_at
+          ? new Date(order.created_at).toLocaleString()
+          : "N/A";
+
+      document.getElementById("subtotal").textContent =
+        money(order.subtotal);
+
+      document.getElementById("discount").textContent =
+        money(order.discount);
+
+      document.getElementById("delivery").textContent =
+        money(order.delivery_charge);
+
+      document.getElementById("total").textContent =
+        money(order.grand_total);
+
+      const itemsList = document.getElementById("itemsList");
+      itemsList.replaceChildren();
+
+      (order.items || []).forEach(function(item) {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const name = document.createElement("strong");
+        name.textContent = safeText(item.product_name);
+
+        const info = document.createElement("div");
+        info.textContent =
+          "Quantity: " + safeText(item.quantity) +
+          " | Price: ৳" + money(item.unit_price) +
+          " | Total: ৳" + money(item.total_price);
+
+        div.append(name, info);
+        itemsList.appendChild(div);
+      });
+
+      result.style.display = "block";
+      showMessage("Order found successfully!", "success");
+
+    } catch (error) {
+      console.error("Tracking error:", error);
+
+      showMessage(
+        "Unable to check order. Please try again.",
+        "error"
+      );
+
+    } finally {
+      button.disabled = false;
+      button.textContent = "Track My Order";
+    }
+  });
+</script>
+
+</body>
+</html>
