@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <header class="topbar">
   <a class="brand" href="#">
     <span class="brand-mark">MR</span>
@@ -16,53 +17,93 @@
       <small>PREMIUM STORE</small>
     </span>
   </a>
+
   <nav>
     <a href="#shop">Shop</a>
+    <a href="#wishlist">Wishlist ♡</a>
     <a href="#about">About</a>
     <a href="#contact">Contact</a>
     <a href="track-order.html">Track Order</a>
   </nav>
+
   <button class="cart-pill" id="cart-open" type="button">
     Cart <span id="cart-count">0</span>
   </button>
 </header>
+
 <main>
+
   <section class="hero">
     <div class="hero-copy">
       <p class="eyebrow">THE NEW COLLECTION</p>
+
       <h1>
         Everyday essentials.<br>
         <em>Elevated.</em>
       </h1>
+
       <p>
         Discover thoughtfully selected products
         with a premium feel.
       </p>
+
       <a class="button gold-button" href="#shop">
         Explore products
       </a>
+
       <a class="button gold-button" href="track-order.html">
         Track Your Order
       </a>
     </div>
-<div class="hero-art">
-  <div class="orb"></div>
-  <div class="ring"></div>
-  <span>MR</span>
-</div>
+
+    <div class="hero-art">
+      <div class="orb"></div>
+      <div class="ring"></div>
+      <span>MR</span>
+    </div>
   </section>
+
   <section class="shop-section" id="shop">
     <div class="section-heading">
       <div>
         <p class="eyebrow">CURATED FOR YOU</p>
         <h2>Featured products</h2>
       </div>
+
       <p class="muted">
         Prices and discounts are loaded from our store database.
       </p>
     </div>
+
     <div class="product-grid" id="product-grid"></div>
   </section>
+
+  <!-- WISHLIST SECTION -->
+
+  <section class="wishlist-section" id="wishlist">
+    <div class="wishlist-heading">
+      <div>
+        <p class="eyebrow">YOUR FAVORITES</p>
+        <h2>My Wishlist ♡</h2>
+        <p class="muted small">
+          Save your favorite products for later.
+        </p>
+      </div>
+
+      <span class="wishlist-count" id="wishlist-count">
+        0 Saved
+      </span>
+    </div>
+
+    <div class="product-grid" id="wishlist-grid">
+      <div class="wishlist-empty">
+        <span>♡</span>
+        Your wishlist is empty.
+        <p>Explore products and save your favorites.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="promise" id="about">
     <p class="eyebrow">THE MR PRODUCT PROMISE</p>
     <h2>Quality in every detail.</h2>
@@ -71,17 +112,21 @@
       experience for customers in Bangladesh.
     </p>
   </section>
+
   <section class="contact" id="contact">
     <div>
       <p class="eyebrow">NEED HELP?</p>
       <h2>We’re here for you.</h2>
     </div>
+
     <p>
       Store contact details will be added
       when the secure admin system is connected.
     </p>
   </section>
+
 </main>
+
 <footer>
   <a class="brand" href="#">
     <span class="brand-mark">MR</span>
@@ -90,12 +135,17 @@
       <small>PREMIUM STORE</small>
     </span>
   </a>
+
   <span>
     © <span id="year"></span> MR PRODUCT
   </span>
+
+  <a href="#wishlist">Wishlist ♡</a>
   <a href="track-order.html">Track Order</a>
 </footer>
+
 <div class="overlay" id="overlay" hidden></div>
+
 <aside
   class="cart-drawer"
   id="cart-drawer"
@@ -106,104 +156,121 @@
     <h2>Your cart</h2>
     <button class="icon-button" id="cart-close" type="button">×</button>
   </div>
+
   <div id="cart-items" class="cart-items"></div>
+
   <div class="cart-bottom">
     <div class="total-row">
       <span>Subtotal</span>
       <b id="cart-total">৳0</b>
     </div>
-<button
-  class="button gold-button full"
-  id="checkout-open"
-  type="button"
->
-  Continue to order
-</button>
+
+    <button
+      class="button gold-button full"
+      id="checkout-open"
+      type="button"
+    >
+      Continue to order
+    </button>
   </div>
 </aside>
+
 <dialog id="order-dialog" class="order-dialog">
   <form id="order-form">
+
     <div class="drawer-head">
       <div>
         <p class="eyebrow">ONE SIMPLE FORM</p>
         <h2>Delivery details</h2>
       </div>
+
       <button
         class="icon-button"
         type="button"
         id="order-close"
       >×</button>
     </div>
-<p class="muted small">
-  Your order total is calculated using current database prices.
-  Payment is subject to manual verification.
-</p>
-<label>
-  Full name
-  <input name="name" required autocomplete="name">
-</label>
-<label>
-  Mobile number
-  <input name="phone" required inputmode="tel">
-</label>
-<label>
-  WhatsApp number (optional)
-  <input name="whatsapp" inputmode="tel">
-</label>
-<label>
-  District
-  <input name="district" required>
-</label>
-<label>
-  Area / Thana
-  <input name="area" required>
-</label>
-<label>
-  Full delivery address
-  <textarea name="address" rows="3" required></textarea>
-</label>
-<label>
-  Payment method
-  <select name="payment" required>
-    <option value="">Choose payment method</option>
-    <option value="bkash">bKash</option>
-    <option value="nagad">Nagad</option>
-    <option value="bank">Bank transfer</option>
-  </select>
-</label>
-<div
-  id="payment-details"
-  class="payment-details"
-  hidden
-  aria-live="polite"
->
-  <h3>Payment Information</h3>
-  <p id="payment-info-text"></p>
-</div>
-<label>
-  Order note (optional)
-  <textarea name="note" rows="2"></textarea>
-</label>
-<div class="total-row">
-  <span>Subtotal</span>
-  <b id="dialog-total">৳0</b>
-</div>
-<button
-  class="button gold-button full"
-  type="submit"
->
-  Place order
-</button>
-<p
-  id="form-message"
-  class="form-message"
-  role="status"
-></p>
+
+    <p class="muted small">
+      Your order total is calculated using current database prices.
+      Payment is subject to manual verification.
+    </p>
+
+    <label>
+      Full name
+      <input name="name" required autocomplete="name">
+    </label>
+
+    <label>
+      Mobile number
+      <input name="phone" required inputmode="tel">
+    </label>
+
+    <label>
+      WhatsApp number (optional)
+      <input name="whatsapp" inputmode="tel">
+    </label>
+
+    <label>
+      District
+      <input name="district" required>
+    </label>
+
+    <label>
+      Area / Thana
+      <input name="area" required>
+    </label>
+
+    <label>
+      Full delivery address
+      <textarea name="address" rows="3" required></textarea>
+    </label>
+
+    <label>
+      Payment method
+      <select name="payment" required>
+        <option value="">Choose payment method</option>
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+        <option value="bank">Bank transfer</option>
+      </select>
+    </label>
+
+    <div
+      id="payment-details"
+      class="payment-details"
+      hidden
+      aria-live="polite"
+    >
+      <h3>Payment Information</h3>
+      <p id="payment-info-text"></p>
+    </div>
+
+    <label>
+      Order note (optional)
+      <textarea name="note" rows="2"></textarea>
+    </label>
+
+    <div class="total-row">
+      <span>Subtotal</span>
+      <b id="dialog-total">৳0</b>
+    </div>
+
+    <button class="button gold-button full" type="submit">
+      Place order
+    </button>
+
+    <p
+      id="form-message"
+      class="form-message"
+      role="status"
+    ></p>
+
   </form>
 </dialog>
+
 <script src="config.js"></script>
 <script src="app.js"></script>
+
 </body>
 </html>
-
-Maybe eta 
