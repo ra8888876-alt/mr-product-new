@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affiliate Management | MR PRODUCT</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#0d0d0d;color:#f4efe4;font-family:Arial,sans-serif}
+.container{max-width:1100px;margin:auto}
+h1{color:#d6b15e}
+.card{background:#171717;border:1px solid #34302a;border-radius:12px;padding:18px;margin:15px 0;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:750px}
+th,td{padding:13px;border-bottom:1px solid #34302a;text-align:left}
+th{color:#d6b15e}
+input,select{padding:9px;background:#0d0d0d;color:white;border:1px solid #555;border-radius:6px}
+button{padding:9px 13px;margin:3px;border:0;border-radius:6px;cursor:pointer;font-weight:bold}
+.save{background:#d6b15e;color:#111}
+.refresh{background:#333;color:white}
+#message{margin:15px 0;color:#d6b15e}
+.small{color:#aaa;font-size:12px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MR PRODUCT — Affiliate Management</h1>
+<p>Manage affiliate applications, approvals and commission rates.</p>
+
+<button class="refresh" onclick="loadAffiliates()">Refresh List</button>
+<div id="message">Checking admin login...</div>
+
+<div class="card">
+<table>
+<thead>
+<tr>
+<th>Name / Phone</th>
+<th>Referral Code</th>
+<th>Commission %</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="affiliateList">
+<tr><td colspan="5">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+<a href="admin.html" style="color:#d6b15e">Back to Admin Panel</a>
+</div>
+
+<script>
+(async function(){
+const CONFIG=window.MR_PRODUCT_CONFIG||{};
+const db=window.supabase.createClient(
+CONFIG.supabaseUrl,
+CONFIG.publishableKey
+);
+
+const message=document.getElementById("message");
+const list=document.getElementById("affiliateList");
+
+const {data:{session},error}=await db.auth.getSession();
+
+if(error||!session){
+message.textContent="Please login as admin first.";
+list.innerHTML="";
+return;
+}
+
+async function loadAffiliates(){
+message.textContent="Loading affiliates...";
+list.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
+
+const {data,error}=await db.functions.invoke("admin-affiliates",{
+method:"GET"
+});
+
+if(error||!data||!data.success){
+message.textContent=data?.error||error?.message||"Could not load affiliates.";
+list.innerHTML="";
+return;
+}
+
+const affiliates=data.affiliates||[];
+
+if(!affiliates.length){
+list.innerHTML="<tr><td colspan='5'>No affiliate applications yet.</td></tr>";
+message.textContent="No applications found.";
+return;
+}
+
+list.innerHTML=affiliates.map(a=>`
+<tr>
+<td>
+<strong>${escapeHTML(a.full_name)}</strong><br>
+<span class="small">${escapeHTML(a.phone||"")}</span>
+</td>
+<td>${escapeHTML(a.referral_code)}</td>
+<td>
+<input type="number" min="0" max="100" step="0.01"
+id="rate-${a.id}" value="${Number(a.commission_rate)}">
+</td>
+<td>
+<select id="status-${a.id}">
+<option value="pending" ${a.status==="pending"?"selected":""}>Pending</option>
+<option value="approved" ${a.status==="approved"?"selected":""}>Approved</option>
+<option value="rejected" ${a.status==="rejected"?"selected":""}>Rejected</option>
+<option value="suspended" ${a.status==="suspended"?"selected":""}>Suspended</option>
+</select>
+</td>
+<td>
+<button class="save" onclick="saveAffiliate('${a.id}')">Save</button>
+</td>
+</tr>
+`).join("");
+
+message.textContent=affiliates.length+" affiliate application(s) loaded.";
+}
+
+function escapeHTML(value){
+return String(value??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+window.saveAffiliate=async function(id){
+const status=document.getElementById("status-"+id).value;
+const rate=Number(document.getElementById("rate-"+id).value);
+
+if(!Number.isFinite(rate)||rate<0||rate>100){
+message.textContent="Commission must be between 0 and 100.";
+return;
+}
+
+message.textContent="Saving...";
+
+const {data,error}=await db.functions.invoke("admin-affiliates",{
+method:"PATCH",
+body:{
+affiliate_id:id,
+status:status,
+commission_rate:rate
+}
+});
+
+if(error||!data||!data.success){
+message.textContent=data?.error||error?.message||"Update failed.";
+return;
+}
+
+message.textContent="Affiliate updated successfully.";
+await loadAffiliates();
+};
+
+window.loadAffiliates=loadAffiliates;
+await loadAffiliates();
+})();
+</script>
+</body>
+</html>
