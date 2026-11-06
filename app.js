@@ -20,6 +20,7 @@ const escapeHTML = (value) =>
 let products = [];
 let cart = [];
 let paymentSettings = null;
+let storeSettings = null;
 
 $("#year").textContent = new Date().getFullYear();
 
@@ -30,6 +31,217 @@ function getProductPrice(product) {
   return discount > 0 && discount < price
     ? discount
     : price;
+}
+
+// =====================================
+// LOAD STORE BRANDING
+// =====================================
+
+async function loadStoreSettings() {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/admin-settings`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not load store settings.");
+    }
+
+    const result = await response.json();
+
+    storeSettings = result.settings || null;
+
+    if (!storeSettings) return;
+
+    applyStoreBranding(storeSettings);
+
+  } catch (error) {
+    console.error("Store branding error:", error);
+  }
+}
+
+// =====================================
+// APPLY STORE BRANDING
+// =====================================
+
+function applyStoreBranding(settings) {
+
+  // STORE NAME
+
+  if (settings.store_name) {
+    const storeName = settings.store_name.trim();
+
+    document.title = `${storeName} — Premium Store`;
+
+    document.querySelectorAll(".brand b").forEach((element) => {
+      element.textContent = storeName;
+    });
+
+    const footerText = document.querySelector("footer > span");
+
+    if (footerText) {
+      footerText.innerHTML =
+        `© <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
+    }
+  }
+
+  // LOGO
+
+  if (settings.logo_url) {
+
+    document.querySelectorAll(".brand-mark").forEach((element) => {
+
+      element.innerHTML = "";
+
+      const image = document.createElement("img");
+
+      image.src = settings.logo_url;
+      image.alt = settings.store_name || "Store Logo";
+
+      image.style.width = "100%";
+      image.style.height = "100%";
+      image.style.objectFit = "contain";
+      image.style.display = "block";
+
+      element.appendChild(image);
+
+    });
+
+  }
+
+  // PRIMARY COLOR
+
+  if (settings.primary_color) {
+
+    const color = settings.primary_color.trim();
+
+    if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+
+      document.documentElement.style.setProperty(
+        "--gold",
+        color
+      );
+
+      document.documentElement.style.setProperty(
+        "--primary-color",
+        color
+      );
+
+      const themeColor = document.querySelector(
+        'meta[name="theme-color"]'
+      );
+
+      if (themeColor) {
+        themeColor.content = color;
+      }
+
+    }
+  }
+
+  // BANNER
+
+  const hero = $(".hero");
+
+  if (hero && settings.banner_url) {
+
+    hero.style.backgroundImage =
+      `linear-gradient(90deg, rgba(13,13,13,.94), rgba(13,13,13,.48)), url("${settings.banner_url}")`;
+
+    hero.style.backgroundSize = "cover";
+    hero.style.backgroundPosition = "center";
+    hero.style.backgroundRepeat = "no-repeat";
+
+  }
+
+  // STORE DESCRIPTION
+
+  if (settings.description) {
+
+    const description = settings.description.trim();
+
+    const heroDescription = $(".hero-copy > p:not(.eyebrow)");
+
+    if (heroDescription) {
+      heroDescription.textContent = description;
+    }
+
+    const aboutDescription = $("#about > p:not(.eyebrow)");
+
+    if (aboutDescription) {
+      aboutDescription.textContent = description;
+    }
+
+  }
+
+  // CONTACT INFORMATION
+
+  const contactSection = $("#contact");
+
+  if (contactSection) {
+
+    const contactParagraph = contactSection.querySelector(
+      "div + p"
+    );
+
+    if (contactParagraph) {
+
+      const contactItems = [];
+
+      if (settings.phone) {
+        contactItems.push({
+          label: "Phone",
+          value: settings.phone,
+          href: "tel:" + settings.phone.replace(/[^\d+]/g, "")
+        });
+      }
+
+      if (settings.whatsapp) {
+        const whatsappNumber = settings.whatsapp.replace(/\D/g, "");
+
+        contactItems.push({
+          label: "WhatsApp",
+          value: settings.whatsapp,
+          href: "https://wa.me/" + whatsappNumber
+        });
+      }
+
+      if (settings.email) {
+        contactItems.push({
+          label: "Email",
+          value: settings.email,
+          href: "mailto:" + settings.email
+        });
+      }
+
+      if (contactItems.length) {
+
+        contactParagraph.innerHTML = contactItems.map((item) => `
+          <div style="margin:10px 0">
+            <strong style="color:var(--gold)">
+              ${escapeHTML(item.label)}:
+            </strong>
+            <a
+              href="${escapeHTML(item.href)}"
+              style="color:var(--cream);text-decoration:underline"
+            >
+              ${escapeHTML(item.value)}
+            </a>
+          </div>
+        `).join("");
+
+      }
+
+    }
+
+  }
+
 }
 
 // =====================================
@@ -92,7 +304,8 @@ function renderProducts() {
     const image = product.image_url
       ? `<img src="${escapeHTML(product.image_url)}"
           alt="${escapeHTML(product.name)}"
-          loading="lazy">`
+          loading="lazy"
+          style="width:100%;height:190px;object-fit:cover">`
       : `<div class="product-image">MR</div>`;
 
     return `
@@ -605,3 +818,5 @@ renderCart();
 loadProducts();
 
 loadPaymentSettings();
+
+loadStoreSettings();
