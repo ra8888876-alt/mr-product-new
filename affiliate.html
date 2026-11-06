@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Affiliate Program | MR PRODUCT</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#0d0d0d;color:#f4efe4;font-family:Arial,sans-serif}
+    .box{max-width:520px;margin:45px auto;padding:25px;background:#171717;border:1px solid #34302a;border-radius:15px}
+    h1{color:#d6b15e;text-align:center}
+    p{color:#bbb;line-height:1.6}
+    label{display:block;margin-top:18px}
+    input{width:100%;padding:13px;margin-top:8px;background:#0d0d0d;color:white;border:1px solid #555;border-radius:7px}
+    button{width:100%;padding:14px;margin-top:22px;background:#d6b15e;color:#111;border:0;border-radius:7px;font-weight:bold}
+    a{color:#d6b15e}
+    #message{margin-top:18px;line-height:1.6;overflow-wrap:anywhere}
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>MR PRODUCT</h1>
+  <h2>Affiliate Program</h2>
+  <p>Apply to become an MR PRODUCT affiliate and earn commission by promoting our products.</p>
+
+  <div id="formArea">
+    <label>Full Name</label>
+    <input id="fullName" type="text" placeholder="Your full name">
+
+    <label>Phone Number</label>
+    <input id="phone" type="tel" placeholder="Your phone number">
+
+    <button id="applyBtn">Apply Now</button>
+  </div>
+
+  <div id="message">Checking login...</div>
+  <p><a href="account.html">Customer Account</a> | <a href="index.html">Back to Store</a></p>
+</div>
+
+<script>
+(async function(){
+  const CONFIG = window.MR_PRODUCT_CONFIG || {};
+  const db = window.supabase.createClient(
+    CONFIG.supabaseUrl,
+    CONFIG.publishableKey
+  );
+
+  const message = document.getElementById("message");
+  const formArea = document.getElementById("formArea");
+  const button = document.getElementById("applyBtn");
+
+  const {data:{session},error} = await db.auth.getSession();
+
+  if(error || !session){
+    formArea.style.display="none";
+    message.innerHTML='Please <a href="account.html">login to your customer account</a> before applying.';
+    return;
+  }
+
+  async function loadApplication(){
+    const {data,error} = await db
+      .from("affiliate_profiles")
+      .select("full_name,referral_code,status,commission_rate")
+      .eq("user_id",session.user.id)
+      .maybeSingle();
+
+    if(error){
+      message.textContent="Could not load application. Please try again.";
+      return;
+    }
+
+    if(data){
+      formArea.style.display="none";
+      message.innerHTML =
+        "<h3>Application Status: "+data.status.toUpperCase()+"</h3>"+
+        "<p>Name: "+data.full_name+"</p>"+
+        "<p>Referral Code: <strong>"+data.referral_code+"</strong></p>"+
+        "<p>Commission Rate: "+data.commission_rate+"%</p>";
+    }
+  }
+
+  await loadApplication();
+
+  button.addEventListener("click",async()=>{
+    const full_name=document.getElementById("fullName").value.trim();
+    const phone=document.getElementById("phone").value.trim();
+
+    if(full_name.length<2 || phone.length<5){
+      message.textContent="Please enter a valid name and phone number.";
+      return;
+    }
+
+    button.disabled=true;
+    button.textContent="Submitting...";
+    message.textContent="Please wait...";
+
+    const {data,error}=await db.functions.invoke("affiliate-register",{
+      body:{full_name,phone}
+    });
+
+    button.disabled=false;
+    button.textContent="Apply Now";
+
+    if(error){
+      message.textContent="Application failed: "+error.message;
+      return;
+    }
+
+    if(!data || !data.success){
+      message.textContent=data?.error || "Application failed.";
+      return;
+    }
+
+    message.innerHTML="<h3>Application Submitted!</h3>"+
+      "<p>Status: PENDING</p>"+
+      "<p>Your application is waiting for admin approval.</p>"+
+      (data.affiliate?.referral_code
+        ? "<p>Referral Code: <strong>"+data.affiliate.referral_code+"</strong></p>"
+        : "");
+    formArea.style.display="none";
+  });
+})();
+</script>
+</body>
+</html>
