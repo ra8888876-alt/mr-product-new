@@ -21,9 +21,10 @@ let products = [];
 let cart = [];
 let paymentSettings = null;
 let storeSettings = null;
+let searchTerm = "";
 
 // =====================================
-// WISHLIST STORAGE
+// WISHLIST
 // =====================================
 
 const WISHLIST_KEY = "mr_product_wishlist";
@@ -34,9 +35,7 @@ function loadWishlist() {
       localStorage.getItem(WISHLIST_KEY) || "[]"
     );
 
-    return Array.isArray(saved)
-      ? saved.map(String)
-      : [];
+    return Array.isArray(saved) ? saved.map(String) : [];
   } catch {
     return [];
   }
@@ -76,10 +75,12 @@ function getProductPrice(product) {
 }
 
 // =====================================
-// LOAD STORE BRANDING
+// LOAD STORE SETTINGS
 // =====================================
 
 async function loadStoreSettings() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+
   try {
     const response = await fetch(
       `${SUPABASE_URL}/functions/v1/admin-settings`,
@@ -105,7 +106,7 @@ async function loadStoreSettings() {
     }
 
   } catch (error) {
-    console.error("Store branding error:", error);
+    console.error("Store settings error:", error);
   }
 }
 
@@ -114,6 +115,8 @@ async function loadStoreSettings() {
 // =====================================
 
 function applyStoreBranding(settings) {
+
+  // STORE NAME
 
   if (settings.store_name) {
     const storeName = settings.store_name.trim();
@@ -161,9 +164,7 @@ function applyStoreBranding(settings) {
       document.documentElement.style.setProperty("--gold", color);
       document.documentElement.style.setProperty("--primary-color", color);
 
-      const themeColor = document.querySelector(
-        'meta[name="theme-color"]'
-      );
+      const themeColor = $('meta[name="theme-color"]');
 
       if (themeColor) {
         themeColor.content = color;
@@ -171,23 +172,55 @@ function applyStoreBranding(settings) {
     }
   }
 
-  // BANNER
+  // BANNER - NEW DESIGN
 
-  const hero = $(".hero");
+  if (settings.banner_url) {
+    const saleBanner = $(".sale-banner");
 
-  if (hero && settings.banner_url) {
-    hero.style.backgroundImage =
-      `linear-gradient(90deg, rgba(13,13,13,.94), rgba(13,13,13,.48)), url("${settings.banner_url}")`;
+    if (saleBanner) {
+      saleBanner.style.backgroundImage = `
+        linear-gradient(
+          90deg,
+          rgba(13,13,13,.94),
+          rgba(13,13,13,.55)
+        ),
+        url("${settings.banner_url}")
+      `;
 
-    hero.style.backgroundSize = "cover";
-    hero.style.backgroundPosition = "center";
-    hero.style.backgroundRepeat = "no-repeat";
+      saleBanner.style.backgroundSize = "cover";
+      saleBanner.style.backgroundPosition = "center";
+      saleBanner.style.backgroundRepeat = "no-repeat";
+    }
+
+    // OLD DESIGN SUPPORT
+
+    const hero = $(".hero");
+
+    if (hero) {
+      hero.style.backgroundImage = `
+        linear-gradient(
+          90deg,
+          rgba(13,13,13,.94),
+          rgba(13,13,13,.48)
+        ),
+        url("${settings.banner_url}")
+      `;
+
+      hero.style.backgroundSize = "cover";
+      hero.style.backgroundPosition = "center";
+    }
   }
 
   // DESCRIPTION
 
   if (settings.description) {
     const description = settings.description.trim();
+
+    const saleDescription = $(".sale-content p:not(.eyebrow)");
+
+    if (saleDescription) {
+      saleDescription.textContent = description;
+    }
 
     const heroDescription = $(".hero-copy > p:not(.eyebrow)");
 
@@ -221,12 +254,12 @@ function applyStoreBranding(settings) {
       }
 
       if (settings.whatsapp) {
-        const whatsappNumber = settings.whatsapp.replace(/\D/g, "");
+        const number = settings.whatsapp.replace(/\D/g, "");
 
         contactItems.push({
           label: "WhatsApp",
           value: settings.whatsapp,
-          href: "https://wa.me/" + whatsappNumber
+          href: "https://wa.me/" + number
         });
       }
 
@@ -244,6 +277,7 @@ function applyStoreBranding(settings) {
             <strong style="color:var(--gold)">
               ${escapeHTML(item.label)}:
             </strong>
+
             <a
               href="${escapeHTML(item.href)}"
               style="color:var(--cream);text-decoration:underline"
@@ -264,10 +298,7 @@ function applyStoreBranding(settings) {
 async function loadProducts() {
   const grid = $("#product-grid");
 
-  if (!grid) {
-    console.error("Product grid not found in index.html");
-    return;
-  }
+  if (!grid) return;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     grid.textContent = "Store database is not configured.";
@@ -288,8 +319,7 @@ async function loadProducts() {
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Could not load products.");
+      throw new Error(await response.text());
     }
 
     products = await response.json();
@@ -314,17 +344,24 @@ function createProductCard(product, isWishlist = false) {
   const currentPrice = getProductPrice(product);
 
   const id = String(product.id);
-
   const saved = wishlist.includes(id);
+  const stock = Number(product.stock || 0);
 
   const image = product.image_url
-    ? `<img
-        src="${escapeHTML(product.image_url)}"
-        alt="${escapeHTML(product.name)}"
-        loading="lazy"
-        style="width:100%;height:190px;object-fit:cover"
-      >`
-    : `<div class="product-image">MR</div>`;
+    ? `
+      <div class="product-image">
+        <img
+          src="${escapeHTML(product.image_url)}"
+          alt="${escapeHTML(product.name)}"
+          loading="lazy"
+        >
+      </div>
+    `
+    : `
+      <div class="product-image">
+        MR
+      </div>
+    `;
 
   return `
     <article class="product-card">
@@ -340,8 +377,9 @@ function createProductCard(product, isWishlist = false) {
               type="button"
               aria-label="${saved ? "Remove from wishlist" : "Add to wishlist"}"
               aria-pressed="${saved}"
-              title="${saved ? "Remove from wishlist" : "Add to wishlist"}"
-            >${saved ? "♥" : "♡"}</button>
+            >
+              ${saved ? "♥" : "♡"}
+            </button>
           `
           : ""
       }
@@ -353,14 +391,15 @@ function createProductCard(product, isWishlist = false) {
       </p>
 
       <div class="price">
-        ${money(currentPrice)}
+        ${
+          currentPrice < oldPrice
+            ? `
+              <del class="old-price">${money(oldPrice)}</del>
+              <strong>${money(currentPrice)}</strong>
+            `
+            : money(currentPrice)
+        }
       </div>
-
-      ${
-        currentPrice < oldPrice
-          ? `<del class="muted">${money(oldPrice)}</del>`
-          : ""
-      }
 
       ${
         isWishlist
@@ -371,16 +410,15 @@ function createProductCard(product, isWishlist = false) {
                 class="button gold-button"
                 data-add="${escapeHTML(id)}"
                 type="button"
-                ${Number(product.stock) <= 0 ? "disabled" : ""}
+                ${stock <= 0 ? "disabled" : ""}
               >
-                ${Number(product.stock) <= 0 ? "Out of stock" : "Add to cart"}
+                ${stock <= 0 ? "Out of stock" : "Add to cart"}
               </button>
 
               <button
                 class="remove-wishlist"
                 data-wishlist-remove="${escapeHTML(id)}"
                 type="button"
-                aria-label="Remove from wishlist"
               >
                 Remove
               </button>
@@ -392,9 +430,9 @@ function createProductCard(product, isWishlist = false) {
               class="button gold-button"
               data-add="${escapeHTML(id)}"
               type="button"
-              ${Number(product.stock) <= 0 ? "disabled" : ""}
+              ${stock <= 0 ? "disabled" : ""}
             >
-              ${Number(product.stock) <= 0 ? "Out of stock" : "Add to cart"}
+              ${stock <= 0 ? "Out of stock" : "Add to cart"}
             </button>
           `
       }
@@ -404,7 +442,7 @@ function createProductCard(product, isWishlist = false) {
 }
 
 // =====================================
-// DISPLAY PRODUCTS
+// SEARCH PRODUCTS
 // =====================================
 
 function renderProducts() {
@@ -412,18 +450,67 @@ function renderProducts() {
 
   if (!grid) return;
 
-  if (!products.length) {
-    grid.textContent = "No products are available right now.";
+  const filteredProducts = products.filter((product) => {
+    const searchText = [
+      product.name,
+      product.description,
+      product.category
+    ].join(" ").toLowerCase();
+
+    return searchText.includes(searchTerm.toLowerCase());
+  });
+
+  if (!filteredProducts.length) {
+    grid.innerHTML = `
+      <div class="wishlist-empty">
+        No products found.
+        <p>Try another search.</p>
+      </div>
+    `;
     return;
   }
 
-  grid.innerHTML = products
+  grid.innerHTML = filteredProducts
     .map((product) => createProductCard(product))
     .join("");
 }
 
+// SEARCH INPUT
+
+const searchInput = $("#product-search");
+const searchButton = $("#search-button");
+
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    searchTerm = searchInput.value.trim();
+    renderProducts();
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      searchTerm = searchInput.value.trim();
+      renderProducts();
+
+      $("#shop")?.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+  });
+}
+
+if (searchButton) {
+  searchButton.addEventListener("click", () => {
+    searchTerm = searchInput?.value.trim() || "";
+    renderProducts();
+
+    $("#shop")?.scrollIntoView({
+      behavior: "smooth"
+    });
+  });
+}
+
 // =====================================
-// DISPLAY WISHLIST
+// WISHLIST DISPLAY
 // =====================================
 
 function renderWishlist() {
@@ -495,14 +582,11 @@ if (wishlistGrid) {
 }
 
 // =====================================
-// LOAD PAYMENT SETTINGS
+// PAYMENT SETTINGS
 // =====================================
 
 async function loadPaymentSettings() {
-  const detailsBox = $("#payment-details");
-  const infoText = $("#payment-info-text");
-
-  if (!detailsBox || !infoText) return;
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
 
   try {
     const response = await fetch(
@@ -604,52 +688,68 @@ function showPaymentDetails() {
 
 function renderCart() {
   const cartCount = $("#cart-count");
+  const mobileCartCount = $("#mobile-cart-count");
   const cartItems = $("#cart-items");
   const cartTotal = $("#cart-total");
   const dialogTotal = $("#dialog-total");
 
-  if (!cartCount || !cartItems || !cartTotal || !dialogTotal) {
-    return;
+  const totalQuantity = cart.reduce(
+    (total, item) => total + item.qty,
+    0
+  );
+
+  if (cartCount) {
+    cartCount.textContent = totalQuantity;
   }
 
-  cartCount.textContent =
-    cart.reduce((total, item) => total + item.qty, 0);
+  if (mobileCartCount) {
+    mobileCartCount.textContent = totalQuantity;
+  }
 
-  cartItems.innerHTML = cart.length
-    ? cart.map((item) => `
-        <div class="cart-line">
-          <div>
-            <b>${escapeHTML(item.name)}</b>
+  if (cartItems) {
+    cartItems.innerHTML = cart.length
+      ? cart.map((item) => `
+          <div class="cart-line">
+            <div>
+              <b>${escapeHTML(item.name)}</b>
 
-            <div class="muted small">
-              ${money(item.price)} × ${item.qty}
+              <div class="muted small">
+                ${money(item.price)} × ${item.qty}
+              </div>
+            </div>
+
+            <div class="qty">
+
+              <button
+                type="button"
+                data-dec="${escapeHTML(item.id)}"
+              >−</button>
+
+              ${item.qty}
+
+              <button
+                type="button"
+                data-inc="${escapeHTML(item.id)}"
+              >+</button>
+
             </div>
           </div>
-
-          <div class="qty">
-            <button
-              type="button"
-              data-dec="${escapeHTML(item.id)}"
-            >−</button>
-
-            ${item.qty}
-
-            <button
-              type="button"
-              data-inc="${escapeHTML(item.id)}"
-            >+</button>
-          </div>
-        </div>
-      `).join("")
-    : '<p class="muted">Your cart is empty.</p>';
+        `).join("")
+      : '<p class="muted">Your cart is empty.</p>';
+  }
 
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
   );
 
-  cartTotal.textContent = money(total);
-  dialogTotal.textContent = money(total);
+  if (cartTotal) {
+    cartTotal.textContent = money(total);
+  }
+
+  if (dialogTotal) {
+    dialogTotal.textContent = money(total);
+  }
 }
 
 // =====================================
@@ -698,7 +798,7 @@ function addToCart(id) {
 }
 
 // =====================================
-// PRODUCT ADD TO CART
+// PRODUCT CART BUTTONS
 // =====================================
 
 if (productGrid) {
@@ -710,8 +810,6 @@ if (productGrid) {
     addToCart(button.dataset.add);
   });
 }
-
-// WISHLIST ADD TO CART
 
 if (wishlistGrid) {
   wishlistGrid.addEventListener("click", (event) => {
@@ -787,9 +885,19 @@ function closeCart() {
   $("#cart-drawer").setAttribute("aria-hidden", "true");
 }
 
+// DESKTOP CART
+
 if ($("#cart-open")) {
   $("#cart-open").addEventListener("click", openCart);
 }
+
+// MOBILE CART
+
+if ($("#mobile-cart-open")) {
+  $("#mobile-cart-open").addEventListener("click", openCart);
+}
+
+// CLOSE CART
 
 if ($("#cart-close")) {
   $("#cart-close").addEventListener("click", closeCart);
@@ -871,9 +979,13 @@ if ($("#order-form")) {
       address: String(formData.get("address") || "").trim()
     };
 
-    const paymentMethod = String(formData.get("payment") || "");
+    const paymentMethod = String(
+      formData.get("payment") || ""
+    );
 
-    const note = String(formData.get("note") || "").trim();
+    const note = String(
+      formData.get("note") || ""
+    ).trim();
 
     if (
       !customer.name ||
