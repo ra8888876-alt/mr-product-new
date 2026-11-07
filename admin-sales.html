@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR PRODUCT — Sales Reports</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:18px;
+  background:#101010;
+  color:#eee;
+  font-family:Arial,sans-serif;
+}
+.container{max-width:1100px;margin:auto}
+h1,h2{color:#c6a34b}
+.card{
+  background:#1b1b1b;
+  border:1px solid #383838;
+  border-radius:12px;
+  padding:18px;
+  margin:16px 0;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+.stat{
+  background:#222;
+  border:1px solid #444;
+  border-radius:10px;
+  padding:15px;
+}
+.stat small{color:#aaa}
+.stat h2{font-size:22px;margin:10px 0 0}
+input,select{
+  padding:11px;
+  border:1px solid #555;
+  border-radius:7px;
+  background:#111;
+  color:white;
+  margin:5px;
+  max-width:100%;
+}
+button{
+  padding:11px 16px;
+  border:0;
+  border-radius:7px;
+  background:#c6a34b;
+  color:#111;
+  font-weight:bold;
+  cursor:pointer;
+  margin:5px;
+}
+.secondary{background:#444;color:white}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{
+  padding:12px;
+  border-bottom:1px solid #383838;
+  text-align:left;
+  font-size:13px;
+}
+th{color:#c6a34b}
+#message{color:#c6a34b;margin:12px 0}
+.profit{color:#48d18b}
+.loss{color:#ff7777}
+[hidden]{display:none!important}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:400px){
+  .stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>MR PRODUCT — Sales Reports</h1>
+<p>Daily, Monthly and Yearly Sales Overview</p>
+
+<div id="message">Checking admin access...</div>
+
+<div id="login" class="card" hidden>
+  <h2>Admin Login Required</h2>
+  <p>Please login to your admin account.</p>
+  <button onclick="location.href='admin.html'">
+    Go to Admin Login
+  </button>
+</div>
+
+<div id="dashboard" hidden>
+
+  <div class="card">
+    <h2>Report Filters</h2>
+
+    <label>Report Type</label>
+    <select id="period">
+      <option value="daily">Daily Report</option>
+      <option value="monthly">Monthly Report</option>
+      <option value="yearly">Yearly Report</option>
+    </select>
+
+    <br>
+
+    <label>From:</label>
+    <input type="date" id="from">
+
+    <label>To:</label>
+    <input type="date" id="to">
+
+    <button onclick="renderReport()">Apply Filter</button>
+    <button class="secondary" onclick="resetFilters()">Reset</button>
+    <button class="secondary" onclick="loadReports()">Refresh</button>
+  </div>
+
+  <div class="stats">
+
+    <div class="stat">
+      <small>Total Orders</small>
+      <h2 id="total-orders">0</h2>
+    </div>
+
+    <div class="stat">
+      <small>Total Revenue</small>
+      <h2 id="total-revenue">৳0</h2>
+    </div>
+
+    <div class="stat">
+      <small>Total Cost</small>
+      <h2 id="total-cost">৳0</h2>
+    </div>
+
+    <div class="stat">
+      <small>Profit / Loss</small>
+      <h2 id="total-profit">৳0</h2>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h2 id="table-title">Daily Sales</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date / Period</th>
+            <th>Orders</th>
+            <th>Revenue</th>
+            <th>Cost</th>
+            <th>Profit / Loss</th>
+          </tr>
+        </thead>
+
+        <tbody id="report-list">
+          <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <button class="secondary" onclick="location.href='admin.html'">
+    Back to Admin Panel
+  </button>
+
+  <button class="secondary" onclick="logout()">
+    Logout
+  </button>
+
+</div>
+</div>
+
+<script>
+const CONFIG = window.MR_PRODUCT_CONFIG || {};
+
+const SUPABASE_URL = CONFIG.supabaseUrl || "";
+const SUPABASE_KEY = CONFIG.publishableKey || "";
+
+let db;
+let allReports = [];
+
+const $ = id => document.getElementById(id);
+
+function money(value){
+  return "৳" + Number(value || 0).toLocaleString("en-BD",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
+}
+
+function showMessage(text){
+  $("message").textContent = text;
+}
+
+async function checkAdmin(){
+  try{
+    if(!SUPABASE_URL || !SUPABASE_KEY){
+      throw new Error("Supabase configuration missing.");
+    }
+
+    db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const {data:{session},error} =
+      await db.auth.getSession();
+
+    if(error) throw error;
+
+    if(!session){
+      showMessage("Please login as admin.");
+      $("login").hidden = false;
+      return;
+    }
+
+    const {data:admin,error:adminError} = await db
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id",session.user.id)
+      .eq("is_active",true)
+      .maybeSingle();
+
+    if(adminError) throw adminError;
+
+    if(!admin){
+      showMessage("Admin access denied.");
+      $("login").hidden = false;
+      return;
+    }
+
+    $("dashboard").hidden = false;
+    $("login").hidden = true;
+
+    showMessage("Admin verified successfully.");
+
+    await loadReports();
+
+  }catch(error){
+    showMessage("Error: " + error.message);
+  }
+}
+
+async function loadReports(){
+  $("report-list").innerHTML =
+    '<tr><td colspan="5">Loading reports...</td></tr>';
+
+  try{
+    const {data,error} = await db.functions.invoke(
+      "admin-sales",
+      {method:"GET"}
+    );
+
+    if(error) throw error;
+
+    if(data && data.error){
+      throw new Error(data.error);
+    }
+
+    allReports = data.reports || [];
+
+    renderReport();
+
+    showMessage("Sales reports loaded successfully.");
+
+  }catch(error){
+    $("report-list").innerHTML =
+      `<tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>`;
+
+    showMessage("Could not load reports: " + error.message);
+  }
+}
+
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g,char=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[char]);
+}
+
+function renderReport(){
+
+  const period = $("period").value;
+  const from = $("from").value;
+  const to = $("to").value;
+
+  let filtered = allReports.filter(row=>{
+    if(from && row.sale_date < from) return false;
+    if(to && row.sale_date > to) return false;
+    return true;
+  });
+
+  const grouped = {};
+
+  filtered.forEach(row=>{
+
+    const date = String(row.sale_date);
+
+    let key = date;
+
+    if(period === "monthly"){
+      key = date.substring(0,7);
+    }
+
+    if(period === "yearly"){
+      key = date.substring(0,4);
+    }
+
+    if(!grouped[key]){
+      grouped[key] = {
+        period:key,
+        orders:0,
+        revenue:0,
+        cost:0,
+        profit:0
+      };
+    }
+
+    grouped[key].orders += Number(row.total_orders || 0);
+    grouped[key].revenue += Number(row.total_revenue || 0);
+    grouped[key].cost += Number(row.total_cost || 0);
+    grouped[key].profit += Number(row.profit || 0);
+
+  });
+
+  const rows = Object.values(grouped)
+    .sort((a,b)=>b.period.localeCompare(a.period));
+
+  const totals = rows.reduce((sum,row)=>{
+    sum.orders += row.orders;
+    sum.revenue += row.revenue;
+    sum.cost += row.cost;
+    sum.profit += row.profit;
+    return sum;
+  },{
+    orders:0,
+    revenue:0,
+    cost:0,
+    profit:0
+  });
+
+  $("total-orders").textContent =
+    totals.orders.toLocaleString();
+
+  $("total-revenue").textContent =
+    money(totals.revenue);
+
+  $("total-cost").textContent =
+    money(totals.cost);
+
+  $("total-profit").textContent =
+    money(totals.profit);
+
+  $("total-profit").className =
+    totals.profit >= 0 ? "profit" : "loss";
+
+  $("table-title").textContent =
+    period === "daily" ? "Daily Sales" :
+    period === "monthly" ? "Monthly Sales" :
+    "Yearly Sales";
+
+  if(rows.length === 0){
+    $("report-list").innerHTML =
+      '<tr><td colspan="5">No sales data found.</td></tr>';
+    return;
+  }
+
+  $("report-list").innerHTML = rows.map(row=>`
+    <tr>
+      <td>${escapeHTML(row.period)}</td>
+      <td>${row.orders}</td>
+      <td>${money(row.revenue)}</td>
+      <td>${money(row.cost)}</td>
+      <td class="${row.profit >= 0 ? "profit" : "loss"}">
+        ${money(row.profit)}
+      </td>
+    </tr>
+  `).join("");
+}
+
+function resetFilters(){
+  $("from").value = "";
+  $("to").value = "";
+  $("period").value = "daily";
+  renderReport();
+}
+
+async function logout(){
+  if(!confirm("Are you sure you want to logout?")) return;
+
+  await db.auth.signOut();
+  location.href = "admin.html";
+}
+
+$("period").addEventListener("change",renderReport);
+
+checkAdmin();
+</script>
+
+</body>
+</html>
