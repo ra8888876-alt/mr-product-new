@@ -23,6 +23,9 @@ let paymentSettings = null;
 let storeSettings = null;
 let searchTerm = "";
 
+// COUPON STATE
+let appliedCoupon = null;
+
 // =====================================
 // WISHLIST
 // =====================================
@@ -75,6 +78,157 @@ function getProductPrice(product) {
 }
 
 // =====================================
+// CART SUBTOTAL
+// =====================================
+
+function getCartSubtotal() {
+  return cart.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0
+  );
+}
+
+// =====================================
+// COUPON DISPLAY
+// =====================================
+
+function updateCouponTotals() {
+  const subtotal = getCartSubtotal();
+
+  const discount = appliedCoupon
+    ? Number(appliedCoupon.discount || 0)
+    : 0;
+
+  const total = Math.max(0, subtotal - discount);
+
+  if ($("#dialog-total")) {
+    $("#dialog-total").textContent = money(subtotal);
+  }
+
+  if ($("#dialog-discount")) {
+    $("#dialog-discount").textContent = money(discount);
+  }
+
+  if ($("#dialog-grand-total")) {
+    $("#dialog-grand-total").textContent = money(total);
+  }
+}
+
+// =====================================
+// CLEAR COUPON
+// =====================================
+
+function clearAppliedCoupon(showMessage = false) {
+  appliedCoupon = null;
+
+  const input = $("#coupon-code");
+
+  if (input) {
+    input.value = "";
+  }
+
+  if ($("#coupon-message")) {
+    $("#coupon-message").textContent = showMessage
+      ? "Cart changed. Please apply your coupon again."
+      : "";
+  }
+
+  updateCouponTotals();
+}
+
+// =====================================
+// APPLY COUPON
+// =====================================
+
+async function applyCoupon() {
+  const input = $("#coupon-code");
+  const button = $("#apply-coupon");
+  const message = $("#coupon-message");
+
+  if (!input || !button || !message) return;
+
+  const code = input.value.trim().toUpperCase();
+
+  if (!code) {
+    message.textContent = "Please enter a coupon code.";
+    return;
+  }
+
+  if (!cart.length) {
+    message.textContent = "Your cart is empty.";
+    return;
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    message.textContent = "Store database is not configured.";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Checking coupon...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/place-order`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "validate_coupon",
+          coupon_code: code,
+          subtotal: getCartSubtotal()
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.ok !== true) {
+      throw new Error(
+        result.error || "Coupon could not be applied."
+      );
+    }
+
+    appliedCoupon = {
+      code: result.coupon_code,
+      discount: Number(result.discount || 0)
+    };
+
+    message.textContent =
+      `Coupon ${result.coupon_code} applied successfully! You saved ${money(result.discount)}.`;
+
+    updateCouponTotals();
+
+  } catch (error) {
+    appliedCoupon = null;
+    updateCouponTotals();
+
+    message.textContent =
+      error.message || "Invalid coupon code.";
+
+  } finally {
+    button.disabled = false;
+  }
+}
+
+if ($("#apply-coupon")) {
+  $("#apply-coupon").addEventListener("click", applyCoupon);
+}
+
+if ($("#coupon-code")) {
+  $("#coupon-code").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyCoupon();
+    }
+  });
+}
+
+// =====================================
 // LOAD STORE SETTINGS
 // =====================================
 
@@ -116,8 +270,6 @@ async function loadStoreSettings() {
 
 function applyStoreBranding(settings) {
 
-  // STORE NAME
-
   if (settings.store_name) {
     const storeName = settings.store_name.trim();
 
@@ -134,8 +286,6 @@ function applyStoreBranding(settings) {
         `© <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
     }
   }
-
-  // LOGO
 
   if (settings.logo_url) {
     document.querySelectorAll(".brand-mark").forEach((element) => {
@@ -155,8 +305,6 @@ function applyStoreBranding(settings) {
     });
   }
 
-  // PRIMARY COLOR
-
   if (settings.primary_color) {
     const color = settings.primary_color.trim();
 
@@ -171,8 +319,6 @@ function applyStoreBranding(settings) {
       }
     }
   }
-
-  // BANNER - NEW DESIGN
 
   if (settings.banner_url) {
     const saleBanner = $(".sale-banner");
@@ -192,8 +338,6 @@ function applyStoreBranding(settings) {
       saleBanner.style.backgroundRepeat = "no-repeat";
     }
 
-    // OLD DESIGN SUPPORT
-
     const hero = $(".hero");
 
     if (hero) {
@@ -210,8 +354,6 @@ function applyStoreBranding(settings) {
       hero.style.backgroundPosition = "center";
     }
   }
-
-  // DESCRIPTION
 
   if (settings.description) {
     const description = settings.description.trim();
@@ -234,8 +376,6 @@ function applyStoreBranding(settings) {
       aboutDescription.textContent = description;
     }
   }
-
-  // CONTACT INFORMATION
 
   const contactSection = $("#contact");
 
@@ -475,8 +615,6 @@ function renderProducts() {
     .join("");
 }
 
-// SEARCH INPUT
-
 const searchInput = $("#product-search");
 const searchButton = $("#search-button");
 
@@ -691,7 +829,6 @@ function renderCart() {
   const mobileCartCount = $("#mobile-cart-count");
   const cartItems = $("#cart-items");
   const cartTotal = $("#cart-total");
-  const dialogTotal = $("#dialog-total");
 
   const totalQuantity = cart.reduce(
     (total, item) => total + item.qty,
@@ -738,18 +875,13 @@ function renderCart() {
       : '<p class="muted">Your cart is empty.</p>';
   }
 
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
+  const total = getCartSubtotal();
 
   if (cartTotal) {
     cartTotal.textContent = money(total);
   }
 
-  if (dialogTotal) {
-    dialogTotal.textContent = money(total);
-  }
+  updateCouponTotals();
 }
 
 // =====================================
@@ -792,6 +924,7 @@ function addToCart(id) {
     });
   }
 
+  clearAppliedCoupon(true);
   renderCart();
 
   alert("Product added to cart!");
@@ -857,6 +990,7 @@ if ($("#cart-items")) {
       );
     }
 
+    clearAppliedCoupon(true);
     renderCart();
   });
 }
@@ -885,19 +1019,13 @@ function closeCart() {
   $("#cart-drawer").setAttribute("aria-hidden", "true");
 }
 
-// DESKTOP CART
-
 if ($("#cart-open")) {
   $("#cart-open").addEventListener("click", openCart);
 }
 
-// MOBILE CART
-
 if ($("#mobile-cart-open")) {
   $("#mobile-cart-open").addEventListener("click", openCart);
 }
-
-// CLOSE CART
 
 if ($("#cart-close")) {
   $("#cart-close").addEventListener("click", closeCart);
@@ -922,6 +1050,7 @@ if ($("#checkout-open")) {
 
     $("#order-dialog").showModal();
 
+    renderCart();
     showPaymentDetails();
   });
 }
@@ -1031,7 +1160,11 @@ if ($("#order-form")) {
               quantity: item.qty
             })),
 
-            note
+            note,
+
+            coupon_code: appliedCoupon
+              ? appliedCoupon.code
+              : null
           })
         }
       );
@@ -1045,15 +1178,24 @@ if ($("#order-form")) {
       }
 
       cart = [];
+      appliedCoupon = null;
 
       renderCart();
 
       form.reset();
 
+      if ($("#coupon-message")) {
+        $("#coupon-message").textContent = "";
+      }
+
+      if ($("#coupon-code")) {
+        $("#coupon-code").value = "";
+      }
+
       showPaymentDetails();
 
       message.textContent =
-        `Order successful! Order number: ${result.order_number}. Total: ${money(result.total)}.`;
+        `Order successful! Order number: ${result.order_number}. Subtotal: ${money(result.subtotal)}. Discount: ${money(result.discount)}. Final Total: ${money(result.total)}.`;
 
     } catch (error) {
       console.error("Order submission error:", error);
