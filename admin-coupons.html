@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR PRODUCT — Coupon Management</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  background:#101010;
+  color:#eee;
+  font-family:Arial,sans-serif;
+}
+.container{max-width:1000px;margin:auto}
+h1{color:#c6a34b}
+h2{color:#c6a34b;font-size:20px}
+.card{
+  background:#1b1b1b;
+  border:1px solid #383838;
+  border-radius:12px;
+  padding:18px;
+  margin:18px 0;
+}
+input,select{
+  width:100%;
+  padding:12px;
+  margin:7px 0 14px;
+  border:1px solid #555;
+  border-radius:7px;
+  background:#111;
+  color:white;
+}
+label{display:block;color:#ddd;font-size:14px}
+button{
+  padding:11px 16px;
+  border:0;
+  border-radius:7px;
+  background:#c6a34b;
+  color:#111;
+  font-weight:bold;
+  cursor:pointer;
+  margin:4px;
+}
+button.danger{background:#a83232;color:white}
+button.secondary{background:#444;color:white}
+button:disabled{opacity:.5}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{
+  padding:11px;
+  border-bottom:1px solid #383838;
+  text-align:left;
+  font-size:13px;
+}
+th{color:#c6a34b}
+.status{font-weight:bold}
+.active{color:#48d18b}
+.inactive{color:#ff7777}
+#message{margin:12px 0;color:#c6a34b}
+[hidden]{display:none!important}
+@media(max-width:600px){
+  body{padding:12px}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>MR PRODUCT — Coupon Management</h1>
+<p>Manage discount coupons, usage limits and expiry dates.</p>
+
+<div id="message">Checking admin access...</div>
+
+<div id="login" class="card" hidden>
+  <h2>Admin Login Required</h2>
+  <p>Please login to your admin account first.</p>
+  <button onclick="location.href='admin.html'">Go to Admin Login</button>
+</div>
+
+<div id="dashboard" hidden>
+
+  <div class="card">
+    <h2>Create New Coupon</h2>
+
+    <form id="coupon-form">
+
+      <label>Coupon Code</label>
+      <input id="code" type="text" placeholder="WELCOME10"
+        required maxlength="40" autocomplete="off">
+
+      <div class="grid">
+        <div>
+          <label>Discount Type</label>
+          <select id="discount-type">
+            <option value="percentage">Percentage (%)</option>
+            <option value="fixed">Fixed Amount (৳)</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Discount Value</label>
+          <input id="discount-value" type="number"
+            min="0.01" step="0.01" required placeholder="10">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Minimum Order Amount (৳)</label>
+          <input id="min-order" type="number"
+            min="0" step="0.01" value="0">
+        </div>
+
+        <div>
+          <label>Maximum Discount (৳) — Optional</label>
+          <input id="max-discount" type="number"
+            min="0.01" step="0.01" placeholder="No limit">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Usage Limit — Optional</label>
+          <input id="usage-limit" type="number"
+            min="1" step="1" placeholder="Unlimited">
+        </div>
+
+        <div>
+          <label>Start Date — Optional</label>
+          <input id="starts-at" type="datetime-local">
+        </div>
+      </div>
+
+      <label>Expiry Date — Optional</label>
+      <input id="expires-at" type="datetime-local">
+
+      <button type="submit" id="create-button">Create Coupon</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>All Coupons</h2>
+    <button onclick="loadCoupons()">Refresh List</button>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Minimum</th>
+            <th>Usage</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="coupon-list">
+          <tr><td colspan="7">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <button class="secondary" onclick="location.href='admin.html'">
+    Back to Admin Panel
+  </button>
+
+  <button class="danger" onclick="logout()">Logout</button>
+
+</div>
+</div>
+
+<script>
+const CONFIG = window.MR_PRODUCT_CONFIG || {};
+const SUPABASE_URL = CONFIG.supabaseUrl || "";
+const SUPABASE_KEY = CONFIG.publishableKey || "";
+
+const message = document.getElementById("message");
+const loginBox = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const couponList = document.getElementById("coupon-list");
+
+let db;
+let currentCoupons = [];
+
+function showMessage(text){
+  message.textContent = text;
+}
+
+function dateValue(id){
+  const value = document.getElementById(id).value;
+  return value ? new Date(value).toISOString() : null;
+}
+
+async function checkAdmin(){
+  try{
+    if(!SUPABASE_URL || !SUPABASE_KEY){
+      throw new Error("Supabase configuration missing. Check config.js");
+    }
+
+    db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session},error} = await db.auth.getSession();
+
+    if(error) throw error;
+
+    if(!session){
+      showMessage("Please login as admin.");
+      loginBox.hidden = false;
+      return;
+    }
+
+    const {data:admin,error:adminError} = await db
+      .from("admin_users")
+      .select("user_id,role,is_active")
+      .eq("user_id",session.user.id)
+      .eq("is_active",true)
+      .maybeSingle();
+
+    if(adminError) throw adminError;
+
+    if(!admin){
+      showMessage("Admin access denied.");
+      loginBox.hidden = false;
+      return;
+    }
+
+    loginBox.hidden = true;
+    dashboard.hidden = false;
+    showMessage("Admin verified successfully.");
+
+    await loadCoupons();
+
+  }catch(error){
+    showMessage("Error: " + error.message);
+  }
+}
+
+async function api(method,body){
+  const options = {method};
+
+  if(body !== undefined){
+    options.body = body;
+  }
+
+  const {data,error} = await db.functions.invoke(
+    "admin-coupons",
+    options
+  );
+
+  if(error) throw error;
+
+  if(data && data.error){
+    throw new Error(data.error);
+  }
+
+  return data;
+}
+
+function formatDate(value){
+  if(!value) return "No expiry";
+
+  const date = new Date(value);
+
+  if(Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString();
+}
+
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g,char=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[char]);
+}
+
+async function loadCoupons(){
+  couponList.innerHTML =
+    '<tr><td colspan="7">Loading coupons...</td></tr>';
+
+  try{
+    const result = await api("GET");
+
+    currentCoupons = Array.isArray(result)
+      ? result
+      : (result.coupons || []);
+
+    if(currentCoupons.length === 0){
+      couponList.innerHTML =
+        '<tr><td colspan="7">No coupons created yet.</td></tr>';
+      return;
+    }
+
+    couponList.innerHTML = currentCoupons.map(coupon=>{
+      const discount = coupon.discount_type === "percentage"
+        ? Number(coupon.discount_value) + "%"
+        : "৳" + Number(coupon.discount_value);
+
+      const usage = coupon.usage_limit
+        ? `${coupon.used_count || 0} / ${coupon.usage_limit}`
+        : `${coupon.used_count || 0} / Unlimited`;
+
+      const status = coupon.is_active
+        ? '<span class="status active">Active</span>'
+        : '<span class="status inactive">Inactive</span>';
+
+      return `
+        <tr>
+          <td><b>${escapeHTML(coupon.code)}</b></td>
+          <td>${discount}</td>
+          <td>৳${Number(coupon.min_order_amount || 0)}</td>
+          <td>${usage}</td>
+          <td>${formatDate(coupon.expires_at)}</td>
+          <td>${status}</td>
+          <td>
+            <button class="secondary"
+              onclick="toggleCoupon('${coupon.id}')">
+              ${coupon.is_active ? "Deactivate" : "Activate"}
+            </button>
+            <button class="danger"
+              onclick="deleteCoupon('${coupon.id}')">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  }catch(error){
+    couponList.innerHTML =
+      `<tr><td colspan="7">Error: ${escapeHTML(error.message)}</td></tr>`;
+  }
+}
+
+document.getElementById("coupon-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const button = document.getElementById("create-button");
+  button.disabled = true;
+  showMessage("Creating coupon...");
+
+  try{
+    const code = document.getElementById("code").value
+      .trim().toUpperCase();
+
+    const type = document.getElementById("discount-type").value;
+    const value = Number(document.getElementById("discount-value").value);
+    const minimum = Number(document.getElementById("min-order").value || 0);
+
+    const maxInput = document.getElementById("max-discount").value;
+    const usageInput = document.getElementById("usage-limit").value;
+
+    if(!/^[A-Z0-9_-]+$/.test(code)){
+      throw new Error("Use only letters, numbers, _ or - in coupon code.");
+    }
+
+    if(type === "percentage" && value > 100){
+      throw new Error("Percentage discount cannot exceed 100.");
+    }
+
+    const payload = {
+      code,
+      discount_type:type,
+      discount_value:value,
+      min_order_amount:minimum,
+      max_discount_amount:maxInput ? Number(maxInput) : null,
+      usage_limit:usageInput ? Number(usageInput) : null,
+      starts_at:dateValue("starts-at"),
+      expires_at:dateValue("expires-at"),
+      is_active:true
+    };
+
+    await api("POST",payload);
+
+    document.getElementById("coupon-form").reset();
+    showMessage("Coupon created successfully!");
+
+    await loadCoupons();
+
+  }catch(error){
+    showMessage("Error: " + error.message);
+  }finally{
+    button.disabled = false;
+  }
+});
+
+async function toggleCoupon(id){
+  const coupon = currentCoupons.find(item=>item.id === id);
+  if(!coupon) return;
+
+  try{
+    await api("PATCH",{
+      id,
+      is_active:!coupon.is_active
+    });
+
+    showMessage("Coupon status updated.");
+    await loadCoupons();
+
+  }catch(error){
+    showMessage("Error: " + error.message);
+  }
+}
+
+async function deleteCoupon(id){
+  if(!confirm("Are you sure you want to delete this coupon?")) return;
+
+  try{
+    await api("DELETE",{id});
+
+    showMessage("Coupon deleted.");
+    await loadCoupons();
+
+  }catch(error){
+    showMessage("Error: " + error.message);
+  }
+}
+
+async function logout(){
+  if(!confirm("Are you sure you want to logout?")) return;
+
+  await db.auth.signOut();
+  location.href = "admin.html";
+}
+
+checkAdmin();
+</script>
+</body>
+</html>
