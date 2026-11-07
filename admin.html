@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MR PRODUCT — Coupon Management</title>
+<title>MR PRODUCT Admin</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 
@@ -11,295 +12,1077 @@
 *{box-sizing:border-box}
 body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
 header{padding:20px;background:#181818;border-bottom:1px solid #c6a34b}
-h1,h2{color:#d6b45b}
-main{max-width:1100px;margin:auto;padding:18px}
+h1,.gold{color:#d6b45b}
+main{max-width:1200px;margin:auto;padding:18px}
 .card{background:#1d1d1d;padding:18px;border:1px solid #393126;border-radius:12px;margin:15px 0}
-input,select{width:100%;padding:12px;margin:7px 0;background:#292929;color:white;border:1px solid #555;border-radius:6px}
-label{display:block;margin-top:12px;color:#d6b45b}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:#292929;padding:18px;border-radius:10px}
+input,textarea,select{width:100%;padding:12px;margin:7px 0;background:#292929;color:white;border:1px solid #555;border-radius:6px}
 button{background:#c6a34b;color:#111;border:0;padding:11px 15px;border-radius:6px;margin:4px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
 .danger{background:#a83232;color:white}
+table{width:100%;border-collapse:collapse;min-width:700px}
+td,th{text-align:left;padding:11px;border-bottom:1px solid #444;vertical-align:top}
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:750px}
-th,td{text-align:left;padding:11px;border-bottom:1px solid #444}
+.hidden{display:none}
 .muted{color:#aaa}
-.status{color:#d6b45b}
+.status{min-width:130px}
+label{display:block;margin-top:12px;color:#d6b45b}
+.preview-image{display:block;max-width:100%;max-height:180px;object-fit:contain;background:#111;border:1px solid #555;border-radius:8px;padding:8px;margin:10px 0}
+.upload-box{background:#292929;padding:12px;border-radius:8px;margin:10px 0}
+input[type="color"]{height:55px;padding:5px;cursor:pointer}
+.section-note{color:#aaa;font-size:13px;line-height:1.6}
 </style>
 </head>
 
 <body>
+
 <header>
 <h1>MR PRODUCT</h1>
-<p>Coupon Management</p>
+<p>Admin Dashboard</p>
 </header>
 
 <main>
-<div class="card" id="loading">Checking admin access...</div>
 
-<div class="card" id="login" hidden>
-<h2>Admin Login Required</h2>
-<p>Please login from your main Admin Panel first.</p>
-<button onclick="location.href='admin.html'">Go to Admin Login</button>
+<div id="loading" class="card">Checking admin access...</div>
+
+<div id="login" class="card hidden">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="loginAdmin()">Login</button>
+<p id="loginMessage"></p>
 </div>
 
-<div id="dashboard" hidden>
+<div id="dashboard" class="hidden">
 
 <div class="card">
-<button onclick="location.href='admin.html'">Back to Admin</button>
-<button onclick="loadCoupons()">Refresh Coupons</button>
-<button onclick="logout()">Logout</button>
-<p id="message" class="muted"></p>
+<h2 class="gold">Welcome, Admin</h2>
+
+<button onclick="logoutAdmin()">Logout</button>
+<button onclick="refreshAll()">Refresh Dashboard</button>
+
+<button onclick="location.href='admin-affiliates.html'">
+Affiliate Management
+</button>
+
+<button onclick="location.href='admin-coupons.html'">
+Coupon Management
+</button>
+
+<p id="message"></p>
 </div>
 
-<div class="card">
-<h2>Create New Coupon</h2>
+<!-- DASHBOARD -->
 
-<label>Coupon Code</label>
-<input id="code" maxlength="40" placeholder="WELCOME10">
+<div class="grid">
 
-<label>Discount Type</label>
-<select id="type">
-<option value="percentage">Percentage (%)</option>
-<option value="fixed">Fixed Amount (৳)</option>
-</select>
-
-<label>Discount Value</label>
-<input id="value" type="number" min="0.01" step="0.01" placeholder="10">
-
-<label>Minimum Order Amount (৳)</label>
-<input id="minimum" type="number" min="0" value="0">
-
-<label>Maximum Discount (৳) — Optional</label>
-<input id="maximum" type="number" min="0.01" placeholder="Leave empty for no limit">
-
-<label>Usage Limit — Optional</label>
-<input id="limit" type="number" min="1" step="1" placeholder="Leave empty for unlimited">
-
-<label>Start Date — Optional</label>
-<input id="starts" type="datetime-local">
-
-<label>Expiry Date — Optional</label>
-<input id="expires" type="datetime-local">
-
-<button id="createButton" onclick="createCoupon()">Create Coupon</button>
+<div class="stat">
+Products
+<h2 id="productCount">0</h2>
 </div>
 
+<div class="stat">
+Orders
+<h2 id="orderCount">0</h2>
+</div>
+
+<div class="stat">
+Customers
+<h2 id="customerCount">0</h2>
+</div>
+
+<div class="stat">
+Order Value
+<h2 id="salesTotal">৳0</h2>
+</div>
+
+</div>
+
+<!-- STORE PROFILE SETTINGS -->
+
 <div class="card">
-<h2>All Coupons</h2>
-<div class="table-wrap" id="couponList">Loading...</div>
+
+<h2 class="gold">Store Profile & Branding</h2>
+
+<p class="section-note">
+Manage your store identity, contact information, logo,
+homepage banner and brand color.
+</p>
+
+<label>Store Name</label>
+<input id="storeName" type="text" maxlength="150" placeholder="MR PRODUCT">
+
+<label>Store Description</label>
+<textarea id="storeDescription" rows="4" maxlength="2000" placeholder="Write about your store..."></textarea>
+
+<label>Phone Number</label>
+<input id="storePhone" type="text" maxlength="100" placeholder="Store phone number">
+
+<label>WhatsApp Number</label>
+<input id="storeWhatsapp" type="text" maxlength="100" placeholder="WhatsApp number">
+
+<label>Email Address</label>
+<input id="storeEmail" type="email" maxlength="200" placeholder="Store email">
+
+<hr style="border-color:#393126;margin:25px 0">
+
+<h3 class="gold">Store Logo</h3>
+
+<div class="upload-box">
+
+<input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp">
+
+<button id="uploadLogoButton" onclick="uploadStoreImage('logo')">
+Upload Logo
+</button>
+
+<img id="logoPreview" class="preview-image hidden" alt="Store logo preview">
+
+<label>Logo Image URL</label>
+<input id="logoUrl" type="url" readonly placeholder="Uploaded logo URL">
+
+</div>
+
+<hr style="border-color:#393126;margin:25px 0">
+
+<h3 class="gold">Homepage Banner</h3>
+
+<div class="upload-box">
+
+<input id="bannerFile" type="file" accept="image/png,image/jpeg,image/webp">
+
+<button id="uploadBannerButton" onclick="uploadStoreImage('banner')">
+Upload Banner
+</button>
+
+<img id="bannerPreview" class="preview-image hidden" alt="Store banner preview">
+
+<label>Banner Image URL</label>
+<input id="bannerUrl" type="url" readonly placeholder="Uploaded banner URL">
+
+</div>
+
+<hr style="border-color:#393126;margin:25px 0">
+
+<h3 class="gold">Brand Color</h3>
+
+<label>Primary Color</label>
+<input id="primaryColor" type="color" value="#c6a34b">
+
+<p class="section-note">Choose your store's primary brand color.</p>
+
+<button id="saveStoreButton" onclick="saveStoreSettings()">Save Store Settings</button>
+<button onclick="loadStoreSettings()">Reload Store Settings</button>
+
+<p id="storeMessage" class="muted" role="status"></p>
+
+</div>
+
+<!-- ADD PRODUCT -->
+
+<div class="card">
+
+<h2 class="gold">Add New Product</h2>
+
+<input id="name" placeholder="Product name">
+<textarea id="description" placeholder="Description"></textarea>
+<input id="price" type="number" min="0.01" step="0.01" placeholder="Regular price (BDT)">
+<input id="discount" type="number" min="0" step="0.01" placeholder="Discount price (optional)">
+<input id="stock" type="number" min="0" step="1" placeholder="Stock quantity">
+<input id="category" placeholder="Category">
+<input id="image" placeholder="Image URL">
+
+<button onclick="addProduct()">Add Product</button>
+
+</div>
+
+<!-- PRODUCT MANAGEMENT -->
+
+<div class="card">
+<h2 class="gold">Product Management</h2>
+<div class="table-wrap" id="products">Loading...</div>
+</div>
+
+<!-- ORDER MANAGEMENT -->
+
+<div class="card">
+<h2 class="gold">Order Management</h2>
+<button onclick="loadOrders()">Refresh Orders</button>
+<div class="table-wrap" id="orders">Loading orders...</div>
+</div>
+
+<!-- PAYMENT SETTINGS -->
+
+<div class="card">
+
+<h2 class="gold">Payment Settings</h2>
+
+<p class="muted">
+Set your payment details once. Customers can use these details when placing orders.
+</p>
+
+<label>bKash Number</label>
+<input id="bkashNumber" type="text" maxlength="100" placeholder="Enter bKash number">
+
+<label>Nagad Number</label>
+<input id="nagadNumber" type="text" maxlength="100" placeholder="Enter Nagad number">
+
+<label>Bank Details</label>
+<textarea id="bankDetails" rows="4" maxlength="2000" placeholder="Bank name, account name, account number, branch"></textarea>
+
+<label>Payment Instructions</label>
+<textarea id="paymentInstructions" rows="4" maxlength="2000" placeholder="Write payment instructions for customers"></textarea>
+
+<button id="savePaymentButton" onclick="savePaymentSettings()">Save Payment Settings</button>
+<button onclick="loadPaymentSettings()">Reload Settings</button>
+
+<p id="paymentMessage" class="muted" role="status"></p>
+
+</div>
+
+<!-- PAYMENT OVERVIEW -->
+
+<div class="card">
+<h2 class="gold">Payment Overview</h2>
+<p class="muted">
+Payment status is manually managed. This does not verify whether money was actually received.
+</p>
+<div class="table-wrap" id="payments">Loading...</div>
+</div>
+
+<!-- CUSTOMER OVERVIEW -->
+
+<div class="card">
+<h2 class="gold">Customer Overview</h2>
+<div class="table-wrap" id="customers">Loading...</div>
 </div>
 
 </div>
 </main>
 
 <script>
-const cfg=window.MR_PRODUCT_CONFIG;
 
-const db=window.supabase.createClient(
+const cfg = window.MR_PRODUCT_CONFIG;
+
+if(!cfg || !cfg.supabaseUrl || !cfg.publishableKey){
+  alert("Supabase configuration is missing. Check config.js.");
+}
+
+const db = window.supabase.createClient(
   cfg.supabaseUrl,
   cfg.publishableKey
 );
 
-const $=id=>document.getElementById(id);
+// GENERAL FUNCTIONS
 
-function money(v){
-  return "৳"+Number(v||0).toLocaleString("en-BD");
+function showMessage(text){
+  document.getElementById("message").textContent=text;
 }
 
-function esc(v){
-  return String(v??"").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",
-    '"':"&quot;","'":"&#39;"
+function money(value){
+  return "৳" + Number(value || 0).toLocaleString("en-BD");
+}
+
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
   }[c]));
 }
 
-async function api(method,body){
-  const {data,error}=await db.functions.invoke("admin-coupons",{
-    method,
-    ...(body?{body}:{})
-  });
-
-  if(error)throw error;
-  if(data?.error)throw new Error(data.error);
-  return data;
-}
+// ADMIN AUTHENTICATION
 
 async function checkAdmin(){
-  try{
-    const {data:{session}}=await db.auth.getSession();
 
-    if(!session){
-      $("loading").hidden=true;
-      $("login").hidden=false;
-      return;
-    }
+  const {data:{session}}=await db.auth.getSession();
 
-    const {data,error}=await db.from("admin_users")
-      .select("user_id")
-      .eq("user_id",session.user.id)
-      .eq("is_active",true)
-      .maybeSingle();
-
-    if(error||!data){
-      $("loading").hidden=true;
-      $("login").hidden=false;
-      return;
-    }
-
-    $("loading").hidden=true;
-    $("dashboard").hidden=false;
-    await loadCoupons();
-
-  }catch(e){
-    $("loading").textContent="Access check failed: "+e.message;
-  }
-}
-
-async function logout(){
-  await db.auth.signOut();
-  location.href="admin.html";
-}
-
-async function createCoupon(){
-  const button=$("createButton");
-
-  const payload={
-    code:$("code").value.trim().toUpperCase(),
-    discount_type:$("type").value,
-    discount_value:Number($("value").value),
-    min_order_amount:Number($("minimum").value||0),
-    max_discount_amount:$("maximum").value||null,
-    usage_limit:$("limit").value||null,
-    starts_at:$("starts").value
-      ? new Date($("starts").value).toISOString():null,
-    expires_at:$("expires").value
-      ? new Date($("expires").value).toISOString():null,
-    is_active:true
-  };
-
-  if(!payload.code||!payload.discount_value){
-    $("message").textContent="Enter coupon code and discount value.";
+  if(!session){
+    showLogin();
     return;
   }
 
-  if(payload.expires_at&&payload.starts_at&&
-     new Date(payload.expires_at)<=new Date(payload.starts_at)){
-    $("message").textContent="Expiry must be after start date.";
+  const {data,error}=await db.from("admin_users")
+    .select("user_id")
+    .eq("user_id",session.user.id)
+    .eq("is_active",true)
+    .maybeSingle();
+
+  if(error || !data){
+    await db.auth.signOut();
+    showLogin();
+    return;
+  }
+
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  await refreshAll();
+}
+
+function showLogin(){
+
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+
+}
+
+async function loginAdmin(){
+
+  document.getElementById("loginMessage").textContent="Checking...";
+
+  const {error}=await db.auth.signInWithPassword({
+    email:document.getElementById("email").value.trim(),
+    password:document.getElementById("password").value
+  });
+
+  if(error){
+    document.getElementById("loginMessage").textContent="Login failed.";
+    return;
+  }
+
+  await checkAdmin();
+}
+
+async function logoutAdmin(){
+  await db.auth.signOut();
+  location.reload();
+}
+
+// EDGE FUNCTION API
+
+async function api(functionName,method,body){
+
+  const {data,error}=await db.functions.invoke(functionName,{
+    method,
+    body
+  });
+
+  if(error) throw error;
+  if(data?.error) throw new Error(data.error);
+
+  return data;
+}
+
+// STORE PROFILE SETTINGS
+
+async function loadStoreSettings(){
+
+  const message=document.getElementById("storeMessage");
+  message.textContent="Loading store settings...";
+
+  try{
+
+    const result=await api("admin-settings","GET");
+    const s=result.settings || {};
+
+    document.getElementById("storeName").value=s.store_name || "";
+    document.getElementById("storeDescription").value=s.description || "";
+    document.getElementById("storePhone").value=s.phone || "";
+    document.getElementById("storeWhatsapp").value=s.whatsapp || "";
+    document.getElementById("storeEmail").value=s.email || "";
+    document.getElementById("logoUrl").value=s.logo_url || "";
+    document.getElementById("bannerUrl").value=s.banner_url || "";
+
+    document.getElementById("primaryColor").value=
+      /^#[0-9a-fA-F]{6}$/.test(s.primary_color || "")
+      ? s.primary_color
+      : "#c6a34b";
+
+    showImagePreview("logo",s.logo_url);
+    showImagePreview("banner",s.banner_url);
+
+    message.textContent="Store settings loaded successfully.";
+
+  }catch(e){
+    message.textContent="Could not load store settings: "+e.message;
+  }
+}
+
+function showImagePreview(type,url){
+
+  const img=document.getElementById(
+    type==="logo" ? "logoPreview":"bannerPreview"
+  );
+
+  if(url){
+    img.src=url;
+    img.classList.remove("hidden");
+  }else{
+    img.removeAttribute("src");
+    img.classList.add("hidden");
+  }
+}
+
+// IMAGE UPLOAD
+
+async function uploadStoreImage(type){
+
+  const isLogo=type==="logo";
+
+  const fileInput=document.getElementById(
+    isLogo ? "logoFile":"bannerFile"
+  );
+
+  const button=document.getElementById(
+    isLogo ? "uploadLogoButton":"uploadBannerButton"
+  );
+
+  const message=document.getElementById("storeMessage");
+  const file=fileInput.files[0];
+
+  if(!file){
+    message.textContent="Please select an image first.";
+    return;
+  }
+
+  const allowedTypes=["image/jpeg","image/png","image/webp"];
+
+  if(!allowedTypes.includes(file.type)){
+    message.textContent="Only JPG, PNG and WEBP images are allowed.";
+    return;
+  }
+
+  if(file.size>5*1024*1024){
+    message.textContent="Image size must be 5 MB or less.";
     return;
   }
 
   button.disabled=true;
-  button.textContent="Creating...";
+  button.textContent="Uploading...";
+  message.textContent="Uploading image...";
 
   try{
-    await api("POST",payload);
 
-    $("message").textContent="Coupon created successfully!";
+    const {data:{session}}=await db.auth.getSession();
 
-    ["code","value","maximum","limit","starts","expires"]
-      .forEach(id=>$(id).value="");
+    if(!session){
+      throw new Error("Please login again.");
+    }
 
-    $("minimum").value="0";
+    const extension=file.type==="image/jpeg"
+      ? "jpg"
+      : file.type.split("/")[1];
 
-    await loadCoupons();
+    const filePath=
+      type+"/"+Date.now()+"-"+crypto.randomUUID()+"."+extension;
+
+    const {data,error}=await db.storage
+      .from("store-assets")
+      .upload(filePath,file,{
+        cacheControl:"3600",
+        upsert:false,
+        contentType:file.type
+      });
+
+    if(error) throw error;
+
+    const {data:publicData}=db.storage
+      .from("store-assets")
+      .getPublicUrl(data.path);
+
+    const url=publicData.publicUrl;
+
+    if(isLogo){
+      document.getElementById("logoUrl").value=url;
+    }else{
+      document.getElementById("bannerUrl").value=url;
+    }
+
+    showImagePreview(type,url);
+    fileInput.value="";
+
+    message.textContent=
+      (isLogo ? "Logo":"Banner")+" uploaded successfully. Now save Store Settings.";
 
   }catch(e){
-    $("message").textContent="Create failed: "+e.message;
+    message.textContent="Upload failed: "+e.message;
   }finally{
+
     button.disabled=false;
-    button.textContent="Create Coupon";
+    button.textContent=isLogo ? "Upload Logo":"Upload Banner";
+
   }
 }
 
-async function toggleCoupon(id,active){
+// SAVE STORE SETTINGS
+
+async function saveStoreSettings(){
+
+  const button=document.getElementById("saveStoreButton");
+  const message=document.getElementById("storeMessage");
+
+  const payload={
+
+    store_name:document.getElementById("storeName").value.trim(),
+    description:document.getElementById("storeDescription").value.trim(),
+    phone:document.getElementById("storePhone").value.trim(),
+    whatsapp:document.getElementById("storeWhatsapp").value.trim(),
+    email:document.getElementById("storeEmail").value.trim(),
+    logo_url:document.getElementById("logoUrl").value.trim(),
+    banner_url:document.getElementById("bannerUrl").value.trim(),
+    primary_color:document.getElementById("primaryColor").value
+
+  };
+
+  if(!payload.store_name){
+    message.textContent="Store name is required.";
+    return;
+  }
+
+  if(payload.store_name.length>150 ||
+     payload.description.length>2000 ||
+     payload.phone.length>100 ||
+     payload.whatsapp.length>100 ||
+     payload.email.length>200){
+
+    message.textContent="One or more fields are too long.";
+    return;
+  }
+
+  if(!confirm("Save Store Profile Settings?"))return;
+
+  button.disabled=true;
+  button.textContent="Saving...";
+  message.textContent="Saving store settings...";
+
   try{
-    await api("PATCH",{id,is_active:!active});
-    $("message").textContent="Coupon status updated.";
-    await loadCoupons();
+
+    await api("admin-settings","PATCH",payload);
+
+    message.textContent="Store settings saved successfully.";
+    alert("Store settings saved successfully.");
+
   }catch(e){
-    $("message").textContent="Update failed: "+e.message;
+    message.textContent="Save failed: "+e.message;
+  }finally{
+
+    button.disabled=false;
+    button.textContent="Save Store Settings";
+
   }
 }
 
-async function deleteCoupon(id){
-  if(!confirm("Permanently delete this coupon?"))return;
+// PAYMENT SETTINGS
+
+async function loadPaymentSettings(){
+
+  const message=document.getElementById("paymentMessage");
+  message.textContent="Loading payment settings...";
 
   try{
-    await api("DELETE",{id});
-    $("message").textContent="Coupon deleted.";
-    await loadCoupons();
+
+    const result=await api("admin-settings","GET");
+    const settings=result.settings || {};
+
+    document.getElementById("bkashNumber").value=settings.bkash_number || "";
+    document.getElementById("nagadNumber").value=settings.nagad_number || "";
+    document.getElementById("bankDetails").value=settings.bank_details || "";
+    document.getElementById("paymentInstructions").value=settings.payment_instructions || "";
+
+    message.textContent="Payment settings loaded.";
+
   }catch(e){
-    $("message").textContent="Delete failed: "+e.message;
+    message.textContent="Could not load settings: "+e.message;
   }
 }
 
-async function loadCoupons(){
-  $("couponList").textContent="Loading coupons...";
+async function savePaymentSettings(){
+
+  const button=document.getElementById("savePaymentButton");
+  const message=document.getElementById("paymentMessage");
+
+  const payload={
+
+    bkash_number:document.getElementById("bkashNumber").value.trim(),
+    nagad_number:document.getElementById("nagadNumber").value.trim(),
+    bank_details:document.getElementById("bankDetails").value.trim(),
+    payment_instructions:document.getElementById("paymentInstructions").value.trim()
+
+  };
+
+  if(
+    payload.bkash_number.length>100 ||
+    payload.nagad_number.length>100 ||
+    payload.bank_details.length>2000 ||
+    payload.payment_instructions.length>2000
+  ){
+
+    message.textContent="One or more fields are too long.";
+    return;
+  }
+
+  if(!confirm("Save these payment settings?"))return;
+
+  button.disabled=true;
+  button.textContent="Saving...";
+  message.textContent="Saving payment settings...";
 
   try{
-    const result=await api("GET");
-    const coupons=result.coupons||[];
 
-    if(!coupons.length){
-      $("couponList").textContent="No coupons created yet.";
+    await api("admin-settings","PATCH",payload);
+
+    message.textContent="Payment settings saved successfully.";
+    alert("Payment settings saved.");
+
+  }catch(e){
+    message.textContent="Save failed: "+e.message;
+  }finally{
+
+    button.disabled=false;
+    button.textContent="Save Payment Settings";
+
+  }
+}
+
+// PRODUCTS
+
+async function loadProducts(){
+
+  const box=document.getElementById("products");
+  box.textContent="Loading products...";
+
+  try{
+
+    const result=await api("admin-products","GET");
+    const list=result.products || [];
+
+    document.getElementById("productCount").textContent=list.length;
+
+    if(!list.length){
+      box.textContent="No products found.";
+      return;
+    }
+
+    let html="<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
+
+    list.forEach(p=>{
+
+      const price=Number(p.discount_price)>0 &&
+        Number(p.discount_price)<Number(p.price)
+        ? p.discount_price
+        : p.price;
+
+      html+=`<tr>
+        <td>${esc(p.name)}</td>
+        <td>${money(price)}</td>
+        <td>${esc(p.stock)}</td>
+        <td>
+
+          <button class="edit-btn"
+            data-id="${esc(p.id)}"
+            data-name="${esc(p.name)}"
+            data-price="${Number(p.price)}"
+            data-discount="${Number(p.discount_price)||0}"
+            data-stock="${Number(p.stock)}">
+            Edit
+          </button>
+
+          <button class="danger delete-btn"
+            data-id="${esc(p.id)}">
+            Hide
+          </button>
+
+        </td>
+      </tr>`;
+
+    });
+
+    box.innerHTML=html+"</table>";
+
+    box.querySelectorAll(".edit-btn").forEach(button=>{
+
+      button.addEventListener("click",()=>{
+
+        editProduct(
+          button.dataset.id,
+          button.dataset.name,
+          Number(button.dataset.price),
+          Number(button.dataset.discount),
+          Number(button.dataset.stock)
+        );
+
+      });
+
+    });
+
+    box.querySelectorAll(".delete-btn").forEach(button=>{
+
+      button.addEventListener("click",()=>{
+        deleteProduct(button.dataset.id);
+      });
+
+    });
+
+  }catch(e){
+    box.textContent="Could not load products: "+e.message;
+  }
+}
+
+async function addProduct(){
+
+  try{
+
+    const name=document.getElementById("name").value.trim();
+    const price=Number(document.getElementById("price").value);
+    const discount=document.getElementById("discount").value;
+    const stock=Number(document.getElementById("stock").value);
+
+    if(!name || !Number.isFinite(price) || price<=0 ||
+       !Number.isInteger(stock) || stock<0){
+
+      alert("Enter valid product information.");
+      return;
+    }
+
+    if(discount!=="" &&
+      (!Number.isFinite(Number(discount)) ||
+       Number(discount)<=0 || Number(discount)>=price)){
+
+      alert("Discount must be less than regular price.");
+      return;
+    }
+
+    await api("admin-products","POST",{
+
+      name,
+      description:document.getElementById("description").value,
+      price,
+      discount_price:discount===""?null:Number(discount),
+      stock,
+      category:document.getElementById("category").value,
+      image_url:document.getElementById("image").value
+
+    });
+
+    alert("Product added.");
+
+    [
+      "name","description","price","discount",
+      "stock","category","image"
+    ].forEach(id=>document.getElementById(id).value="");
+
+    await loadProducts();
+
+  }catch(e){
+    alert("Could not add product: "+e.message);
+  }
+}
+
+async function editProduct(id,name,price,discount,stock){
+
+  const newName=prompt("Product name:",name);
+  if(newName===null)return;
+
+  const newPrice=prompt("Regular price:",price);
+  if(newPrice===null)return;
+
+  const newDiscount=prompt("Discount price (0 for none):",discount);
+  if(newDiscount===null)return;
+
+  const newStock=prompt("Stock quantity:",stock);
+  if(newStock===null)return;
+
+  const p=Number(newPrice);
+  const d=Number(newDiscount);
+  const s=Number(newStock);
+
+  if(!newName.trim() || !Number.isFinite(p) || p<=0 ||
+     !Number.isFinite(d) || d<0 || (d>0 && d>=p) ||
+     !Number.isInteger(s) || s<0){
+
+    alert("Invalid product information.");
+    return;
+  }
+
+  try{
+
+    await api("admin-products","PATCH",{
+
+      id,
+      name:newName.trim(),
+      price:p,
+      discount_price:d===0?null:d,
+      stock:s
+
+    });
+
+    alert("Product updated.");
+    await loadProducts();
+
+  }catch(e){
+    alert("Update failed: "+e.message);
+  }
+}
+
+async function deleteProduct(id){
+
+  if(!confirm("Hide this product from the store?"))return;
+
+  try{
+
+    await api("admin-products","DELETE",{id});
+
+    alert("Product hidden.");
+    await loadProducts();
+
+  }catch(e){
+    alert("Delete failed: "+e.message);
+  }
+}
+
+// ORDERS
+
+let orderData=[];
+
+async function loadOrders(){
+
+  const box=document.getElementById("orders");
+  box.textContent="Loading orders...";
+
+  try{
+
+    const result=await api("admin-orders","GET");
+    orderData=result.orders || [];
+
+    document.getElementById("orderCount").textContent=orderData.length;
+
+    const customers=new Set();
+    let total=0;
+
+    orderData.forEach(o=>{
+      if(o.customer_id)customers.add(o.customer_id);
+      total+=Number(o.grand_total || 0);
+    });
+
+    document.getElementById("customerCount").textContent=customers.size;
+    document.getElementById("salesTotal").textContent=money(total);
+
+    if(!orderData.length){
+
+      box.textContent="No orders found.";
+      document.getElementById("payments").textContent="No payment records.";
+      document.getElementById("customers").textContent="No customers found.";
+
       return;
     }
 
     let html=`<table>
-    <tr>
-      <th>Code</th>
-      <th>Discount</th>
-      <th>Minimum Order</th>
-      <th>Usage</th>
-      <th>Expiry</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>`;
+      <tr>
+        <th>Order</th>
+        <th>Customer</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Order Status</th>
+        <th>Payment</th>
+        <th>Update</th>
+      </tr>`;
 
-    coupons.forEach(c=>{
-      const discount=c.discount_type==="percentage"
-        ? Number(c.discount_value)+"%"
-        : money(c.discount_value);
+    orderData.forEach(o=>{
 
-      const usage=c.usage_limit
-        ? c.used_count+"/"+c.usage_limit
-        : c.used_count+"/Unlimited";
+      const customer=o.customers || {};
+      const items=o.order_items || [];
+
+      const itemText=items.map(i=>
+        `${esc(i.product_name)} × ${esc(i.quantity)}`
+      ).join("<br>");
 
       html+=`<tr>
-        <td><b>${esc(c.code)}</b></td>
-        <td>${discount}</td>
-        <td>${money(c.min_order_amount)}</td>
-        <td>${esc(usage)}</td>
-        <td>${c.expires_at?esc(new Date(c.expires_at).toLocaleString()):"No expiry"}</td>
-        <td class="status">${c.is_active?"Active":"Inactive"}</td>
+
         <td>
-          <button data-toggle="${esc(c.id)}" data-active="${c.is_active}">
-            ${c.is_active?"Deactivate":"Activate"}
-          </button>
-          <button class="danger" data-delete="${esc(c.id)}">Delete</button>
+          <b>${esc(o.order_number || o.id)}</b><br>
+          <small>${esc(o.created_at || "")}</small>
         </td>
+
+        <td>
+          ${esc(customer.name)}<br>
+          ${esc(customer.phone)}<br>
+          ${esc(customer.address)}
+        </td>
+
+        <td>${itemText || "No items"}</td>
+
+        <td>${money(o.grand_total)}</td>
+
+        <td>
+          <select class="status order-status" data-id="${esc(o.id)}">
+            ${statusOptions(
+              ["pending","confirmed","processing","shipped","delivered","cancelled"],
+              o.order_status
+            )}
+          </select>
+        </td>
+
+        <td>
+          <select class="status payment-status" data-id="${esc(o.id)}">
+            ${statusOptions(
+              ["pending","paid","failed","refunded"],
+              o.payment_status
+            )}
+          </select>
+        </td>
+
+        <td>
+          <button class="save-order" data-id="${esc(o.id)}">Save</button>
+        </td>
+
       </tr>`;
+
     });
 
-    $("couponList").innerHTML=html+"</table>";
+    box.innerHTML=html+"</table>";
 
-    $("couponList").querySelectorAll("[data-toggle]").forEach(b=>{
-      b.addEventListener("click",()=>{
-        toggleCoupon(b.dataset.toggle,b.dataset.active==="true");
+    box.querySelectorAll(".save-order").forEach(button=>{
+      button.addEventListener("click",()=>{
+        updateOrder(button.dataset.id);
       });
     });
 
-    $("couponList").querySelectorAll("[data-delete]").forEach(b=>{
-      b.addEventListener("click",()=>{
-        deleteCoupon(b.dataset.delete);
-      });
-    });
+    loadCustomerAndPaymentViews();
 
   }catch(e){
-    $("couponList").textContent="Could not load coupons: "+e.message;
+    box.textContent="Could not load orders: "+e.message;
   }
 }
 
+function statusOptions(values,current){
+
+  return values.map(v=>
+    `<option value="${v}" ${v===current?"selected":""}>${v}</option>`
+  ).join("");
+
+}
+
+async function updateOrder(id){
+
+  const button=document.querySelector(
+    `.save-order[data-id="${CSS.escape(id)}"]`
+  );
+
+  if(!button)return;
+
+  const row=button.closest("tr");
+
+  const order_status=row.querySelector(".order-status").value;
+  const payment_status=row.querySelector(".payment-status").value;
+
+  if(!confirm("Update this order and payment status?"))return;
+
+  try{
+
+    await api("admin-orders","PATCH",{
+      id,
+      order_status,
+      payment_status
+    });
+
+    alert("Order updated.");
+    await loadOrders();
+
+  }catch(e){
+    alert("Could not update order: "+e.message);
+  }
+}
+
+function loadCustomerAndPaymentViews(){
+
+  const customers={};
+
+  orderData.forEach(o=>{
+
+    const c=o.customers || {};
+    const key=o.customer_id || o.id;
+
+    if(!customers[key]){
+
+      customers[key]={ 
+        name:c.name || "Unknown",
+        phone:c.phone || "",
+        address:c.address || "",
+        orders:0
+      };
+
+    }
+
+    customers[key].orders++;
+
+  });
+
+  const customerList=Object.values(customers);
+
+  document.getElementById("customers").innerHTML=
+
+    customerList.length
+
+    ? `<table>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Orders</th>
+        </tr>
+
+        ${
+          customerList.map(c=>`<tr>
+            <td>${esc(c.name)}</td>
+            <td>${esc(c.phone)}</td>
+            <td>${esc(c.address)}</td>
+            <td>${c.orders}</td>
+          </tr>`).join("")
+        }
+
+      </table>`
+
+    : "No customers found.";
+
+  document.getElementById("payments").innerHTML=
+
+    `<table>
+      <tr>
+        <th>Order</th>
+        <th>Method</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+
+      ${
+        orderData.map(o=>`<tr>
+          <td>${esc(o.order_number || o.id)}</td>
+          <td>${esc(o.payment_method)}</td>
+          <td>${money(o.grand_total)}</td>
+          <td>${esc(o.payment_status)}</td>
+        </tr>`).join("")
+      }
+
+    </table>`;
+
+}
+
+// REFRESH DASHBOARD
+
+async function refreshAll(){
+
+  showMessage("Refreshing...");
+
+  await loadProducts();
+  await loadOrders();
+  await loadStoreSettings();
+  await loadPaymentSettings();
+
+  showMessage("Dashboard refreshed.");
+
+}
+
+// START
+
 checkAdmin();
+
 </script>
+
 </body>
 </html>
