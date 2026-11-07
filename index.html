@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101010">
+
+  <meta name="description" content="Shop premium products at MR PRODUCT. Discover fashion, beauty, electronics, watches and more.">
+
   <title>MR PRODUCT — Premium Shopping</title>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -13,7 +17,7 @@
 <!-- HEADER -->
 <header class="topbar">
 
-  <a class="brand" href="#">
+  <a class="brand" href="index.html" aria-label="MR PRODUCT Home">
     <span class="brand-mark">MR</span>
     <span>
       <b>MR PRODUCT</b>
@@ -21,6 +25,7 @@
     </span>
   </a>
 
+  <!-- SEARCH -->
   <div class="header-search">
     <input
       type="search"
@@ -28,10 +33,13 @@
       placeholder="Search products..."
       aria-label="Search products"
     >
-    <button type="button" id="search-button">⌕</button>
+    <button type="button" id="search-button" aria-label="Search">
+      ⌕
+    </button>
   </div>
 
-  <nav class="desktop-nav">
+  <!-- DESKTOP NAVIGATION -->
+  <nav class="desktop-nav" aria-label="Main navigation">
     <a href="#shop">Home</a>
     <a href="#categories">Categories</a>
     <a href="#deals">Deals</a>
@@ -40,8 +48,10 @@
     <a href="account.html">Account</a>
   </nav>
 
+  <!-- CART BUTTON -->
   <button class="cart-pill" id="cart-open" type="button">
-    🛒 Cart <span id="cart-count">0</span>
+    🛒 Cart
+    <span id="cart-count">0</span>
   </button>
 
 </header>
@@ -67,10 +77,14 @@
   <section class="sale-banner">
 
     <div class="sale-content">
-      <p class="eyebrow">MR PRODUCT SPECIAL OFFER</p>
+
+      <p class="eyebrow">
+        MR PRODUCT SPECIAL OFFER
+      </p>
 
       <h1>
-        PREMIUM SHOPPING.<br>
+        PREMIUM SHOPPING.
+        <br>
         <em>BETTER PRICES.</em>
       </h1>
 
@@ -82,6 +96,7 @@
       <a href="#shop" class="button gold-button">
         SHOP NOW →
       </a>
+
     </div>
 
     <div class="sale-decoration">
@@ -121,28 +136,42 @@
   <section class="deals-section" id="deals">
 
     <div class="section-heading">
+
       <div>
         <p class="eyebrow">SPECIAL OFFERS</p>
         <h2>⚡ Exclusive Deals</h2>
       </div>
 
-      <a href="#shop" class="view-all">View All →</a>
+      <a href="#shop" class="view-all">
+        View All →
+      </a>
+
     </div>
 
     <div class="deal-banners">
 
       <a href="#shop" class="deal-card clearance-deal">
+
         <span>✦ SPECIAL OFFER</span>
+
         <h3>Clearance Deals</h3>
+
         <p>Discover amazing prices</p>
+
         <strong>SHOP NOW →</strong>
+
       </a>
 
       <a href="#shop" class="deal-card premium-deal">
+
         <span>⚡ LIMITED OFFERS</span>
+
         <h3>Premium Collection</h3>
+
         <p>Exclusive products for you</p>
+
         <strong>EXPLORE →</strong>
+
       </a>
 
     </div>
@@ -150,13 +179,24 @@
   </section>
 
 
-  <!-- PRODUCT FILTER MENU -->
-  <section class="product-tabs">
+  <!-- PRODUCT TABS -->
+  <section class="product-tabs" aria-label="Product collections">
 
-    <a href="#shop" class="product-tab active">All Products</a>
-    <a href="#shop" class="product-tab">🔥 Deals</a>
-    <a href="#shop" class="product-tab">⭐ Best Selling</a>
-    <a href="#shop" class="product-tab">New Arrivals</a>
+    <a href="#shop" class="product-tab active">
+      All Products
+    </a>
+
+    <a href="#shop" class="product-tab">
+      🔥 Deals
+    </a>
+
+    <a href="#shop" class="product-tab">
+      ⭐ Best Selling
+    </a>
+
+    <a href="#shop" class="product-tab">
+      New Arrivals
+    </a>
 
   </section>
 
@@ -177,7 +217,12 @@
 
     </div>
 
-    <div class="product-grid" id="product-grid"></div>
+    <!-- PRODUCTS LOAD HERE -->
+    <div
+      class="product-grid"
+      id="product-grid"
+      aria-live="polite"
+    ></div>
 
   </section>
 
@@ -189,6 +234,7 @@
 
       <div>
         <p class="eyebrow">YOUR FAVORITES</p>
+
         <h2>My Wishlist ♡</h2>
 
         <p class="muted small">
@@ -206,8 +252,12 @@
 
       <div class="wishlist-empty">
         <span>♡</span>
+
         Your wishlist is empty.
-        <p>Explore products and save your favorites.</p>
+
+        <p>
+          Explore products and save your favorites.
+        </p>
       </div>
 
     </div>
@@ -218,7 +268,9 @@
   <!-- BRAND PROMISE -->
   <section class="promise" id="about">
 
-    <p class="eyebrow">THE MR PRODUCT PROMISE</p>
+    <p class="eyebrow">
+      THE MR PRODUCT PROMISE
+    </p>
 
     <h2>Quality in every detail.</h2>
 
@@ -251,12 +303,15 @@
 <!-- FOOTER -->
 <footer>
 
-  <a class="brand" href="#">
+  <a class="brand" href="index.html">
+
     <span class="brand-mark">MR</span>
+
     <span>
       <b>MR PRODUCT</b>
       <small>PREMIUM STORE</small>
     </span>
+
   </a>
 
   <span>
@@ -264,13 +319,16 @@
   </span>
 
   <a href="#wishlist">Wishlist ♡</a>
+
   <a href="track-order.html">Track Order</a>
+
+  <a href="account.html">Account</a>
 
 </footer>
 
 
 <!-- MOBILE BOTTOM NAVIGATION -->
-<nav class="mobile-bottom-nav">
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
 
   <a href="#" class="mobile-nav-item active">
     <span>⌂</span>
@@ -301,7 +359,11 @@
 
 
 <!-- CART OVERLAY -->
-<div class="overlay" id="overlay" hidden></div>
+<div
+  class="overlay"
+  id="overlay"
+  hidden
+></div>
 
 
 <!-- CART DRAWER -->
@@ -313,16 +375,24 @@
 >
 
   <div class="drawer-head">
+
     <h2>Your cart</h2>
 
     <button
       class="icon-button"
       id="cart-close"
       type="button"
-    >×</button>
+      aria-label="Close cart"
+    >
+      ×
+    </button>
+
   </div>
 
-  <div id="cart-items" class="cart-items"></div>
+  <div
+    id="cart-items"
+    class="cart-items"
+  ></div>
 
   <div class="cart-bottom">
 
@@ -345,7 +415,10 @@
 
 
 <!-- ORDER DIALOG -->
-<dialog id="order-dialog" class="order-dialog">
+<dialog
+  id="order-dialog"
+  class="order-dialog"
+>
 
   <form id="order-form">
 
@@ -360,57 +433,125 @@
         class="icon-button"
         type="button"
         id="order-close"
-      >×</button>
+        aria-label="Close order form"
+      >
+        ×
+      </button>
 
     </div>
+
 
     <p class="muted small">
       Your order total is calculated using current database prices.
       Payment is subject to manual verification.
     </p>
 
+
+    <!-- CUSTOMER NAME -->
     <label>
       Full name
-      <input name="name" required autocomplete="name">
+
+      <input
+        name="name"
+        type="text"
+        required
+        autocomplete="name"
+      >
     </label>
 
+
+    <!-- PHONE -->
     <label>
       Mobile number
-      <input name="phone" required inputmode="tel">
+
+      <input
+        name="phone"
+        type="tel"
+        required
+        inputmode="tel"
+        autocomplete="tel"
+      >
     </label>
 
+
+    <!-- WHATSAPP -->
     <label>
       WhatsApp number (optional)
-      <input name="whatsapp" inputmode="tel">
+
+      <input
+        name="whatsapp"
+        type="tel"
+        inputmode="tel"
+      >
     </label>
 
+
+    <!-- DISTRICT -->
     <label>
       District
-      <input name="district" required>
+
+      <input
+        name="district"
+        type="text"
+        required
+        autocomplete="address-level1"
+      >
     </label>
 
+
+    <!-- AREA -->
     <label>
       Area / Thana
-      <input name="area" required>
+
+      <input
+        name="area"
+        type="text"
+        required
+      >
     </label>
 
+
+    <!-- ADDRESS -->
     <label>
       Full delivery address
-      <textarea name="address" rows="3" required></textarea>
+
+      <textarea
+        name="address"
+        rows="3"
+        required
+        autocomplete="street-address"
+      ></textarea>
     </label>
 
+
+    <!-- PAYMENT -->
     <label>
       Payment method
 
       <select name="payment" required>
-        <option value="">Choose payment method</option>
-        <option value="bkash">bKash</option>
-        <option value="nagad">Nagad</option>
-        <option value="bank">Bank transfer</option>
+
+        <option value="">
+          Choose payment method
+        </option>
+
+        <option value="bkash">
+          bKash
+        </option>
+
+        <option value="nagad">
+          Nagad
+        </option>
+
+        <option value="bank">
+          Bank transfer
+        </option>
+
       </select>
 
     </label>
 
+
+    <!-- PAYMENT INFORMATION -->
     <div
       id="payment-details"
       class="payment-details"
@@ -419,20 +560,34 @@
     >
 
       <h3>Payment Information</h3>
+
       <p id="payment-info-text"></p>
 
     </div>
 
+
+    <!-- ORDER NOTE -->
     <label>
       Order note (optional)
-      <textarea name="note" rows="2"></textarea>
+
+      <textarea
+        name="note"
+        rows="2"
+      ></textarea>
     </label>
 
+
+    <!-- TOTAL -->
     <div class="total-row">
+
       <span>Subtotal</span>
+
       <b id="dialog-total">৳0</b>
+
     </div>
 
+
+    <!-- SUBMIT -->
     <button
       class="button gold-button full"
       type="submit"
@@ -440,10 +595,12 @@
       Place order
     </button>
 
+
     <p
       id="form-message"
       class="form-message"
       role="status"
+      aria-live="polite"
     ></p>
 
   </form>
@@ -451,6 +608,7 @@
 </dialog>
 
 
+<!-- JAVASCRIPT -->
 <script src="config.js"></script>
 <script src="app.js"></script>
 
