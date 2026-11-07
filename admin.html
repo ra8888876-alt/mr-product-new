@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MR PRODUCT Admin</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
@@ -34,18 +32,13 @@ input[type="color"]{height:55px;padding:5px;cursor:pointer}
 .section-note{color:#aaa;font-size:13px;line-height:1.6}
 </style>
 </head>
-
 <body>
-
 <header>
 <h1>MR PRODUCT</h1>
 <p>Admin Dashboard</p>
 </header>
-
 <main>
-
 <div id="loading" class="card">Checking admin access...</div>
-
 <div id="login" class="card hidden">
 <h2>Admin Login</h2>
 <input id="email" type="email" placeholder="Admin email">
@@ -53,138 +46,95 @@ input[type="color"]{height:55px;padding:5px;cursor:pointer}
 <button onclick="loginAdmin()">Login</button>
 <p id="loginMessage"></p>
 </div>
-
 <div id="dashboard" class="hidden">
-
 <div class="card">
 <h2 class="gold">Welcome, Admin</h2>
 
-<button onclick="logoutAdmin()">Logout</button>
-<button onclick="refreshAll()">Refresh Dashboard</button>
+Logout
+Refresh Dashboard
 
 <button onclick="location.href='admin-affiliates.html'">
 Affiliate Management
 </button>
-
 <button onclick="location.href='admin-coupons.html'">
 Coupon Management
 </button>
-
+<button onclick="location.href='admin-sales.html'">
+Sales Report
+</button>
 <p id="message"></p>
 </div>
-
 <!-- DASHBOARD -->
-
 <div class="grid">
-
 <div class="stat">
 Products
 <h2 id="productCount">0</h2>
 </div>
-
 <div class="stat">
 Orders
 <h2 id="orderCount">0</h2>
 </div>
-
 <div class="stat">
 Customers
 <h2 id="customerCount">0</h2>
 </div>
-
 <div class="stat">
 Order Value
 <h2 id="salesTotal">৳0</h2>
 </div>
-
 </div>
-
 <!-- STORE PROFILE SETTINGS -->
-
 <div class="card">
-
 <h2 class="gold">Store Profile & Branding</h2>
-
 <p class="section-note">
 Manage your store identity, contact information, logo,
 homepage banner and brand color.
 </p>
 
-<label>Store Name</label>
-<input id="storeName" type="text" maxlength="150" placeholder="MR PRODUCT">
+Store Name
+Store Description
 
-<label>Store Description</label>
 <textarea id="storeDescription" rows="4" maxlength="2000" placeholder="Write about your store..."></textarea>
 
-<label>Phone Number</label>
-<input id="storePhone" type="text" maxlength="100" placeholder="Store phone number">
-
-<label>WhatsApp Number</label>
-<input id="storeWhatsapp" type="text" maxlength="100" placeholder="WhatsApp number">
-
-<label>Email Address</label>
-<input id="storeEmail" type="email" maxlength="200" placeholder="Store email">
-
+Phone Number
+WhatsApp Number
+Email Address
 <hr style="border-color:#393126;margin:25px 0">
-
 <h3 class="gold">Store Logo</h3>
-
 <div class="upload-box">
-
 <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp">
-
 <button id="uploadLogoButton" onclick="uploadStoreImage('logo')">
 Upload Logo
 </button>
-
 <img id="logoPreview" class="preview-image hidden" alt="Store logo preview">
 
-<label>Logo Image URL</label>
-<input id="logoUrl" type="url" readonly placeholder="Uploaded logo URL">
-
+Logo Image URL
 </div>
-
 <hr style="border-color:#393126;margin:25px 0">
-
 <h3 class="gold">Homepage Banner</h3>
-
 <div class="upload-box">
-
 <input id="bannerFile" type="file" accept="image/png,image/jpeg,image/webp">
-
 <button id="uploadBannerButton" onclick="uploadStoreImage('banner')">
 Upload Banner
 </button>
-
 <img id="bannerPreview" class="preview-image hidden" alt="Store banner preview">
 
-<label>Banner Image URL</label>
-<input id="bannerUrl" type="url" readonly placeholder="Uploaded banner URL">
-
+Banner Image URL
 </div>
-
 <hr style="border-color:#393126;margin:25px 0">
-
 <h3 class="gold">Brand Color</h3>
 
-<label>Primary Color</label>
-<input id="primaryColor" type="color" value="#c6a34b">
-
+Primary Color
 <p class="section-note">Choose your store's primary brand color.</p>
 
-<button id="saveStoreButton" onclick="saveStoreSettings()">Save Store Settings</button>
-<button onclick="loadStoreSettings()">Reload Store Settings</button>
+Save Store Settings
+Reload Store Settings
 
 <p id="storeMessage" class="muted" role="status"></p>
-
 </div>
-
 <!-- ADD PRODUCT -->
-
 <div class="card">
-
 <h2 class="gold">Add New Product</h2>
-
 <input id="name" placeholder="Product name">
 <textarea id="description" placeholder="Description"></textarea>
 <input id="price" type="number" min="0.01" step="0.01" placeholder="Regular price (BDT)">
@@ -193,56 +143,43 @@ Upload Banner
 <input id="category" placeholder="Category">
 <input id="image" placeholder="Image URL">
 
-<button onclick="addProduct()">Add Product</button>
+Add Product
 
 </div>
-
 <!-- PRODUCT MANAGEMENT -->
-
 <div class="card">
 <h2 class="gold">Product Management</h2>
 <div class="table-wrap" id="products">Loading...</div>
 </div>
-
 <!-- ORDER MANAGEMENT -->
-
 <div class="card">
 <h2 class="gold">Order Management</h2>
 <button onclick="loadOrders()">Refresh Orders</button>
 <div class="table-wrap" id="orders">Loading orders...</div>
 </div>
-
 <!-- PAYMENT SETTINGS -->
-
 <div class="card">
-
 <h2 class="gold">Payment Settings</h2>
-
 <p class="muted">
 Set your payment details once. Customers can use these details when placing orders.
 </p>
 
-<label>bKash Number</label>
-<input id="bkashNumber" type="text" maxlength="100" placeholder="Enter bKash number">
+bKash Number
+Nagad Number
+Bank Details
 
-<label>Nagad Number</label>
-<input id="nagadNumber" type="text" maxlength="100" placeholder="Enter Nagad number">
-
-<label>Bank Details</label>
 <textarea id="bankDetails" rows="4" maxlength="2000" placeholder="Bank name, account name, account number, branch"></textarea>
 
-<label>Payment Instructions</label>
+Payment Instructions
+
 <textarea id="paymentInstructions" rows="4" maxlength="2000" placeholder="Write payment instructions for customers"></textarea>
 
-<button id="savePaymentButton" onclick="savePaymentSettings()">Save Payment Settings</button>
-<button onclick="loadPaymentSettings()">Reload Settings</button>
+Save Payment Settings
+Reload Settings
 
 <p id="paymentMessage" class="muted" role="status"></p>
-
 </div>
-
 <!-- PAYMENT OVERVIEW -->
-
 <div class="card">
 <h2 class="gold">Payment Overview</h2>
 <p class="muted">
@@ -250,40 +187,29 @@ Payment status is manually managed. This does not verify whether money was actua
 </p>
 <div class="table-wrap" id="payments">Loading...</div>
 </div>
-
 <!-- CUSTOMER OVERVIEW -->
-
 <div class="card">
 <h2 class="gold">Customer Overview</h2>
 <div class="table-wrap" id="customers">Loading...</div>
 </div>
-
 </div>
 </main>
-
 <script>
-
 const cfg = window.MR_PRODUCT_CONFIG;
-
 if(!cfg || !cfg.supabaseUrl || !cfg.publishableKey){
   alert("Supabase configuration is missing. Check config.js.");
 }
-
 const db = window.supabase.createClient(
   cfg.supabaseUrl,
   cfg.publishableKey
 );
-
 // GENERAL FUNCTIONS
-
 function showMessage(text){
   document.getElementById("message").textContent=text;
 }
-
 function money(value){
   return "৳" + Number(value || 0).toLocaleString("en-BD");
 }
-
 function esc(value){
   return String(value ?? "").replace(/[&<>"']/g,c=>({
     "&":"&amp;",
@@ -293,94 +219,66 @@ function esc(value){
     "'":"&#39;"
   }[c]));
 }
-
 // ADMIN AUTHENTICATION
-
 async function checkAdmin(){
-
   const {data:{session}}=await db.auth.getSession();
-
   if(!session){
     showLogin();
     return;
   }
-
   const {data,error}=await db.from("admin_users")
     .select("user_id")
     .eq("user_id",session.user.id)
     .eq("is_active",true)
     .maybeSingle();
-
   if(error || !data){
     await db.auth.signOut();
     showLogin();
     return;
   }
-
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("login").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
-
   await refreshAll();
 }
-
 function showLogin(){
-
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("dashboard").classList.add("hidden");
   document.getElementById("login").classList.remove("hidden");
-
 }
-
 async function loginAdmin(){
-
   document.getElementById("loginMessage").textContent="Checking...";
-
   const {error}=await db.auth.signInWithPassword({
     email:document.getElementById("email").value.trim(),
     password:document.getElementById("password").value
   });
-
   if(error){
     document.getElementById("loginMessage").textContent="Login failed.";
     return;
   }
-
   await checkAdmin();
 }
-
 async function logoutAdmin(){
   await db.auth.signOut();
   location.reload();
 }
-
 // EDGE FUNCTION API
-
 async function api(functionName,method,body){
-
   const {data,error}=await db.functions.invoke(functionName,{
     method,
     body
   });
-
   if(error) throw error;
   if(data?.error) throw new Error(data.error);
-
   return data;
 }
-
 // STORE PROFILE SETTINGS
-
 async function loadStoreSettings(){
-
   const message=document.getElementById("storeMessage");
   message.textContent="Loading store settings...";
-
   try{
-
     const result=await api("admin-settings","GET");
     const s=result.settings || {};
-
     document.getElementById("storeName").value=s.store_name || "";
     document.getElementById("storeDescription").value=s.description || "";
     document.getElementById("storePhone").value=s.phone || "";
@@ -388,28 +286,21 @@ async function loadStoreSettings(){
     document.getElementById("storeEmail").value=s.email || "";
     document.getElementById("logoUrl").value=s.logo_url || "";
     document.getElementById("bannerUrl").value=s.banner_url || "";
-
     document.getElementById("primaryColor").value=
       /^#[0-9a-fA-F]{6}$/.test(s.primary_color || "")
       ? s.primary_color
       : "#c6a34b";
-
     showImagePreview("logo",s.logo_url);
     showImagePreview("banner",s.banner_url);
-
     message.textContent="Store settings loaded successfully.";
-
   }catch(e){
     message.textContent="Could not load store settings: "+e.message;
   }
 }
-
 function showImagePreview(type,url){
-
   const img=document.getElementById(
     type==="logo" ? "logoPreview":"bannerPreview"
   );
-
   if(url){
     img.src=url;
     img.classList.remove("hidden");
@@ -418,60 +309,43 @@ function showImagePreview(type,url){
     img.classList.add("hidden");
   }
 }
-
 // IMAGE UPLOAD
-
 async function uploadStoreImage(type){
-
   const isLogo=type==="logo";
-
   const fileInput=document.getElementById(
     isLogo ? "logoFile":"bannerFile"
   );
-
   const button=document.getElementById(
     isLogo ? "uploadLogoButton":"uploadBannerButton"
   );
-
   const message=document.getElementById("storeMessage");
   const file=fileInput.files[0];
-
   if(!file){
     message.textContent="Please select an image first.";
     return;
   }
-
   const allowedTypes=["image/jpeg","image/png","image/webp"];
-
   if(!allowedTypes.includes(file.type)){
     message.textContent="Only JPG, PNG and WEBP images are allowed.";
     return;
   }
-
   if(file.size>5*1024*1024){
     message.textContent="Image size must be 5 MB or less.";
     return;
   }
-
   button.disabled=true;
   button.textContent="Uploading...";
   message.textContent="Uploading image...";
-
   try{
-
     const {data:{session}}=await db.auth.getSession();
-
     if(!session){
       throw new Error("Please login again.");
     }
-
     const extension=file.type==="image/jpeg"
       ? "jpg"
       : file.type.split("/")[1];
-
     const filePath=
       type+"/"+Date.now()+"-"+crypto.randomUUID()+"."+extension;
-
     const {data,error}=await db.storage
       .from("store-assets")
       .upload(filePath,file,{
@@ -479,46 +353,32 @@ async function uploadStoreImage(type){
         upsert:false,
         contentType:file.type
       });
-
     if(error) throw error;
-
     const {data:publicData}=db.storage
       .from("store-assets")
       .getPublicUrl(data.path);
-
     const url=publicData.publicUrl;
-
     if(isLogo){
       document.getElementById("logoUrl").value=url;
     }else{
       document.getElementById("bannerUrl").value=url;
     }
-
     showImagePreview(type,url);
     fileInput.value="";
-
     message.textContent=
       (isLogo ? "Logo":"Banner")+" uploaded successfully. Now save Store Settings.";
-
   }catch(e){
     message.textContent="Upload failed: "+e.message;
   }finally{
-
     button.disabled=false;
     button.textContent=isLogo ? "Upload Logo":"Upload Banner";
-
   }
 }
-
 // SAVE STORE SETTINGS
-
 async function saveStoreSettings(){
-
   const button=document.getElementById("saveStoreButton");
   const message=document.getElementById("storeMessage");
-
   const payload={
-
     store_name:document.getElementById("storeName").value.trim(),
     description:document.getElementById("storeDescription").value.trim(),
     phone:document.getElementById("storePhone").value.trim(),
@@ -527,153 +387,106 @@ async function saveStoreSettings(){
     logo_url:document.getElementById("logoUrl").value.trim(),
     banner_url:document.getElementById("bannerUrl").value.trim(),
     primary_color:document.getElementById("primaryColor").value
-
   };
-
   if(!payload.store_name){
     message.textContent="Store name is required.";
     return;
   }
-
   if(payload.store_name.length>150 ||
      payload.description.length>2000 ||
      payload.phone.length>100 ||
      payload.whatsapp.length>100 ||
      payload.email.length>200){
-
     message.textContent="One or more fields are too long.";
     return;
   }
-
   if(!confirm("Save Store Profile Settings?"))return;
-
   button.disabled=true;
   button.textContent="Saving...";
   message.textContent="Saving store settings...";
-
   try{
-
     await api("admin-settings","PATCH",payload);
-
     message.textContent="Store settings saved successfully.";
     alert("Store settings saved successfully.");
-
   }catch(e){
     message.textContent="Save failed: "+e.message;
   }finally{
-
     button.disabled=false;
     button.textContent="Save Store Settings";
-
   }
 }
-
 // PAYMENT SETTINGS
-
 async function loadPaymentSettings(){
-
   const message=document.getElementById("paymentMessage");
   message.textContent="Loading payment settings...";
-
   try{
-
     const result=await api("admin-settings","GET");
     const settings=result.settings || {};
-
     document.getElementById("bkashNumber").value=settings.bkash_number || "";
     document.getElementById("nagadNumber").value=settings.nagad_number || "";
     document.getElementById("bankDetails").value=settings.bank_details || "";
     document.getElementById("paymentInstructions").value=settings.payment_instructions || "";
-
     message.textContent="Payment settings loaded.";
-
   }catch(e){
     message.textContent="Could not load settings: "+e.message;
   }
 }
-
 async function savePaymentSettings(){
-
   const button=document.getElementById("savePaymentButton");
   const message=document.getElementById("paymentMessage");
-
   const payload={
-
     bkash_number:document.getElementById("bkashNumber").value.trim(),
     nagad_number:document.getElementById("nagadNumber").value.trim(),
     bank_details:document.getElementById("bankDetails").value.trim(),
     payment_instructions:document.getElementById("paymentInstructions").value.trim()
-
   };
-
   if(
     payload.bkash_number.length>100 ||
     payload.nagad_number.length>100 ||
     payload.bank_details.length>2000 ||
     payload.payment_instructions.length>2000
   ){
-
     message.textContent="One or more fields are too long.";
     return;
   }
-
   if(!confirm("Save these payment settings?"))return;
-
   button.disabled=true;
   button.textContent="Saving...";
   message.textContent="Saving payment settings...";
-
   try{
-
     await api("admin-settings","PATCH",payload);
-
     message.textContent="Payment settings saved successfully.";
     alert("Payment settings saved.");
-
   }catch(e){
     message.textContent="Save failed: "+e.message;
   }finally{
-
     button.disabled=false;
     button.textContent="Save Payment Settings";
-
   }
 }
-
 // PRODUCTS
-
 async function loadProducts(){
-
   const box=document.getElementById("products");
   box.textContent="Loading products...";
-
   try{
-
     const result=await api("admin-products","GET");
     const list=result.products || [];
-
     document.getElementById("productCount").textContent=list.length;
-
     if(!list.length){
       box.textContent="No products found.";
       return;
     }
-
     let html="<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr>";
-
     list.forEach(p=>{
-
       const price=Number(p.discount_price)>0 &&
         Number(p.discount_price)<Number(p.price)
         ? p.discount_price
         : p.price;
-
       html+=`<tr>
         <td>${esc(p.name)}</td>
         <td>${money(price)}</td>
         <td>${esc(p.stock)}</td>
         <td>
-
           <button class="edit-btn"
             data-id="${esc(p.id)}"
             data-name="${esc(p.name)}"
@@ -682,23 +495,16 @@ async function loadProducts(){
             data-stock="${Number(p.stock)}">
             Edit
           </button>
-
           <button class="danger delete-btn"
             data-id="${esc(p.id)}">
             Hide
           </button>
-
         </td>
       </tr>`;
-
     });
-
     box.innerHTML=html+"</table>";
-
     box.querySelectorAll(".edit-btn").forEach(button=>{
-
       button.addEventListener("click",()=>{
-
         editProduct(
           button.dataset.id,
           button.dataset.name,
@@ -706,50 +512,35 @@ async function loadProducts(){
           Number(button.dataset.discount),
           Number(button.dataset.stock)
         );
-
       });
-
     });
-
     box.querySelectorAll(".delete-btn").forEach(button=>{
-
       button.addEventListener("click",()=>{
         deleteProduct(button.dataset.id);
       });
-
     });
-
   }catch(e){
     box.textContent="Could not load products: "+e.message;
   }
 }
-
 async function addProduct(){
-
   try{
-
     const name=document.getElementById("name").value.trim();
     const price=Number(document.getElementById("price").value);
     const discount=document.getElementById("discount").value;
     const stock=Number(document.getElementById("stock").value);
-
     if(!name || !Number.isFinite(price) || price<=0 ||
        !Number.isInteger(stock) || stock<0){
-
       alert("Enter valid product information.");
       return;
     }
-
     if(discount!=="" &&
       (!Number.isFinite(Number(discount)) ||
        Number(discount)<=0 || Number(discount)>=price)){
-
       alert("Discount must be less than regular price.");
       return;
     }
-
     await api("admin-products","POST",{
-
       name,
       description:document.getElementById("description").value,
       price,
@@ -757,121 +548,82 @@ async function addProduct(){
       stock,
       category:document.getElementById("category").value,
       image_url:document.getElementById("image").value
-
     });
-
     alert("Product added.");
-
     [
       "name","description","price","discount",
       "stock","category","image"
     ].forEach(id=>document.getElementById(id).value="");
-
     await loadProducts();
-
   }catch(e){
     alert("Could not add product: "+e.message);
   }
 }
-
 async function editProduct(id,name,price,discount,stock){
-
   const newName=prompt("Product name:",name);
   if(newName===null)return;
-
   const newPrice=prompt("Regular price:",price);
   if(newPrice===null)return;
-
   const newDiscount=prompt("Discount price (0 for none):",discount);
   if(newDiscount===null)return;
-
   const newStock=prompt("Stock quantity:",stock);
   if(newStock===null)return;
-
   const p=Number(newPrice);
   const d=Number(newDiscount);
   const s=Number(newStock);
-
   if(!newName.trim() || !Number.isFinite(p) || p<=0 ||
      !Number.isFinite(d) || d<0 || (d>0 && d>=p) ||
      !Number.isInteger(s) || s<0){
-
     alert("Invalid product information.");
     return;
   }
-
   try{
-
     await api("admin-products","PATCH",{
-
       id,
       name:newName.trim(),
       price:p,
       discount_price:d===0?null:d,
       stock:s
-
     });
-
     alert("Product updated.");
     await loadProducts();
-
   }catch(e){
     alert("Update failed: "+e.message);
   }
 }
-
 async function deleteProduct(id){
-
   if(!confirm("Hide this product from the store?"))return;
-
   try{
-
     await api("admin-products","DELETE",{id});
-
     alert("Product hidden.");
     await loadProducts();
-
   }catch(e){
     alert("Delete failed: "+e.message);
   }
 }
-
 // ORDERS
-
 let orderData=[];
-
 async function loadOrders(){
-
   const box=document.getElementById("orders");
   box.textContent="Loading orders...";
-
   try{
-
     const result=await api("admin-orders","GET");
     orderData=result.orders || [];
-
     document.getElementById("orderCount").textContent=orderData.length;
-
     const customers=new Set();
     let total=0;
-
     orderData.forEach(o=>{
       if(o.customer_id)customers.add(o.customer_id);
       total+=Number(o.grand_total || 0);
     });
-
     document.getElementById("customerCount").textContent=customers.size;
     document.getElementById("salesTotal").textContent=money(total);
-
     if(!orderData.length){
-
       box.textContent="No orders found.";
       document.getElementById("payments").textContent="No payment records.";
       document.getElementById("customers").textContent="No customers found.";
-
       return;
     }
-
     let html=`<table>
       <tr>
         <th>Order</th>
@@ -882,33 +634,24 @@ async function loadOrders(){
         <th>Payment</th>
         <th>Update</th>
       </tr>`;
-
     orderData.forEach(o=>{
-
       const customer=o.customers || {};
       const items=o.order_items || [];
-
       const itemText=items.map(i=>
         `${esc(i.product_name)} × ${esc(i.quantity)}`
       ).join("<br>");
-
       html+=`<tr>
-
         <td>
           <b>${esc(o.order_number || o.id)}</b><br>
           <small>${esc(o.created_at || "")}</small>
         </td>
-
         <td>
           ${esc(customer.name)}<br>
           ${esc(customer.phone)}<br>
           ${esc(customer.address)}
         </td>
-
         <td>${itemText || "No items"}</td>
-
         <td>${money(o.grand_total)}</td>
-
         <td>
           <select class="status order-status" data-id="${esc(o.id)}">
             ${statusOptions(
@@ -917,7 +660,6 @@ async function loadOrders(){
             )}
           </select>
         </td>
-
         <td>
           <select class="status payment-status" data-id="${esc(o.id)}">
             ${statusOptions(
@@ -926,99 +668,66 @@ async function loadOrders(){
             )}
           </select>
         </td>
-
         <td>
           <button class="save-order" data-id="${esc(o.id)}">Save</button>
         </td>
-
       </tr>`;
-
     });
-
     box.innerHTML=html+"</table>";
-
     box.querySelectorAll(".save-order").forEach(button=>{
       button.addEventListener("click",()=>{
         updateOrder(button.dataset.id);
       });
     });
-
     loadCustomerAndPaymentViews();
-
   }catch(e){
     box.textContent="Could not load orders: "+e.message;
   }
 }
-
 function statusOptions(values,current){
-
   return values.map(v=>
     `<option value="${v}" ${v===current?"selected":""}>${v}</option>`
   ).join("");
-
 }
-
 async function updateOrder(id){
-
   const button=document.querySelector(
     `.save-order[data-id="${CSS.escape(id)}"]`
   );
-
   if(!button)return;
-
   const row=button.closest("tr");
-
   const order_status=row.querySelector(".order-status").value;
   const payment_status=row.querySelector(".payment-status").value;
-
   if(!confirm("Update this order and payment status?"))return;
-
   try{
-
     await api("admin-orders","PATCH",{
       id,
       order_status,
       payment_status
     });
-
     alert("Order updated.");
     await loadOrders();
-
   }catch(e){
     alert("Could not update order: "+e.message);
   }
 }
-
 function loadCustomerAndPaymentViews(){
-
   const customers={};
-
   orderData.forEach(o=>{
-
     const c=o.customers || {};
     const key=o.customer_id || o.id;
-
     if(!customers[key]){
-
       customers[key]={ 
         name:c.name || "Unknown",
         phone:c.phone || "",
         address:c.address || "",
         orders:0
       };
-
     }
-
     customers[key].orders++;
-
   });
-
   const customerList=Object.values(customers);
-
   document.getElementById("customers").innerHTML=
-
     customerList.length
-
     ? `<table>
         <tr>
           <th>Name</th>
@@ -1026,7 +735,6 @@ function loadCustomerAndPaymentViews(){
           <th>Address</th>
           <th>Orders</th>
         </tr>
-
         ${
           customerList.map(c=>`<tr>
             <td>${esc(c.name)}</td>
@@ -1035,13 +743,9 @@ function loadCustomerAndPaymentViews(){
             <td>${c.orders}</td>
           </tr>`).join("")
         }
-
       </table>`
-
     : "No customers found.";
-
   document.getElementById("payments").innerHTML=
-
     `<table>
       <tr>
         <th>Order</th>
@@ -1049,7 +753,6 @@ function loadCustomerAndPaymentViews(){
         <th>Amount</th>
         <th>Status</th>
       </tr>
-
       ${
         orderData.map(o=>`<tr>
           <td>${esc(o.order_number || o.id)}</td>
@@ -1058,31 +761,19 @@ function loadCustomerAndPaymentViews(){
           <td>${esc(o.payment_status)}</td>
         </tr>`).join("")
       }
-
     </table>`;
-
 }
-
 // REFRESH DASHBOARD
-
 async function refreshAll(){
-
   showMessage("Refreshing...");
-
   await loadProducts();
   await loadOrders();
   await loadStoreSettings();
   await loadPaymentSettings();
-
   showMessage("Dashboard refreshed.");
-
 }
-
 // START
-
 checkAdmin();
-
 </script>
-
 </body>
 </html>
