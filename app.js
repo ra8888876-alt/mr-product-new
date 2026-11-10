@@ -6,7 +6,10 @@ const SUPABASE_KEY = CONFIG.publishableKey || "";
 const $ = (selector) => document.querySelector(selector);
 
 const money = (amount) =>
-  "৳" + Number(amount || 0).toLocaleString("en-BD");
+  "৳" + Number(amount || 0).toLocaleString("en-BD", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
 
 const escapeHTML = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -23,8 +26,45 @@ let paymentSettings = null;
 let storeSettings = null;
 let searchTerm = "";
 
-// COUPON STATE
 let appliedCoupon = null;
+
+let repeatDiscount = {
+  previous_delivered_orders: 0,
+  repeat_percent: 0,
+  repeat_discount: 0
+};
+
+let repeatPreviewTimer = null;
+let repeatPreviewRequest = 0;
+
+// =====================================
+// API HELPER
+// =====================================
+
+async function postOrderAction(payload) {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/place-order`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.error || "Request could not be completed."
+    );
+  }
+
+  return result;
+}
 
 // =====================================
 // WISHLIST
@@ -38,7 +78,10 @@ function loadWishlist() {
       localStorage.getItem(WISHLIST_KEY) || "[]"
     );
 
-    return Array.isArray(saved) ? saved.map(String) : [];
+    return Array.isArray(saved)
+      ? saved.map(String)
+      : [];
+
   } catch {
     return [];
   }
@@ -89,29 +132,220 @@ function getCartSubtotal() {
 }
 
 // =====================================
-// COUPON DISPLAY
+// DISCOUNT TOTALS
 // =====================================
+
+function getCouponDiscount() {
+  return Math.min(
+    getCartSubtotal(),
+    Math.max(0, Number(appliedCoupon?.discount || 0))
+  );
+}
+
+function getRepeatDiscount() {
+  return Math.min(
+    Math.max(0, getCartSubtotal() - getCouponDiscount()),
+    Math.max(0, Number(repeatDiscount.repeat_discount || 0))
+  );
+}
 
 function updateCouponTotals() {
   const subtotal = getCartSubtotal();
+  const couponDiscount = getCouponDiscount();
+  const repeat = getRepeatDiscount();
 
-  const discount = appliedCoupon
-    ? Number(appliedCoupon.discount || 0)
-    : 0;
+  const totalDiscount = Math.min(
+    subtotal,
+    couponDiscount + repeat
+  );
 
-  const total = Math.max(0, subtotal - discount);
+  const total = Math.max(
+    0,
+    subtotal - totalDiscount
+  );
 
   if ($("#dialog-total")) {
     $("#dialog-total").textContent = money(subtotal);
   }
 
   if ($("#dialog-discount")) {
-    $("#dialog-discount").textContent = money(discount);
+    $("#dialog-discount").textContent =
+      money(couponDiscount);
+  }
+
+  if ($("#dialog-repeat-discount")) {
+    $("#dialog-repeat-discount").textContent =
+      money(repeat);
+  }
+
+  if ($("#dialog-total-discount")) {
+    $("#dialog-total-discount").textContent =
+      money(totalDiscount);
   }
 
   if ($("#dialog-grand-total")) {
-    $("#dialog-grand-total").textContent = money(total);
+    $("#dialog-grand-total").textContent =
+      money(total);
   }
+
+  if ($("#repeat-order-count")) {
+    $("#repeat-order-count").textContent =
+      Number(
+        repeatDiscount.previous_delivered_orders || 0
+      );
+  }
+
+  if ($("#repeat-discount-percent")) {
+    $("#repeat-discount-percent").textContent =
+      Number(repeatDiscount.repeat_percent || 0);
+  }
+}
+
+// =====================================
+// RESET REPEAT DISCOUNT
+// =====================================
+
+function resetRepeatDiscount(message = "") {
+  repeatPreviewRequest++;
+
+  repeatDiscount = {
+    previous_delivered_orders: 0,
+    repeat_percent: 0,
+    repeat_discount: 0
+  };
+
+  if ($("#repeat-discount-message")) {
+    $("#repeat-discount-message").textContent =
+      message ||
+      "Enter your delivery details to check your reward.";
+  }
+
+  updateCouponTotals();
+}
+
+// =====================================
+// GET CHECKOUT CUSTOMER
+// =====================================
+
+function getCheckoutCustomer() {
+  const form = $("#order-form");
+
+  if (!form) return null;
+
+  const formData = new FormData(form);
+
+  return {
+    name: String(formData.get("name") || "").trim(),
+    phone: String(formData.get("phone") || "").trim(),
+    whatsapp: String(formData.get("whatsapp") || "").trim(),
+    district: String(formData.get("district") || "").trim(),
+    area: String(formData.get("area") || "").trim(),
+    address: String(formData.get("address") || "").trim()
+  };
+}
+
+// =====================================
+// REPEAT CUSTOMER DISCOUNT PREVIEW
+// =====================================
+
+async function previewRepeatDiscount() {
+  if (!cart.length) {
+    resetRepeatDiscount();
+    return;
+  }
+
+  const customer = getCheckoutCustomer();
+
+  if (
+    !customer ||
+    !customer.phone ||
+    !customer.district ||
+    !customer.area ||
+    !customer.address
+  ) {
+    resetRepeatDiscount(
+      "Complete your phone number and delivery address to check your reward."
+    );
+
+    return;
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    resetRepeatDiscount(
+      "Discount service is currently unavailable."
+    );
+
+    return;
+  }
+
+  const requestNumber = ++repeatPreviewRequest;
+
+  if ($("#repeat-discount-message")) {
+    $("#repeat-discount-message").textContent =
+      "Checking your previous delivered orders...";
+  }
+
+  try {
+    const result = await postOrderAction({
+      action: "preview_repeat_discount",
+      customer,
+      subtotal: getCartSubtotal(),
+      coupon_discount: getCouponDiscount()
+    });
+
+    if (requestNumber !== repeatPreviewRequest) {
+      return;
+    }
+
+    if (result.ok !== true) {
+      throw new Error(
+        result.error || "Could not check repeat discount."
+      );
+    }
+
+    repeatDiscount = {
+      previous_delivered_orders: Number(
+        result.previous_delivered_orders || 0
+      ),
+      repeat_percent: Number(
+        result.repeat_percent || 0
+      ),
+      repeat_discount: Number(
+        result.repeat_discount || 0
+      )
+    };
+
+    if ($("#repeat-discount-message")) {
+      if (repeatDiscount.repeat_percent > 0) {
+        $("#repeat-discount-message").textContent =
+          `Congratulations! You have ${repeatDiscount.repeat_percent}% repeat customer discount.`;
+      } else {
+        $("#repeat-discount-message").textContent =
+          "Your next repeat customer reward is waiting. Keep shopping with MR PRODUCT!";
+      }
+    }
+
+    updateCouponTotals();
+
+  } catch (error) {
+    console.error("Repeat discount preview error:", error);
+
+    if (requestNumber !== repeatPreviewRequest) {
+      return;
+    }
+
+    resetRepeatDiscount(
+      "Unable to check your reward right now. Your order can still be submitted."
+    );
+  }
+}
+
+function scheduleRepeatPreview() {
+  clearTimeout(repeatPreviewTimer);
+
+  repeatPreviewTimer = setTimeout(() => {
+    previewRepeatDiscount();
+  }, 650);
 }
 
 // =====================================
@@ -134,6 +368,7 @@ function clearAppliedCoupon(showMessage = false) {
   }
 
   updateCouponTotals();
+  scheduleRepeatPreview();
 }
 
 // =====================================
@@ -160,7 +395,8 @@ async function applyCoupon() {
   }
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    message.textContent = "Store database is not configured.";
+    message.textContent =
+      "Store database is not configured.";
     return;
   }
 
@@ -168,26 +404,13 @@ async function applyCoupon() {
   message.textContent = "Checking coupon...";
 
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/place-order`,
-      {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          action: "validate_coupon",
-          coupon_code: code,
-          subtotal: getCartSubtotal()
-        })
-      }
-    );
+    const result = await postOrderAction({
+      action: "validate_coupon",
+      coupon_code: code,
+      subtotal: getCartSubtotal()
+    });
 
-    const result = await response.json();
-
-    if (!response.ok || result.ok !== true) {
+    if (result.ok !== true) {
       throw new Error(
         result.error || "Coupon could not be applied."
       );
@@ -202,6 +425,7 @@ async function applyCoupon() {
       `Coupon ${result.coupon_code} applied successfully! You saved ${money(result.discount)}.`;
 
     updateCouponTotals();
+    scheduleRepeatPreview();
 
   } catch (error) {
     appliedCoupon = null;
@@ -216,16 +440,22 @@ async function applyCoupon() {
 }
 
 if ($("#apply-coupon")) {
-  $("#apply-coupon").addEventListener("click", applyCoupon);
+  $("#apply-coupon").addEventListener(
+    "click",
+    applyCoupon
+  );
 }
 
 if ($("#coupon-code")) {
-  $("#coupon-code").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      applyCoupon();
+  $("#coupon-code").addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyCoupon();
+      }
     }
-  });
+  );
 }
 
 // =====================================
@@ -248,7 +478,9 @@ async function loadStoreSettings() {
     );
 
     if (!response.ok) {
-      throw new Error("Could not load store settings.");
+      throw new Error(
+        "Could not load store settings."
+      );
     }
 
     const result = await response.json();
@@ -269,50 +501,64 @@ async function loadStoreSettings() {
 // =====================================
 
 function applyStoreBranding(settings) {
-
   if (settings.store_name) {
     const storeName = settings.store_name.trim();
 
     document.title = `${storeName} — Premium Store`;
 
-    document.querySelectorAll(".brand b").forEach((element) => {
-      element.textContent = storeName;
-    });
+    document.querySelectorAll(".brand b").forEach(
+      (element) => {
+        element.textContent = storeName;
+      }
+    );
 
-    const footerText = document.querySelector("footer > span");
+    const footerText = document.querySelector(
+      "footer > span"
+    );
 
     if (footerText) {
       footerText.innerHTML =
-        `© <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
+        `©️ <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
     }
   }
 
   if (settings.logo_url) {
-    document.querySelectorAll(".brand-mark").forEach((element) => {
-      element.innerHTML = "";
+    document.querySelectorAll(".brand-mark").forEach(
+      (element) => {
+        element.innerHTML = "";
 
-      const image = document.createElement("img");
+        const image = document.createElement("img");
 
-      image.src = settings.logo_url;
-      image.alt = settings.store_name || "Store Logo";
+        image.src = settings.logo_url;
+        image.alt = settings.store_name || "Store Logo";
 
-      image.style.width = "100%";
-      image.style.height = "100%";
-      image.style.objectFit = "contain";
-      image.style.display = "block";
+        image.style.width = "100%";
+        image.style.height = "100%";
+        image.style.objectFit = "contain";
+        image.style.display = "block";
 
-      element.appendChild(image);
-    });
+        element.appendChild(image);
+      }
+    );
   }
 
   if (settings.primary_color) {
     const color = settings.primary_color.trim();
 
     if (/^#[0-9a-fA-F]{6}$/.test(color)) {
-      document.documentElement.style.setProperty("--gold", color);
-      document.documentElement.style.setProperty("--primary-color", color);
+      document.documentElement.style.setProperty(
+        "--gold",
+        color
+      );
 
-      const themeColor = $('meta[name="theme-color"]');
+      document.documentElement.style.setProperty(
+        "--primary-color",
+        color
+      );
+
+      const themeColor = $(
+        'meta[name="theme-color"]'
+      );
 
       if (themeColor) {
         themeColor.content = color;
@@ -358,19 +604,25 @@ function applyStoreBranding(settings) {
   if (settings.description) {
     const description = settings.description.trim();
 
-    const saleDescription = $(".sale-content p:not(.eyebrow)");
+    const saleDescription = $(
+      ".sale-content p:not(.eyebrow)"
+    );
 
     if (saleDescription) {
       saleDescription.textContent = description;
     }
 
-    const heroDescription = $(".hero-copy > p:not(.eyebrow)");
+    const heroDescription = $(
+      ".hero-copy > p:not(.eyebrow)"
+    );
 
     if (heroDescription) {
       heroDescription.textContent = description;
     }
 
-    const aboutDescription = $("#about > p:not(.eyebrow)");
+    const aboutDescription = $(
+      "#about > p:not(.eyebrow)"
+    );
 
     if (aboutDescription) {
       aboutDescription.textContent = description;
@@ -380,7 +632,8 @@ function applyStoreBranding(settings) {
   const contactSection = $("#contact");
 
   if (contactSection) {
-    const contactParagraph = contactSection.querySelector("div + p");
+    const contactParagraph =
+      contactSection.querySelector("div + p");
 
     if (contactParagraph) {
       const contactItems = [];
@@ -389,12 +642,15 @@ function applyStoreBranding(settings) {
         contactItems.push({
           label: "Phone",
           value: settings.phone,
-          href: "tel:" + settings.phone.replace(/[^\d+]/g, "")
+          href:
+            "tel:" +
+            settings.phone.replace(/[^\d+]/g, "")
         });
       }
 
       if (settings.whatsapp) {
-        const number = settings.whatsapp.replace(/\D/g, "");
+        const number =
+          settings.whatsapp.replace(/\D/g, "");
 
         contactItems.push({
           label: "WhatsApp",
@@ -412,20 +668,21 @@ function applyStoreBranding(settings) {
       }
 
       if (contactItems.length) {
-        contactParagraph.innerHTML = contactItems.map((item) => `
-          <div style="margin:10px 0">
-            <strong style="color:var(--gold)">
-              ${escapeHTML(item.label)}:
-            </strong>
+        contactParagraph.innerHTML =
+          contactItems.map((item) => `
+            <div style="margin:10px 0">
+              <strong style="color:var(--gold)">
+                ${escapeHTML(item.label)}:
+              </strong>
 
-            <a
-              href="${escapeHTML(item.href)}"
-              style="color:var(--cream);text-decoration:underline"
-            >
-              ${escapeHTML(item.value)}
-            </a>
-          </div>
-        `).join("");
+              <a
+                href="${escapeHTML(item.href)}"
+                style="color:var(--cream);text-decoration:underline"
+              >
+                ${escapeHTML(item.value)}
+              </a>
+            </div>
+          `).join("");
       }
     }
   }
@@ -441,7 +698,9 @@ async function loadProducts() {
   if (!grid) return;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    grid.textContent = "Store database is not configured.";
+    grid.textContent =
+      "Store database is not configured.";
+
     return;
   }
 
@@ -468,7 +727,10 @@ async function loadProducts() {
     renderWishlist();
 
   } catch (error) {
-    console.error("Product loading error:", error);
+    console.error(
+      "Product loading error:",
+      error
+    );
 
     grid.textContent =
       "Products could not be loaded. Please try again later.";
@@ -518,7 +780,7 @@ function createProductCard(product, isWishlist = false) {
               aria-label="${saved ? "Remove from wishlist" : "Add to wishlist"}"
               aria-pressed="${saved}"
             >
-              ${saved ? "♥" : "♡"}
+              ${saved ? "♥️" : "♡"}
             </button>
           `
           : ""
@@ -590,15 +852,19 @@ function renderProducts() {
 
   if (!grid) return;
 
-  const filteredProducts = products.filter((product) => {
-    const searchText = [
-      product.name,
-      product.description,
-      product.category
-    ].join(" ").toLowerCase();
+  const filteredProducts = products.filter(
+    (product) => {
+      const searchText = [
+        product.name,
+        product.description,
+        product.category
+      ].join(" ").toLowerCase();
 
-    return searchText.includes(searchTerm.toLowerCase());
-  });
+      return searchText.includes(
+        searchTerm.toLowerCase()
+      );
+    }
+  );
 
   if (!filteredProducts.length) {
     grid.innerHTML = `
@@ -607,6 +873,7 @@ function renderProducts() {
         <p>Try another search.</p>
       </div>
     `;
+
     return;
   }
 
@@ -657,11 +924,13 @@ function renderWishlist() {
 
   if (!grid || !count) return;
 
-  const savedProducts = products.filter((product) =>
-    wishlist.includes(String(product.id))
+  const savedProducts = products.filter(
+    (product) =>
+      wishlist.includes(String(product.id))
   );
 
-  count.textContent = `${savedProducts.length} Saved`;
+  count.textContent =
+    `${savedProducts.length} Saved`;
 
   if (!savedProducts.length) {
     grid.innerHTML = `
@@ -676,7 +945,9 @@ function renderWishlist() {
   }
 
   grid.innerHTML = savedProducts
-    .map((product) => createProductCard(product, true))
+    .map((product) =>
+      createProductCard(product, true)
+    )
     .join("");
 }
 
@@ -688,7 +959,9 @@ function toggleWishlist(id) {
   id = String(id);
 
   if (wishlist.includes(id)) {
-    wishlist = wishlist.filter((item) => item !== id);
+    wishlist = wishlist.filter(
+      (item) => item !== id
+    );
   } else {
     wishlist.push(id);
   }
@@ -701,21 +974,29 @@ const wishlistGrid = $("#wishlist-grid");
 
 if (productGrid) {
   productGrid.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-wishlist-toggle]");
+    const button = event.target.closest(
+      "[data-wishlist-toggle]"
+    );
 
     if (!button) return;
 
-    toggleWishlist(button.dataset.wishlistToggle);
+    toggleWishlist(
+      button.dataset.wishlistToggle
+    );
   });
 }
 
 if (wishlistGrid) {
   wishlistGrid.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-wishlist-remove]");
+    const button = event.target.closest(
+      "[data-wishlist-remove]"
+    );
 
     if (!button) return;
 
-    toggleWishlist(button.dataset.wishlistRemove);
+    toggleWishlist(
+      button.dataset.wishlistRemove
+    );
   });
 }
 
@@ -739,7 +1020,9 @@ async function loadPaymentSettings() {
     );
 
     if (!response.ok) {
-      throw new Error("Could not load payment information.");
+      throw new Error(
+        "Could not load payment information."
+      );
     }
 
     const result = await response.json();
@@ -747,7 +1030,11 @@ async function loadPaymentSettings() {
     paymentSettings = result.settings || null;
 
   } catch (error) {
-    console.error("Payment settings error:", error);
+    console.error(
+      "Payment settings error:",
+      error
+    );
+
     paymentSettings = null;
   }
 }
@@ -761,7 +1048,9 @@ function showPaymentDetails() {
   const infoText = $("#payment-info-text");
   const paymentSelect = $('select[name="payment"]');
 
-  if (!detailsBox || !infoText || !paymentSelect) return;
+  if (!detailsBox || !infoText || !paymentSelect) {
+    return;
+  }
 
   const method = paymentSelect.value;
 
@@ -773,8 +1062,10 @@ function showPaymentDetails() {
 
   if (!paymentSettings) {
     detailsBox.hidden = false;
+
     infoText.textContent =
       "Payment information is currently unavailable. Please contact the store.";
+
     return;
   }
 
@@ -797,18 +1088,30 @@ function showPaymentDetails() {
 
   if (!details && !instructions) {
     detailsBox.hidden = false;
+
     infoText.textContent =
       "Payment details have not been added yet.";
+
     return;
   }
 
   const lines = [];
 
-  if (method === "bkash") lines.push("bKash Payment Details");
-  if (method === "nagad") lines.push("Nagad Payment Details");
-  if (method === "bank") lines.push("Bank Transfer Details");
+  if (method === "bkash") {
+    lines.push("bKash Payment Details");
+  }
 
-  if (details) lines.push(details);
+  if (method === "nagad") {
+    lines.push("Nagad Payment Details");
+  }
+
+  if (method === "bank") {
+    lines.push("Bank Transfer Details");
+  }
+
+  if (details) {
+    lines.push(details);
+  }
 
   if (instructions) {
     lines.push("");
@@ -959,40 +1262,46 @@ if (wishlistGrid) {
 // =====================================
 
 if ($("#cart-items")) {
-  $("#cart-items").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-inc], [data-dec]");
+  $("#cart-items").addEventListener(
+    "click",
+    (event) => {
+      const button = event.target.closest(
+        "[data-inc], [data-dec]"
+      );
 
-    if (!button) return;
+      if (!button) return;
 
-    const id = button.dataset.inc || button.dataset.dec;
+      const id =
+        button.dataset.inc || button.dataset.dec;
 
-    const item = cart.find(
-      (entry) => String(entry.id) === String(id)
-    );
+      const item = cart.find(
+        (entry) => String(entry.id) === String(id)
+      );
 
-    if (!item) return;
+      if (!item) return;
 
-    if (button.dataset.inc) {
-      if (item.qty >= item.stock) {
-        alert("Maximum available stock reached.");
-        return;
+      if (button.dataset.inc) {
+        if (item.qty >= item.stock) {
+          alert("Maximum available stock reached.");
+          return;
+        }
+
+        item.qty++;
+
+      } else {
+        item.qty--;
       }
 
-      item.qty++;
+      if (item.qty <= 0) {
+        cart = cart.filter(
+          (entry) => String(entry.id) !== String(id)
+        );
+      }
 
-    } else {
-      item.qty--;
+      clearAppliedCoupon(true);
+      renderCart();
     }
-
-    if (item.qty <= 0) {
-      cart = cart.filter(
-        (entry) => String(entry.id) !== String(id)
-      );
-    }
-
-    clearAppliedCoupon(true);
-    renderCart();
-  });
+  );
 }
 
 // =====================================
@@ -1000,39 +1309,61 @@ if ($("#cart-items")) {
 // =====================================
 
 function openCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) return;
+  if (!$("#overlay") || !$("#cart-drawer")) {
+    return;
+  }
 
   $("#overlay").hidden = false;
 
   $("#cart-drawer").classList.add("open");
 
-  $("#cart-drawer").setAttribute("aria-hidden", "false");
+  $("#cart-drawer").setAttribute(
+    "aria-hidden",
+    "false"
+  );
 }
 
 function closeCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) return;
+  if (!$("#overlay") || !$("#cart-drawer")) {
+    return;
+  }
 
   $("#overlay").hidden = true;
 
   $("#cart-drawer").classList.remove("open");
 
-  $("#cart-drawer").setAttribute("aria-hidden", "true");
+  $("#cart-drawer").setAttribute(
+    "aria-hidden",
+    "true"
+  );
 }
 
 if ($("#cart-open")) {
-  $("#cart-open").addEventListener("click", openCart);
+  $("#cart-open").addEventListener(
+    "click",
+    openCart
+  );
 }
 
 if ($("#mobile-cart-open")) {
-  $("#mobile-cart-open").addEventListener("click", openCart);
+  $("#mobile-cart-open").addEventListener(
+    "click",
+    openCart
+  );
 }
 
 if ($("#cart-close")) {
-  $("#cart-close").addEventListener("click", closeCart);
+  $("#cart-close").addEventListener(
+    "click",
+    closeCart
+  );
 }
 
 if ($("#overlay")) {
-  $("#overlay").addEventListener("click", closeCart);
+  $("#overlay").addEventListener(
+    "click",
+    closeCart
+  );
 }
 
 // =====================================
@@ -1040,25 +1371,64 @@ if ($("#overlay")) {
 // =====================================
 
 if ($("#checkout-open")) {
-  $("#checkout-open").addEventListener("click", () => {
-    if (!cart.length) {
-      alert("Your cart is empty.");
-      return;
+  $("#checkout-open").addEventListener(
+    "click",
+    () => {
+      if (!cart.length) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      closeCart();
+
+      $("#order-dialog").showModal();
+
+      renderCart();
+      showPaymentDetails();
+      scheduleRepeatPreview();
     }
-
-    closeCart();
-
-    $("#order-dialog").showModal();
-
-    renderCart();
-    showPaymentDetails();
-  });
+  );
 }
 
 if ($("#order-close")) {
-  $("#order-close").addEventListener("click", () => {
-    $("#order-dialog").close();
-  });
+  $("#order-close").addEventListener(
+    "click",
+    () => {
+      $("#order-dialog").close();
+    }
+  );
+}
+
+// =====================================
+// CUSTOMER INPUT - REPEAT PREVIEW
+// =====================================
+
+if ($("#order-form")) {
+  $("#order-form").addEventListener(
+    "input",
+    (event) => {
+      const name = event.target.name;
+
+      if (
+        ["phone", "district", "area", "address"].includes(name)
+      ) {
+        scheduleRepeatPreview();
+      }
+    }
+  );
+
+  $("#order-form").addEventListener(
+    "change",
+    (event) => {
+      const name = event.target.name;
+
+      if (
+        ["phone", "district", "area", "address"].includes(name)
+      ) {
+        scheduleRepeatPreview();
+      }
+    }
+  );
 }
 
 // =====================================
@@ -1079,134 +1449,176 @@ if (paymentSelect) {
 // =====================================
 
 if ($("#order-form")) {
-  $("#order-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
+  $("#order-form").addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
 
-    const form = event.currentTarget;
-    const message = $("#form-message");
+      const form = event.currentTarget;
+      const message = $("#form-message");
 
-    const submitButton = form.querySelector('[type="submit"]');
-
-    if (!cart.length) {
-      message.textContent = "Your cart is empty.";
-      return;
-    }
-
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      message.textContent = "Store database is not configured.";
-      return;
-    }
-
-    const formData = new FormData(form);
-
-    const customer = {
-      name: String(formData.get("name") || "").trim(),
-      phone: String(formData.get("phone") || "").trim(),
-      whatsapp: String(formData.get("whatsapp") || "").trim(),
-      district: String(formData.get("district") || "").trim(),
-      area: String(formData.get("area") || "").trim(),
-      address: String(formData.get("address") || "").trim()
-    };
-
-    const paymentMethod = String(
-      formData.get("payment") || ""
-    );
-
-    const note = String(
-      formData.get("note") || ""
-    ).trim();
-
-    if (
-      !customer.name ||
-      !customer.phone ||
-      !customer.district ||
-      !customer.area ||
-      !customer.address
-    ) {
-      message.textContent =
-        "Please complete all required fields.";
-      return;
-    }
-
-    if (!["bkash", "nagad", "bank"].includes(paymentMethod)) {
-      message.textContent =
-        "Please select a valid payment method.";
-      return;
-    }
-
-    submitButton.disabled = true;
-
-    message.textContent = "Submitting your order...";
-
-    try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/place-order`,
-        {
-          method: "POST",
-
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            customer,
-
-            payment_method: paymentMethod,
-
-            items: cart.map((item) => ({
-              product_id: item.id,
-              quantity: item.qty
-            })),
-
-            note,
-
-            coupon_code: appliedCoupon
-              ? appliedCoupon.code
-              : null
-          })
-        }
+      const submitButton = form.querySelector(
+        '[type="submit"]'
       );
 
-      const result = await response.json();
+      if (!cart.length) {
+        message.textContent = "Your cart is empty.";
+        return;
+      }
 
-      if (!response.ok || result.ok !== true) {
-        throw new Error(
-          result.error || "Order could not be completed."
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        message.textContent =
+          "Store database is not configured.";
+
+        return;
+      }
+
+      const formData = new FormData(form);
+
+      const customer = {
+        name: String(
+          formData.get("name") || ""
+        ).trim(),
+
+        phone: String(
+          formData.get("phone") || ""
+        ).trim(),
+
+        whatsapp: String(
+          formData.get("whatsapp") || ""
+        ).trim(),
+
+        district: String(
+          formData.get("district") || ""
+        ).trim(),
+
+        area: String(
+          formData.get("area") || ""
+        ).trim(),
+
+        address: String(
+          formData.get("address") || ""
+        ).trim()
+      };
+
+      const paymentMethod = String(
+        formData.get("payment") || ""
+      );
+
+      const note = String(
+        formData.get("note") || ""
+      ).trim();
+
+      if (
+        !customer.name ||
+        !customer.phone ||
+        !customer.district ||
+        !customer.area ||
+        !customer.address
+      ) {
+        message.textContent =
+          "Please complete all required fields.";
+
+        return;
+      }
+
+      if (
+        !["bkash", "nagad", "bank"].includes(
+          paymentMethod
+        )
+      ) {
+        message.textContent =
+          "Please select a valid payment method.";
+
+        return;
+      }
+
+      submitButton.disabled = true;
+
+      message.textContent =
+        "Submitting your order...";
+
+      try {
+        const result = await postOrderAction({
+          customer,
+
+          payment_method: paymentMethod,
+
+          items: cart.map((item) => ({
+            product_id: item.id,
+            quantity: item.qty
+          })),
+
+          note,
+
+          coupon_code: appliedCoupon
+            ? appliedCoupon.code
+            : null
+        });
+
+        if (result.ok !== true) {
+          throw new Error(
+            result.error || "Order could not be completed."
+          );
+        }
+
+        const orderSubtotal = Number(
+          result.subtotal ?? getCartSubtotal()
         );
+
+        const couponAmount = Number(
+          result.discount || 0
+        );
+
+        const repeatAmount = Number(
+          result.repeat_discount || 0
+        );
+
+        const finalTotal = Number(
+          result.total ??
+          Math.max(
+            0,
+            orderSubtotal - couponAmount - repeatAmount
+          )
+        );
+
+        cart = [];
+        appliedCoupon = null;
+
+        resetRepeatDiscount();
+
+        renderCart();
+
+        form.reset();
+
+        if ($("#coupon-message")) {
+          $("#coupon-message").textContent = "";
+        }
+
+        if ($("#coupon-code")) {
+          $("#coupon-code").value = "";
+        }
+
+        showPaymentDetails();
+
+        message.textContent =
+          `Order successful! Order number: ${result.order_number}. Subtotal: ${money(orderSubtotal)}. Coupon Discount: ${money(couponAmount)}. Repeat Discount: ${money(repeatAmount)}. Final Total: ${money(finalTotal)}.`;
+
+      } catch (error) {
+        console.error(
+          "Order submission error:",
+          error
+        );
+
+        message.textContent =
+          error.message ||
+          "Something went wrong. Please try again.";
+
+      } finally {
+        submitButton.disabled = false;
       }
-
-      cart = [];
-      appliedCoupon = null;
-
-      renderCart();
-
-      form.reset();
-
-      if ($("#coupon-message")) {
-        $("#coupon-message").textContent = "";
-      }
-
-      if ($("#coupon-code")) {
-        $("#coupon-code").value = "";
-      }
-
-      showPaymentDetails();
-
-      message.textContent =
-        `Order successful! Order number: ${result.order_number}. Subtotal: ${money(result.subtotal)}. Discount: ${money(result.discount)}. Final Total: ${money(result.total)}.`;
-
-    } catch (error) {
-      console.error("Order submission error:", error);
-
-      message.textContent =
-        error.message || "Something went wrong. Please try again.";
-
-    } finally {
-      submitButton.disabled = false;
     }
-  });
+  );
 }
 
 // =====================================
