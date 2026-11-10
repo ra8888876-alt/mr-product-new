@@ -11,7 +11,6 @@
 
 <body>
 
-<!-- HEADER -->
 <header class="topbar">
 
   <a class="brand" href="index.html" aria-label="MR PRODUCT Home">
@@ -45,7 +44,6 @@
 
 <main>
 
-  <!-- CATEGORY MENU -->
   <section class="category-menu" id="categories">
     <a href="#shop" class="category-item active">All</a>
     <a href="#shop" class="category-item">Electronics</a>
@@ -56,7 +54,6 @@
     <a href="#shop" class="category-item">Accessories</a>
   </section>
 
-  <!-- SALE BANNER -->
   <section class="sale-banner">
     <div class="sale-content">
       <p class="eyebrow">MR PRODUCT SPECIAL OFFER</p>
@@ -79,7 +76,6 @@
     </div>
   </section>
 
-  <!-- STORE BENEFITS -->
   <section class="store-benefits">
     <div>
       <span>✓</span>
@@ -94,13 +90,12 @@
     </div>
 
     <div>
-      <span>↗</span>
+      <span>↗️</span>
       <strong>Order Tracking</strong>
       <small>Track your delivery</small>
     </div>
   </section>
 
-  <!-- DEALS -->
   <section class="deals-section" id="deals">
     <div class="section-heading">
       <div>
@@ -128,7 +123,6 @@
     </div>
   </section>
 
-  <!-- PRODUCT TABS -->
   <section class="product-tabs" aria-label="Product collections">
     <a href="#shop" class="product-tab active">All Products</a>
     <a href="#shop" class="product-tab">🔥 Deals</a>
@@ -136,7 +130,6 @@
     <a href="#shop" class="product-tab">New Arrivals</a>
   </section>
 
-  <!-- PRODUCTS -->
   <section class="shop-section" id="shop">
     <div class="section-heading">
       <div>
@@ -150,7 +143,6 @@
     <div class="product-grid" id="product-grid" aria-live="polite"></div>
   </section>
 
-  <!-- WISHLIST -->
   <section class="wishlist-section" id="wishlist">
     <div class="wishlist-heading">
       <div>
@@ -171,14 +163,12 @@
     </div>
   </section>
 
-  <!-- BRAND PROMISE -->
   <section class="promise" id="about">
     <p class="eyebrow">THE MR PRODUCT PROMISE</p>
     <h2>Quality in every detail.</h2>
     <p>Discover a premium shopping experience with carefully selected products.</p>
   </section>
 
-  <!-- CONTACT -->
   <section class="contact" id="contact">
     <div>
       <p class="eyebrow">NEED HELP?</p>
@@ -190,7 +180,6 @@
 
 </main>
 
-<!-- FOOTER -->
 <footer>
   <a class="brand" href="index.html">
     <span class="brand-mark">MR</span>
@@ -200,13 +189,12 @@
     </span>
   </a>
 
-  <span>© <span id="year"></span> MR PRODUCT</span>
+  <span>©️ <span id="year"></span> MR PRODUCT</span>
   <a href="#wishlist">Wishlist ♡</a>
   <a href="track-order.html">Track Order</a>
   <a href="account.html">Account</a>
 </footer>
 
-<!-- MOBILE BOTTOM NAVIGATION -->
 <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
   <a href="#" class="mobile-nav-item active">
     <span>⌂</span>
@@ -230,10 +218,8 @@
   </button>
 </nav>
 
-<!-- CART OVERLAY -->
 <div class="overlay" id="overlay" hidden></div>
 
-<!-- CART DRAWER -->
 <aside class="cart-drawer" id="cart-drawer"
   aria-label="Shopping cart" aria-hidden="true">
 
@@ -260,7 +246,6 @@
 
 </aside>
 
-<!-- ORDER DIALOG -->
 <dialog id="order-dialog" class="order-dialog">
 
   <form id="order-form">
@@ -280,46 +265,39 @@
       Payment is subject to manual verification.
     </p>
 
-    <!-- CUSTOMER NAME -->
     <label>
       Full name
       <input name="name" type="text" required autocomplete="name">
     </label>
 
-    <!-- PHONE -->
     <label>
       Mobile number
       <input name="phone" type="tel" required
         inputmode="tel" autocomplete="tel">
     </label>
 
-    <!-- WHATSAPP -->
     <label>
       WhatsApp number (optional)
       <input name="whatsapp" type="tel" inputmode="tel">
     </label>
 
-    <!-- DISTRICT -->
     <label>
       District
       <input name="district" type="text" required
         autocomplete="address-level1">
     </label>
 
-    <!-- AREA -->
     <label>
       Area / Thana
       <input name="area" type="text" required>
     </label>
 
-    <!-- ADDRESS -->
     <label>
       Full delivery address
       <textarea name="address" rows="3"
         required autocomplete="street-address"></textarea>
     </label>
 
-    <!-- PAYMENT -->
     <label>
       Payment method
       <select name="payment" required>
@@ -330,14 +308,12 @@
       </select>
     </label>
 
-    <!-- PAYMENT INFORMATION -->
     <div id="payment-details" class="payment-details"
       hidden aria-live="polite">
       <h3>Payment Information</h3>
       <p id="payment-info-text"></p>
     </div>
 
-    <!-- COUPON SECTION -->
     <div class="coupon-section">
       <h3>Have a Coupon?</h3>
 
@@ -365,13 +341,35 @@
         aria-live="polite"></p>
     </div>
 
-    <!-- ORDER NOTE -->
+    <div class="repeat-discount-box"
+      style="margin:15px 0;padding:14px;border:1px solid var(--gold);border-radius:12px;background:rgba(198,163,75,.07);">
+
+      <h3 style="margin:0 0 8px;">🎁 Repeat Customer Reward</h3>
+
+      <p id="repeat-discount-message"
+        class="muted small"
+        role="status"
+        aria-live="polite">
+        Enter your delivery details to check your reward.
+      </p>
+
+      <div class="total-row">
+        <span>Previous Delivered Orders</span>
+        <b id="repeat-order-count">0</b>
+      </div>
+
+      <div class="total-row">
+        <span>Repeat Discount (<span id="repeat-discount-percent">0</span>%)</span>
+        <b id="dialog-repeat-discount">৳0</b>
+      </div>
+
+    </div>
+
     <label>
       Order note (optional)
       <textarea name="note" rows="2"></textarea>
     </label>
 
-    <!-- ORDER TOTAL -->
     <div class="total-row">
       <span>Subtotal</span>
       <b id="dialog-total">৳0</b>
@@ -383,11 +381,15 @@
     </div>
 
     <div class="total-row">
+      <strong>Total Discount</strong>
+      <strong id="dialog-total-discount">৳0</strong>
+    </div>
+
+    <div class="total-row">
       <strong>Final Total</strong>
       <strong id="dialog-grand-total">৳0</strong>
     </div>
 
-    <!-- SUBMIT -->
     <button class="button gold-button full" type="submit">
       Place order
     </button>
@@ -399,7 +401,6 @@
 
 </dialog>
 
-<!-- JAVASCRIPT -->
 <script src="config.js"></script>
 <script src="app.js"></script>
 
