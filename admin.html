@@ -10,13 +10,19 @@
 <script src="config.js"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
+
 body{
   margin:0;
   background:#101010;
   color:#eee;
   font-family:Arial,sans-serif;
 }
+
+/* HEADER */
+
 header{
   background:#171717;
   border-bottom:1px solid #c6a34b;
@@ -26,17 +32,165 @@ header{
   align-items:center;
   flex-wrap:wrap;
   gap:10px;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
 }
-h1,h2,h3{color:#c6a34b}
-h1{font-size:22px;margin:0}
-main{max-width:1200px;margin:auto;padding:18px}
+
+h1,h2,h3{
+  color:#c6a34b;
+}
+
+h1{
+  font-size:22px;
+  margin:0;
+}
+
+h2{
+  font-size:19px;
+  margin:0 0 16px;
+}
+
+h3{
+  font-size:16px;
+}
+
+main{
+  max-width:1250px;
+  margin:auto;
+  padding:22px;
+}
+
+/* COMMON CARD */
+
 .card{
   background:#171717;
   border:1px solid #333;
-  border-radius:12px;
-  padding:18px;
-  margin-bottom:20px;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
 }
+
+/* DASHBOARD TOP */
+
+.dashboard-intro{
+  background:linear-gradient(145deg,#1d1b15,#171717);
+  border:1px solid #c6a34b;
+  border-radius:15px;
+  padding:22px;
+  margin-bottom:22px;
+  box-shadow:0 5px 22px rgba(0,0,0,.3);
+}
+
+.dashboard-intro h2{
+  margin:0 0 8px;
+}
+
+.dashboard-intro p{
+  margin:0 0 16px;
+}
+
+/* ACCORDION SECTION */
+
+.section-card{
+  background:#171717;
+  border:1px solid #806a32;
+  border-radius:13px;
+  margin-bottom:14px;
+  overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+
+.section-card:hover{
+  border-color:#c6a34b;
+}
+
+.section-card[open]{
+  border-color:#c6a34b;
+  box-shadow:0 4px 18px rgba(198,163,75,.08);
+}
+
+/* SECTION TITLE */
+
+.section-heading{
+  list-style:none;
+  cursor:pointer;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:#c6a34b;
+  font-size:16px;
+  font-weight:bold;
+  user-select:none;
+  background:linear-gradient(110deg,#201e18,#171717);
+  min-height:65px;
+}
+
+.section-heading::-webkit-details-marker{
+  display:none;
+}
+
+.section-heading:hover{
+  background:linear-gradient(110deg,#29251a,#1b1b1b);
+}
+
+.section-name{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.section-icon{
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #806a32;
+  border-radius:9px;
+  background:#101010;
+  font-size:17px;
+  flex-shrink:0;
+}
+
+.section-arrow{
+  width:28px;
+  height:28px;
+  border:1px solid #806a32;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  transition:transform .25s;
+  flex-shrink:0;
+}
+
+.section-card[open] .section-arrow{
+  transform:rotate(180deg);
+  background:#c6a34b;
+  color:#111;
+}
+
+.section-content{
+  padding:20px;
+  border-top:1px solid #594a27;
+  animation:sectionOpen .2s ease;
+}
+
+@keyframes sectionOpen{
+  from{
+    opacity:.5;
+    transform:translateY(-5px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* FORMS */
+
 input,textarea,select{
   width:100%;
   padding:12px;
@@ -46,8 +200,30 @@ input,textarea,select{
   border:1px solid #555;
   border-radius:7px;
   font-size:15px;
+  outline:none;
 }
-textarea{min-height:85px;resize:vertical}
+
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:#c6a34b;
+  box-shadow:0 0 0 2px rgba(198,163,75,.12);
+}
+
+textarea{
+  min-height:85px;
+  resize:vertical;
+}
+
+input[type="color"]{
+  min-height:45px;
+  padding:5px;
+}
+
+input[type="file"]{
+  padding:10px;
+}
+
 button{
   background:#c6a34b;
   color:#111;
@@ -57,39 +233,90 @@ button{
   font-weight:bold;
   cursor:pointer;
   margin:4px;
+  transition:.2s;
 }
+
+button:hover{
+  background:#e0bd63;
+  transform:translateY(-1px);
+}
+
 button.secondary{
   background:#333;
   color:#fff;
   border:1px solid #666;
 }
-button.danger{background:#a83232;color:#fff}
-button:disabled{opacity:.5;cursor:not-allowed}
-label{display:block;color:#ddd;font-size:14px}
+
+button.secondary:hover{
+  background:#444;
+}
+
+button.danger{
+  background:#a83232;
+  color:#fff;
+}
+
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+  transform:none;
+}
+
+label{
+  display:block;
+  color:#ddd;
+  font-size:14px;
+}
+
+/* GRID */
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
   gap:12px;
 }
-.table-wrap{overflow-x:auto}
+
+/* TABLE */
+
+.table-wrap{
+  overflow-x:auto;
+  border:1px solid #333;
+  border-radius:9px;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
   min-width:750px;
+  background:#151515;
 }
+
 th,td{
   padding:11px;
   border-bottom:1px solid #333;
   text-align:left;
   font-size:13px;
 }
-th{color:#c6a34b}
+
+th{
+  color:#c6a34b;
+  background:#202020;
+  white-space:nowrap;
+}
+
+tr:hover td{
+  background:#1d1d1d;
+}
+
 .product-img{
   width:55px;
   height:55px;
   object-fit:cover;
   border-radius:6px;
 }
+
+/* IMAGE PREVIEW */
+
 .preview{
   max-width:130px;
   max-height:100px;
@@ -97,30 +324,60 @@ th{color:#c6a34b}
   margin:5px 0 12px;
   border-radius:7px;
   object-fit:contain;
-}
-.stat{
-  background:#202020;
-  padding:15px;
-  border-radius:9px;
   border:1px solid #444;
 }
+
+/* STAT CARDS */
+
+.stat{
+  background:linear-gradient(145deg,#24221c,#202020);
+  padding:17px;
+  border-radius:10px;
+  border:1px solid #554927;
+  color:#ccc;
+}
+
 .stat strong{
   display:block;
   color:#c6a34b;
-  font-size:22px;
-  margin-top:7px;
+  font-size:23px;
+  margin-top:8px;
 }
+
+/* MESSAGES */
+
 .status{
   padding:10px;
   border-radius:7px;
   margin:10px 0;
   display:none;
 }
-.success{background:#173c25;color:#9be3ad}
-.error{background:#4b2020;color:#ffaaaa}
-.muted{color:#aaa;font-size:13px}
-.hidden{display:none!important}
-hr{border:0;border-top:1px solid #333;margin:20px 0}
+
+.success{
+  background:#173c25;
+  color:#9be3ad;
+}
+
+.error{
+  background:#4b2020;
+  color:#ffaaaa;
+}
+
+.muted{
+  color:#aaa;
+  font-size:13px;
+}
+
+.hidden{
+  display:none!important;
+}
+
+hr{
+  border:0;
+  border-top:1px solid #333;
+  margin:20px 0;
+}
+
 .section-title{
   display:flex;
   justify-content:space-between;
@@ -128,11 +385,67 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
   flex-wrap:wrap;
   gap:10px;
 }
+
+/* LOGIN */
+
+.login-card{
+  max-width:480px;
+  margin:60px auto;
+  border:1px solid #c6a34b;
+  box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+
+/* MOBILE */
+
 @media(max-width:600px){
-  main{padding:10px}
-  .card{padding:13px}
-  header{padding:14px}
-  button{font-size:13px}
+
+  main{
+    padding:12px;
+  }
+
+  header{
+    padding:14px;
+  }
+
+  h1{
+    font-size:19px;
+  }
+
+  h2{
+    font-size:17px;
+  }
+
+  .section-heading{
+    padding:14px;
+    min-height:60px;
+    font-size:14px;
+  }
+
+  .section-content{
+    padding:13px;
+  }
+
+  .section-icon{
+    width:32px;
+    height:32px;
+    font-size:15px;
+  }
+
+  button{
+    font-size:13px;
+  }
+
+  .dashboard-intro{
+    padding:17px;
+  }
+
+  .card{
+    padding:14px;
+  }
+
+  .login-card{
+    margin:30px auto;
+  }
 }
 </style>
 </head>
@@ -147,8 +460,11 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 <main>
 
 <!-- LOGIN -->
-<section id="loginSection" class="card">
+
+<section id="loginSection" class="card login-card">
+
   <h2>Admin Login</h2>
+
   <div id="loginMessage" class="status error"></div>
 
   <label>Email</label>
@@ -158,310 +474,504 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
   <input type="password" id="loginPassword" placeholder="Password">
 
   <button onclick="loginAdmin()">Login</button>
+
 </section>
 
+
 <!-- DASHBOARD -->
+
 <div id="dashboard" class="hidden">
 
-  <section class="card">
-    <h2>Admin Dashboard</h2>
-    <p class="muted">MR PRODUCT Store Management</p>
+  <!-- DASHBOARD INTRO -->
+
+  <section class="dashboard-intro">
+
+    <h2>MR PRODUCT Dashboard</h2>
+
+    <p class="muted">Premium Store Management System</p>
 
     <button onclick="refreshAll()">Refresh Dashboard</button>
-    <button onclick="location.href='admin-affiliates.html'">Affiliate Management</button>
-    <button onclick="location.href='admin-coupons.html'">Coupon Management</button>
-    <button onclick="location.href='admin-sales.html'">Sales Report</button>
+
+    <button onclick="location.href='admin-affiliates.html'">
+      Affiliate Management
+    </button>
+
+    <button onclick="location.href='admin-coupons.html'">
+      Coupon Management
+    </button>
+
+    <button onclick="location.href='admin-sales.html'">
+      Sales Report
+    </button>
+
   </section>
+
 
   <!-- STORE PROFILE -->
-  <section class="card">
-    <h2>Store Profile & Branding</h2>
 
-    <label>Store Name</label>
-    <input id="storeName" placeholder="MR PRODUCT">
+  <details class="section-card">
 
-    <label>Store Description</label>
-    <textarea id="storeDescription" placeholder="Store description"></textarea>
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">🎨</span>
+        Store Profile & Branding
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
 
-    <label>Phone</label>
-    <input id="storePhone" placeholder="Phone number">
+    <div class="section-content">
 
-    <label>WhatsApp</label>
-    <input id="storeWhatsapp" placeholder="WhatsApp number">
+      <label>Store Name</label>
+      <input id="storeName" placeholder="MR PRODUCT">
 
-    <label>Email</label>
-    <input id="storeEmail" type="email" placeholder="Store email">
+      <label>Store Description</label>
+      <textarea id="storeDescription" placeholder="Store description"></textarea>
 
-    <label>Primary Color</label>
-    <input id="primaryColor" type="color" value="#c6a34b">
+      <label>Phone</label>
+      <input id="storePhone" placeholder="Phone number">
 
-    <hr>
+      <label>WhatsApp</label>
+      <input id="storeWhatsapp" placeholder="WhatsApp number">
 
-    <label>Store Logo</label>
-    <input id="logoFile" type="file" accept="image/*"
-      onchange="showImagePreview(this,'logoPreview')">
-    <img id="logoPreview" class="preview">
+      <label>Email</label>
+      <input id="storeEmail" type="email" placeholder="Store email">
 
-    <label>Store Banner</label>
-    <input id="bannerFile" type="file" accept="image/*"
-      onchange="showImagePreview(this,'bannerPreview')">
-    <img id="bannerPreview" class="preview">
+      <label>Primary Color</label>
+      <input id="primaryColor" type="color" value="#c6a34b">
 
-    <p id="storeMessage" class="status"></p>
+      <hr>
 
-    <button onclick="saveStoreSettings()">Save Store Settings</button>
-    <button class="secondary" onclick="loadStoreSettings()">Reload Store Settings</button>
-  </section>
+      <label>Store Logo</label>
+      <input id="logoFile" type="file" accept="image/*"
+        onchange="showImagePreview(this,'logoPreview')">
+
+      <img id="logoPreview" class="preview">
+
+      <label>Store Banner</label>
+      <input id="bannerFile" type="file" accept="image/*"
+        onchange="showImagePreview(this,'bannerPreview')">
+
+      <img id="bannerPreview" class="preview">
+
+      <p id="storeMessage" class="status"></p>
+
+      <button onclick="saveStoreSettings()">Save Store Settings</button>
+
+      <button class="secondary" onclick="loadStoreSettings()">
+        Reload Store Settings
+      </button>
+
+    </div>
+
+  </details>
+
 
   <!-- ADD PRODUCT -->
-  <section class="card">
-    <h2>Add New Product</h2>
 
-    <label>Product Name</label>
-    <input id="productName" placeholder="Product name">
+  <details class="section-card">
 
-    <label>Description</label>
-    <textarea id="productDescription" placeholder="Product description"></textarea>
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">➕</span>
+        Add New Product
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
 
-    <div class="grid">
-      <div>
-        <label>Selling Price (৳)</label>
-        <input id="productPrice" type="number" min="0" step="0.01">
+    <div class="section-content">
+
+      <label>Product Name</label>
+      <input id="productName" placeholder="Product name">
+
+      <label>Description</label>
+      <textarea id="productDescription" placeholder="Product description"></textarea>
+
+      <div class="grid">
+
+        <div>
+          <label>Selling Price (৳)</label>
+          <input id="productPrice" type="number" min="0" step="0.01">
+        </div>
+
+        <div>
+          <label>Cost Price (৳)</label>
+          <input id="costPrice" type="number" min="0" step="0.01" value="0">
+        </div>
+
+        <div>
+          <label>Discount Price (৳) — Optional</label>
+          <input id="productDiscount" type="number" min="0" step="0.01">
+        </div>
+
+        <div>
+          <label>Stock</label>
+          <input id="productStock" type="number" min="0" step="1">
+        </div>
+
       </div>
 
-      <div>
-        <label>Cost Price (৳)</label>
-        <input id="costPrice" type="number" min="0" step="0.01" value="0">
-      </div>
+      <label>Category</label>
+      <input id="productCategory" placeholder="Category">
 
-      <div>
-        <label>Discount Price (৳) — Optional</label>
-        <input id="productDiscount" type="number" min="0" step="0.01">
-      </div>
+      <label>Image URL</label>
+      <input id="productImage" placeholder="https://...">
 
-      <div>
-        <label>Stock</label>
-        <input id="productStock" type="number" min="0" step="1">
-      </div>
+      <p id="productMessage" class="status"></p>
+
+      <button id="addProductButton" onclick="addProduct()">Add Product</button>
+
+      <button class="secondary" onclick="clearProductForm()">Clear Form</button>
+
     </div>
 
-    <label>Category</label>
-    <input id="productCategory" placeholder="Category">
+  </details>
 
-    <label>Image URL</label>
-    <input id="productImage" placeholder="https://...">
-
-    <p id="productMessage" class="status"></p>
-
-    <button id="addProductButton" onclick="addProduct()">Add Product</button>
-    <button class="secondary" onclick="clearProductForm()">Clear Form</button>
-  </section>
 
   <!-- PRODUCTS -->
-  <section class="card">
-    <div class="section-title">
-      <h2>Product Management</h2>
-      <button onclick="loadProducts()">Refresh Products</button>
+
+  <details class="section-card">
+
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">📦</span>
+        Product Management
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
+
+    <div class="section-content">
+
+      <div class="section-title">
+
+        <h2>Product Management</h2>
+
+        <button onclick="loadProducts()">Refresh Products</button>
+
+      </div>
+
+      <div id="productsMessage" class="status"></div>
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Selling Price</th>
+              <th>Cost Price</th>
+              <th>Discount</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="productsTable">
+            <tr><td colspan="8">Loading products...</td></tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
     </div>
 
-    <div id="productsMessage" class="status"></div>
+  </details>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Selling Price</th>
-            <th>Cost Price</th>
-            <th>Discount</th>
-            <th>Stock</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="productsTable">
-          <tr><td colspan="8">Loading products...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 
   <!-- ORDERS -->
-  <section class="card">
-    <div class="section-title">
-      <h2>Order Management</h2>
-      <button onclick="loadOrders()">Refresh Orders</button>
+
+  <details class="section-card">
+
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">🛒</span>
+        Order Management
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
+
+    <div class="section-content">
+
+      <div class="section-title">
+
+        <h2>Order Management</h2>
+
+        <button onclick="loadOrders()">Refresh Orders</button>
+
+      </div>
+
+      <div id="ordersMessage" class="status"></div>
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Order Number</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Total</th>
+              <th>Payment</th>
+              <th>Payment Status</th>
+              <th>Order Status</th>
+              <th>Update</th>
+            </tr>
+          </thead>
+
+          <tbody id="ordersTable">
+            <tr><td colspan="8">Loading orders...</td></tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
     </div>
 
-    <div id="ordersMessage" class="status"></div>
+  </details>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Order Number</th>
-            <th>Customer</th>
-            <th>Phone</th>
-            <th>Total</th>
-            <th>Payment</th>
-            <th>Payment Status</th>
-            <th>Order Status</th>
-            <th>Update</th>
-          </tr>
-        </thead>
-        <tbody id="ordersTable">
-          <tr><td colspan="8">Loading orders...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 
   <!-- PAYMENT SETTINGS -->
-  <section class="card">
-    <h2>Payment Settings</h2>
 
-    <label>bKash Number</label>
-    <input id="bkashNumber" placeholder="bKash number">
+  <details class="section-card">
 
-    <label>Nagad Number</label>
-    <input id="nagadNumber" placeholder="Nagad number">
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">💳</span>
+        Payment Settings
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
 
-    <label>Bank Details</label>
-    <textarea id="bankDetails" placeholder="Bank details"></textarea>
+    <div class="section-content">
 
-    <label>Payment Instructions</label>
-    <textarea id="paymentInstructions" placeholder="Payment instructions"></textarea>
+      <h2>Payment Settings</h2>
 
-    <p class="muted">Cash on Delivery is currently disabled.</p>
+      <label>bKash Number</label>
+      <input id="bkashNumber" placeholder="bKash number">
 
-    <p id="paymentMessage" class="status"></p>
+      <label>Nagad Number</label>
+      <input id="nagadNumber" placeholder="Nagad number">
 
-    <button onclick="savePaymentSettings()">Save Payment Settings</button>
-    <button class="secondary" onclick="loadPaymentSettings()">Reload Payment Settings</button>
-  </section>
+      <label>Bank Details</label>
+      <textarea id="bankDetails" placeholder="Bank details"></textarea>
+
+      <label>Payment Instructions</label>
+      <textarea id="paymentInstructions" placeholder="Payment instructions"></textarea>
+
+      <p class="muted">Cash on Delivery is currently disabled.</p>
+
+      <p id="paymentMessage" class="status"></p>
+
+      <button onclick="savePaymentSettings()">Save Payment Settings</button>
+
+      <button class="secondary" onclick="loadPaymentSettings()">
+        Reload Payment Settings
+      </button>
+
+    </div>
+
+  </details>
+
 
   <!-- PAYMENT OVERVIEW -->
-  <section class="card">
-    <h2>Payment Overview</h2>
-    <div class="grid">
-      <div class="stat">
-        Pending Payments
-        <strong id="pendingPayments">৳0</strong>
+
+  <details class="section-card">
+
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">💰</span>
+        Payment Overview
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
+
+    <div class="section-content">
+
+      <h2>Payment Overview</h2>
+
+      <div class="grid">
+
+        <div class="stat">
+          Pending Payments
+          <strong id="pendingPayments">৳0</strong>
+        </div>
+
+        <div class="stat">
+          Paid Payments
+          <strong id="paidPayments">৳0</strong>
+        </div>
+
+        <div class="stat">
+          Total Orders
+          <strong id="totalOrders">0</strong>
+        </div>
+
       </div>
-      <div class="stat">
-        Paid Payments
-        <strong id="paidPayments">৳0</strong>
-      </div>
-      <div class="stat">
-        Total Orders
-        <strong id="totalOrders">0</strong>
-      </div>
+
     </div>
-  </section>
+
+  </details>
+
 
   <!-- CUSTOMER OVERVIEW -->
-  <section class="card">
-    <div class="section-title">
-      <h2>Customer Overview</h2>
-      <button onclick="loadCustomerAndPaymentViews()">Refresh Customers</button>
+
+  <details class="section-card">
+
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">👥</span>
+        Customer Overview
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
+
+    <div class="section-content">
+
+      <div class="section-title">
+
+        <h2>Customer Overview</h2>
+
+        <button onclick="loadCustomerAndPaymentViews()">
+          Refresh Customers
+        </button>
+
+      </div>
+
+      <div class="grid">
+
+        <div class="stat">
+          Total Customers
+          <strong id="totalCustomers">0</strong>
+        </div>
+
+        <div class="stat">
+          Total Customer Orders
+          <strong id="customerOrders">0</strong>
+        </div>
+
+      </div>
+
+      <div class="table-wrap" style="margin-top:18px">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Total Orders</th>
+              <th>Total Spent</th>
+            </tr>
+          </thead>
+
+          <tbody id="customersTable">
+            <tr><td colspan="5">Loading customers...</td></tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
     </div>
 
-    <div class="grid">
-      <div class="stat">
-        Total Customers
-        <strong id="totalCustomers">0</strong>
-      </div>
-      <div class="stat">
-        Total Customer Orders
-        <strong id="customerOrders">0</strong>
-      </div>
-    </div>
+  </details>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Address</th>
-            <th>Total Orders</th>
-            <th>Total Spent</th>
-          </tr>
-        </thead>
-        <tbody id="customersTable">
-          <tr><td colspan="5">Loading customers...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 
   <!-- REPEAT CUSTOMER DISCOUNT -->
-  <section class="card">
-    <h2>Repeat Customer Discount</h2>
 
-    <p class="muted">
-      Delivered order-এর সংখ্যা অনুযায়ী Repeat Customer-দের discount নিয়ন্ত্রণ করুন।
-    </p>
+  <details class="section-card">
 
-    <div id="repeatDiscountMessage" class="status"></div>
+    <summary class="section-heading">
+      <span class="section-name">
+        <span class="section-icon">🎁</span>
+        Repeat Customer Discount
+      </span>
+      <span class="section-arrow">⌄</span>
+    </summary>
 
-    <div class="table-wrap">
-      <table style="min-width:600px">
-        <thead>
-          <tr>
-            <th>Previous Delivered Orders</th>
-            <th>Discount (%)</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="repeatDiscountTable">
-          <tr>
-            <td colspan="4">Loading discount levels...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="section-content">
 
-    <hr>
+      <h2>Repeat Customer Discount</h2>
 
-    <h3>Add New Discount Level</h3>
+      <p class="muted">
+        Delivered order-এর সংখ্যা অনুযায়ী Repeat Customer-দের discount নিয়ন্ত্রণ করুন।
+      </p>
 
-    <div class="grid">
-      <div>
-        <label>Minimum Delivered Orders</label>
-        <input
-          id="newRepeatOrders"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="Example: 14"
-        >
+      <div id="repeatDiscountMessage" class="status"></div>
+
+      <div class="table-wrap">
+
+        <table style="min-width:600px">
+
+          <thead>
+            <tr>
+              <th>Previous Delivered Orders</th>
+              <th>Discount (%)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="repeatDiscountTable">
+            <tr>
+              <td colspan="4">Loading discount levels...</td>
+            </tr>
+          </tbody>
+
+        </table>
+
       </div>
 
-      <div>
-        <label>Discount Percentage (%)</label>
-        <input
-          id="newRepeatPercent"
-          type="number"
-          min="0"
-          max="100"
-          step="0.01"
-          placeholder="Example: 20"
-        >
+      <hr>
+
+      <h3>Add New Discount Level</h3>
+
+      <div class="grid">
+
+        <div>
+          <label>Minimum Delivered Orders</label>
+          <input
+            id="newRepeatOrders"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Example: 14"
+          >
+        </div>
+
+        <div>
+          <label>Discount Percentage (%)</label>
+          <input
+            id="newRepeatPercent"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            placeholder="Example: 20"
+          >
+        </div>
+
       </div>
+
+      <button onclick="addRepeatDiscountTier()">Add Discount Level</button>
+
+      <button class="secondary" onclick="loadRepeatDiscountTiers()">
+        Refresh Levels
+      </button>
+
     </div>
 
-    <button onclick="addRepeatDiscountTier()">Add Discount Level</button>
-
-    <button class="secondary" onclick="loadRepeatDiscountTiers()">
-      Refresh Levels
-    </button>
-  </section>
+  </details>
 
 </div>
 </main>
+
 
 <script>
 const CONFIG = window.MR_PRODUCT_CONFIG || {};
@@ -1476,6 +1986,7 @@ db.auth.onAuthStateChange((event, session) => {
 });
 
 checkAdmin();
+
 </script>
 
 </body>
