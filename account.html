@@ -98,9 +98,7 @@ button:disabled{
 }
 
 .hidden{display:none}
-
 .muted{color:#aaa}
-
 </style>
 </head>
 
@@ -112,8 +110,6 @@ button:disabled{
 </header>
 
 <main>
-
-  <!-- AUTHENTICATION -->
 
   <section class="card" id="auth-section">
 
@@ -128,25 +124,12 @@ button:disabled{
       <h3>Create Account</h3>
 
       <label>Email</label>
-
-      <input
-        type="email"
-        id="signup-email"
-        required
-      >
+      <input type="email" id="signup-email" required>
 
       <label>Password</label>
+      <input type="password" id="signup-password" minlength="8" required>
 
-      <input
-        type="password"
-        id="signup-password"
-        minlength="8"
-        required
-      >
-
-      <button type="submit">
-        Register
-      </button>
+      <button type="submit">Register</button>
 
     </form>
 
@@ -157,49 +140,25 @@ button:disabled{
       <h3>Login</h3>
 
       <label>Email</label>
-
-      <input
-        type="email"
-        id="login-email"
-        required
-      >
+      <input type="email" id="login-email" required>
 
       <label>Password</label>
+      <input type="password" id="login-password" required>
 
-      <input
-        type="password"
-        id="login-password"
-        required
-      >
-
-      <button type="submit">
-        Login
-      </button>
+      <button type="submit">Login</button>
 
     </form>
 
-    <button
-      class="secondary"
-      id="reset-password"
-      type="button"
-    >
+    <button class="secondary" id="reset-password" type="button">
       Forgot Password?
     </button>
 
-    <div
-      class="message"
-      id="auth-message"
-    ></div>
+    <div class="message" id="auth-message"></div>
 
   </section>
 
 
-  <!-- CUSTOMER PROFILE -->
-
-  <section
-    class="card hidden"
-    id="profile-section"
-  >
+  <section class="card hidden" id="profile-section">
 
     <h1>My Profile</h1>
 
@@ -208,62 +167,30 @@ button:disabled{
     <form id="profile-form">
 
       <label>Full Name</label>
-
-      <input
-        id="profile-name"
-        required
-      >
+      <input id="profile-name" required>
 
       <label>Phone Number</label>
-
-      <input
-        id="profile-phone"
-        required
-      >
+      <input id="profile-phone" required>
 
       <label>WhatsApp Number</label>
-
-      <input
-        id="profile-whatsapp"
-      >
+      <input id="profile-whatsapp">
 
       <label>District</label>
-
-      <input
-        id="profile-district"
-        required
-      >
+      <input id="profile-district" required>
 
       <label>Area</label>
-
-      <input
-        id="profile-area"
-        required
-      >
+      <input id="profile-area" required>
 
       <label>Full Delivery Address</label>
+      <input id="profile-address" required>
 
-      <input
-        id="profile-address"
-        required
-      >
-
-      <button type="submit">
-        Save Profile
-      </button>
+      <button type="submit">Save Profile</button>
 
     </form>
 
-    <div
-      class="message"
-      id="profile-message"
-    ></div>
+    <div class="message" id="profile-message"></div>
 
-    <button
-      class="secondary"
-      id="logout-button"
-      type="button"
-    >
+    <button class="secondary" id="logout-button" type="button">
       Logout
     </button>
 
@@ -279,316 +206,177 @@ const CONFIG = window.MR_PRODUCT_CONFIG || {};
 const SUPABASE_URL = CONFIG.supabaseUrl || "";
 const SUPABASE_KEY = CONFIG.publishableKey || "";
 
-const authMessage =
-  document.getElementById("auth-message");
-
-const profileMessage =
-  document.getElementById("profile-message");
-
+const authMessage = document.getElementById("auth-message");
+const profileMessage = document.getElementById("profile-message");
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-
-  authMessage.textContent =
-    "Database configuration is missing.";
-
+  authMessage.textContent = "Database configuration is missing.";
   throw new Error("Supabase configuration missing");
-
 }
-
 
 const db = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
 
-
 let currentUser = null;
 
 
-// =====================================
 // MESSAGE
-// =====================================
 
 function showMessage(element, message, error = false) {
-
   element.textContent = message;
-
-  element.style.color = error
-    ? "#ff7777"
-    : "#d6b15e";
-
+  element.style.color = error ? "#ff7777" : "#d6b15e";
 }
 
 
-// =====================================
 // SHOW AUTHENTICATION
-// =====================================
 
 function showAuth() {
-
-  document
-    .getElementById("profile-section")
-    .classList.add("hidden");
-
-  document
-    .getElementById("auth-section")
-    .classList.remove("hidden");
-
+  document.getElementById("profile-section").classList.add("hidden");
+  document.getElementById("auth-section").classList.remove("hidden");
 }
 
 
-// =====================================
 // SHOW PROFILE
-// =====================================
 
 function showProfile() {
-
-  document
-    .getElementById("auth-section")
-    .classList.add("hidden");
-
-  document
-    .getElementById("profile-section")
-    .classList.remove("hidden");
-
+  document.getElementById("auth-section").classList.add("hidden");
+  document.getElementById("profile-section").classList.remove("hidden");
 }
 
 
-// =====================================
 // REGISTER
-// =====================================
 
-document
-  .getElementById("signup-form")
-  .addEventListener("submit", async (e) => {
+document.getElementById("signup-form").addEventListener("submit", async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    const email =
-      document.getElementById("signup-email")
-        .value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
 
-    const password =
-      document.getElementById("signup-password")
-        .value;
+  showMessage(authMessage, "Creating your account...");
 
-    showMessage(
-      authMessage,
-      "Creating your account..."
-    );
-
-    const { data, error } = await db.auth.signUp({
-
-      email,
-
-      password,
-
-      options: {
-        emailRedirectTo:
-          window.location.origin + "/account.html"
-      }
-
-    });
-
-    if (error) {
-
-      showMessage(
-        authMessage,
-        error.message,
-        true
-      );
-
-      return;
-
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + "/account.html"
     }
-
-    if (data.session) {
-
-      await checkSession();
-
-    } else {
-
-      showMessage(
-        authMessage,
-        "Registration successful! Please check your email and confirm your account before logging in."
-      );
-
-    }
-
   });
 
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
 
-// =====================================
+  if (data.session) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  showMessage(
+    authMessage,
+    "Registration successful! Please check your email and confirm your account before logging in."
+  );
+
+});
+
+
 // LOGIN
-// =====================================
 
-document
-  .getElementById("login-form")
-  .addEventListener("submit", async (e) => {
+document.getElementById("login-form").addEventListener("submit", async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    const email =
-      document.getElementById("login-email")
-        .value.trim();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
 
-    const password =
-      document.getElementById("login-password")
-        .value;
+  showMessage(authMessage, "Logging in...");
 
-    showMessage(
-      authMessage,
-      "Logging in..."
-    );
-
-    const { error } = await db.auth.signInWithPassword({
-
-      email,
-
-      password
-
-    });
-
-    if (error) {
-
-      showMessage(
-        authMessage,
-        error.message,
-        true
-      );
-
-      return;
-
-    }
-
-    await checkSession();
-
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
   });
 
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
 
-// =====================================
+  window.location.href = "index.html";
+
+});
+
+
 // FORGOT PASSWORD
-// =====================================
 
-document
-  .getElementById("reset-password")
-  .addEventListener("click", async () => {
+document.getElementById("reset-password").addEventListener("click", async () => {
 
-    const email =
-      document.getElementById("login-email")
-        .value.trim();
+  const email = document.getElementById("login-email").value.trim();
 
-    if (!email) {
-
-      showMessage(
-        authMessage,
-        "Enter your email in the Login section first.",
-        true
-      );
-
-      return;
-
-    }
-
-    const { error } =
-      await db.auth.resetPasswordForEmail(email, {
-
-        redirectTo:
-          window.location.origin + "/account.html"
-
-      });
-
-    if (error) {
-
-      showMessage(
-        authMessage,
-        error.message,
-        true
-      );
-
-      return;
-
-    }
-
+  if (!email) {
     showMessage(
       authMessage,
-      "Password reset instructions sent to your email."
+      "Enter your email in the Login section first.",
+      true
     );
+    return;
+  }
 
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/account.html"
   });
 
+  if (error) {
+    showMessage(authMessage, error.message, true);
+    return;
+  }
 
-// =====================================
+  showMessage(
+    authMessage,
+    "Password reset instructions sent to your email."
+  );
+
+});
+
+
 // CHECK SESSION
-// =====================================
 
 async function checkSession() {
 
-  const { data, error } =
-    await db.auth.getSession();
+  const { data, error } = await db.auth.getSession();
 
   if (error || !data.session) {
-
     currentUser = null;
-
     showAuth();
-
     return;
-
   }
 
   currentUser = data.session.user;
 
-
-  // Prevent active admin accounts
-  // from using the customer profile page.
-
-  const { data: admin, error: adminError } =
-    await db
-      .from("admin_users")
-      .select("user_id")
-      .eq("user_id", currentUser.id)
-      .eq("is_active", true)
-      .maybeSingle();
-
+  const { data: admin, error: adminError } = await db
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", currentUser.id)
+    .eq("is_active", true)
+    .maybeSingle();
 
   if (adminError) {
-
-    showMessage(
-      authMessage,
-      "Could not verify account permissions.",
-      true
-    );
-
+    showMessage(authMessage, "Could not verify account permissions.", true);
     return;
-
   }
-
 
   if (admin) {
-
     await db.auth.signOut();
-
     currentUser = null;
-
     showAuth();
-
-    showMessage(
-      authMessage,
-      "Admin accounts must use the Admin Panel.",
-      true
-    );
-
+    showMessage(authMessage, "Admin accounts must use the Admin Panel.", true);
     return;
-
   }
 
-
-  document
-    .getElementById("user-email")
-    .textContent =
-      "Email: " + currentUser.email;
-
+  document.getElementById("user-email").textContent =
+    "Email: " + currentUser.email;
 
   showProfile();
 
@@ -597,235 +385,130 @@ async function checkSession() {
 }
 
 
-// =====================================
 // LOAD PROFILE
-// =====================================
 
 async function loadProfile() {
 
-  const { data, error } =
-    await db
-      .from("customers")
-      .select("*")
-      .eq("auth_user_id", currentUser.id)
-      .maybeSingle();
-
+  const { data, error } = await db
+    .from("customers")
+    .select("*")
+    .eq("auth_user_id", currentUser.id)
+    .maybeSingle();
 
   if (error) {
-
-    showMessage(
-      profileMessage,
-      error.message,
-      true
-    );
-
+    showMessage(profileMessage, error.message, true);
     return;
-
   }
-
 
   if (!data) {
-
-    showMessage(
-      profileMessage,
-      "Please complete your customer profile."
-    );
-
+    showMessage(profileMessage, "Please complete your customer profile.");
     return;
-
   }
 
-
-  document.getElementById("profile-name").value =
-    data.name || "";
-
-  document.getElementById("profile-phone").value =
-    data.phone || "";
-
-  document.getElementById("profile-whatsapp").value =
-    data.whatsapp || "";
-
-  document.getElementById("profile-district").value =
-    data.district || "";
-
-  document.getElementById("profile-area").value =
-    data.area || "";
-
-  document.getElementById("profile-address").value =
-    data.address || "";
+  document.getElementById("profile-name").value = data.name || "";
+  document.getElementById("profile-phone").value = data.phone || "";
+  document.getElementById("profile-whatsapp").value = data.whatsapp || "";
+  document.getElementById("profile-district").value = data.district || "";
+  document.getElementById("profile-area").value = data.area || "";
+  document.getElementById("profile-address").value = data.address || "";
 
 }
 
 
-// =====================================
 // SAVE PROFILE
-// =====================================
 
-document
-  .getElementById("profile-form")
-  .addEventListener("submit", async (e) => {
+document.getElementById("profile-form").addEventListener("submit", async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!currentUser) return;
+  if (!currentUser) return;
 
+  const profile = {
 
-    const profile = {
+    auth_user_id: currentUser.id,
+    email: currentUser.email,
 
-      auth_user_id: currentUser.id,
+    name: document.getElementById("profile-name").value.trim(),
+    phone: document.getElementById("profile-phone").value.trim(),
+    whatsapp: document.getElementById("profile-whatsapp").value.trim(),
+    district: document.getElementById("profile-district").value.trim(),
+    area: document.getElementById("profile-area").value.trim(),
+    address: document.getElementById("profile-address").value.trim(),
 
-      email: currentUser.email,
+    updated_at: new Date().toISOString()
 
-      name:
-        document.getElementById("profile-name")
-          .value.trim(),
+  };
 
-      phone:
-        document.getElementById("profile-phone")
-          .value.trim(),
+  const saveButton = document.querySelector(
+    '#profile-form button[type="submit"]'
+  );
 
-      whatsapp:
-        document.getElementById("profile-whatsapp")
-          .value.trim(),
+  saveButton.disabled = true;
 
-      district:
-        document.getElementById("profile-district")
-          .value.trim(),
+  showMessage(profileMessage, "Saving profile...");
 
-      area:
-        document.getElementById("profile-area")
-          .value.trim(),
+  try {
 
-      address:
-        document.getElementById("profile-address")
-          .value.trim(),
+    const { error } = await db
+      .from("customers")
+      .upsert(profile, {
+        onConflict: "auth_user_id"
+      });
 
-      updated_at: new Date().toISOString()
+    if (error) throw error;
 
-    };
+    showMessage(profileMessage, "Profile saved successfully.");
 
+    saveButton.disabled = false;
 
-    const saveButton =
-      document.querySelector(
-        '#profile-form button[type="submit"]'
-      );
+  } catch (error) {
 
-
-    saveButton.disabled = true;
+    console.error("Profile saving error:", error);
 
     showMessage(
       profileMessage,
-      "Saving profile..."
+      error.message || "Could not save your profile.",
+      true
     );
 
+    saveButton.disabled = false;
 
-    try {
+  }
 
-      const { error } =
-        await db
-          .from("customers")
-          .upsert(profile, {
-
-            onConflict: "auth_user_id"
-
-          });
+});
 
 
-      if (error) {
-
-        throw error;
-
-      }
-
-
-      // SUCCESS + AUTOMATIC REDIRECT
-
-      showMessage(
-        profileMessage,
-        "Profile saved successfully! Redirecting to store..."
-      );
-
-
-      setTimeout(() => {
-
-        window.location.href = "index.html";
-
-      }, 1500);
-
-
-    } catch (error) {
-
-      console.error(
-        "Profile saving error:",
-        error
-      );
-
-      showMessage(
-        profileMessage,
-        error.message || "Could not save your profile.",
-        true
-      );
-
-      saveButton.disabled = false;
-
-    }
-
-  });
-
-
-// =====================================
 // LOGOUT
-// =====================================
 
-document
-  .getElementById("logout-button")
-  .addEventListener("click", async () => {
+document.getElementById("logout-button").addEventListener("click", async () => {
 
-    const { error } = await db.auth.signOut();
+  const { error } = await db.auth.signOut();
 
-    if (error) {
+  if (error) {
+    showMessage(profileMessage, error.message, true);
+    return;
+  }
 
-      showMessage(
-        profileMessage,
-        error.message,
-        true
-      );
+  currentUser = null;
+  showAuth();
 
-      return;
+  showMessage(authMessage, "You have logged out.");
 
-    }
-
-    currentUser = null;
-
-    showAuth();
-
-    showMessage(
-      authMessage,
-      "You have logged out."
-    );
-
-  });
+});
 
 
-// =====================================
 // INITIAL SESSION CHECK
-// =====================================
 
 checkSession();
 
 
-// =====================================
 // AUTH STATE CHANGE
-// =====================================
 
 db.auth.onAuthStateChange((event, session) => {
 
   if (event === "SIGNED_OUT") {
-
     currentUser = null;
-
     showAuth();
-
   }
 
 });
