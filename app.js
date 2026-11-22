@@ -1,1545 +1,941 @@
-"use strict";
+(() => {
+  "use strict";
 
-/* =========================================
-   MR PRODUCT — STOREFRONT APP
-========================================= */
+  const CONFIG = window.MR_PRODUCT_CONFIG || {};
+  const SUPABASE_URL = (CONFIG.supabaseUrl || "").replace(/\/$/, "");
+  const SUPABASE_KEY = CONFIG.publishableKey || "";
 
-const CONFIG = window.MR_PRODUCT_CONFIG || {};
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-const SUPABASE_URL = (CONFIG.supabaseUrl || "").replace(/\/$/, "");
-const SUPABASE_KEY = CONFIG.publishableKey || "";
+  const money = (amount) =>
+    "৳" + Number(amount || 0).toLocaleString("en-BD", {
+      maximumFractionDigits: 2
+    });
 
-const API = `${SUPABASE_URL}/rest/v1`;
-const FUNCTIONS = `${SUPABASE_URL}/functions/v1`;
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
 
-const $ = (selector, parent = document) => parent.querySelector(selector);
-const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
+  const placeholderImage =
+    "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=700";
 
-const money = (amount) =>
-  "৳" + Number(amount || 0).toLocaleString("en-BD", {
-    maximumFractionDigits: 2
-  });
-
-const escapeHTML = (value) =>
-  String(value ?? "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
-
-const safeImage = (url) => {
-  if (!url) return "";
-  try {
-    const parsed = new URL(url, window.location.origin);
-    if (["http:", "https:"].includes(parsed.protocol)) return parsed.href;
-  } catch (_) {}
-  return "";
-};
-
-const STORAGE_CART = "mr_product_cart";
-const STORAGE_WISHLIST = "mr_product_wishlist";
-
-let products = [];
-let categories = [];
-let cart = [];
-let wishlist = [];
-let storeSettings = {};
-let paymentSettings = {};
-let selectedCategory = "all";
-let selectedTab = "all";
-let currentCoupon = null;
-let couponDiscount = 0;
-let repeatDiscount = 0;
-let repeatOrderCount = 0;
-let repeatDiscountPercent = 0;
-let searchText = "";
-let isSubmittingOrder = false;
-
-/* =========================================
-   STORAGE
-========================================= */
-
-function readStorage(key, fallback = []) {
-  try {
-    const value = JSON.parse(localStorage.getItem(key));
-    return value ?? fallback;
-  } catch (_) {
-    return fallback;
-  }
-}
-
-function saveCart() {
-  localStorage.setItem(STORAGE_CART, JSON.stringify(cart));
-}
-
-function saveWishlist() {
-  localStorage.setItem(STORAGE_WISHLIST, JSON.stringify(wishlist));
-}
-
-function loadCart() {
-  const saved = readStorage(STORAGE_CART, []);
-  cart = Array.isArray(saved) ? saved : [];
-}
-
-function loadWishlist() {
-  const saved = readStorage(STORAGE_WISHLIST, []);
-  wishlist = Array.isArray(saved) ? saved : [];
-}
-
-/* =========================================
-   API
-========================================= */
-
-function headers(extra = {}) {
-  return {
-    "Content-Type": "application/json",
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    ...extra
-  };
-}
-
-async function apiRequest(url, options = {}) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    throw new Error("Supabase configuration missing. Check config.js");
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers: headers(options.headers || {})
-  });
-
-  const text = await response.text();
-  let result = {};
-
-  try {
-    result = text ? JSON.parse(text) : {};
-  } catch (_) {
-    result = { message: text };
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      result.message ||
-      result.error ||
-      result.details ||
-      `Request failed (${response.status})`
-    );
-  }
-
-  return result;
-}
-
-async function callFunction(name, payload = null, method = "POST") {
-  const options = {
-    method,
-    headers: {}
+  const state = {
+    products: [],
+    cart: readStorage("mr_product_cart", []),
+    wishlist: readStorage("mr_product_wishlist", []),
+    settings: {},
+    activeCategory: "all",
+    search: "",
+    sort: "featured",
+    selectedPayment: "bkash",
+    coupon: null,
+    repeatDiscount: 0,
+    customer: null,
+    busy: false
   };
 
-  if (payload !== null) {
-    options.body = JSON.stringify(payload);
-  }
-
-  return apiRequest(`${FUNCTIONS}/${name}`, options);
-}
-
-async function postOrderAction(payload) {
-  return callFunction("place-order", payload, "POST");
-}
-
-/* =========================================
-   NOTIFICATIONS
-========================================= */
-
-function showMessage(message, type = "success") {
-  let toast = $("#mr-toast");
-
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "mr-toast";
-    toast.className = "toast";
-    document.body.appendChild(toast);
-  }
-
-  toast.textContent = message;
-  toast.dataset.type = type;
-  toast.style.display = "block";
-
-  clearTimeout(showMessage.timer);
-
-  showMessage.timer = setTimeout(() => {
-    toast.style.display = "none";
-  }, 3200);
-}
-
-/* =========================================
-   STORE SETTINGS
-========================================= */
-
-async function loadStoreSettings() {
-  try {
-    const result = await callFunction("admin-settings", null, "GET");
-
-    if (result?.settings) {
-      storeSettings = result.settings;
-      applyStoreSettings();
+  function readStorage(key, fallback) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key));
+      return value ?? fallback;
+    } catch {
+      return fallback;
     }
-  } catch (error) {
-    console.warn("Store settings:", error.message);
-  }
-}
-
-function applyStoreSettings() {
-  const settings = storeSettings;
-
-  const storeName = settings.store_name || "MR PRODUCT";
-  const description = settings.description || "";
-
-  const nameElement = $("#store-name");
-  const footerName = $("#footer-store-name");
-  const descriptionElement = $("#store-description");
-
-  if (nameElement) nameElement.textContent = storeName;
-  if (footerName) footerName.textContent = storeName;
-  if (descriptionElement && description) {
-    descriptionElement.textContent = description;
   }
 
-  if (settings.logo_url) {
-    const logo = safeImage(settings.logo_url);
+  function saveStorage() {
+    localStorage.setItem("mr_product_cart", JSON.stringify(state.cart));
+    localStorage.setItem("mr_product_wishlist", JSON.stringify(state.wishlist));
+  }
 
-    $$(".brand-logo, #store-logo, .footer-logo img").forEach((element) => {
-      if (element.tagName === "IMG") {
-        element.src = logo;
+  function headers(extra = {}) {
+    return {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      ...extra
+    };
+  }
+
+  async function rest(path, options = {}) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      throw new Error("Supabase configuration পাওয়া যায়নি।");
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...options,
+      headers: headers(options.headers || {})
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || "Request failed");
+    }
+
+    return data;
+  }
+
+  async function edgeFunction(name, payload, method = "POST") {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/${name}`,
+      {
+        method,
+        headers: headers(),
+        ...(method === "GET" ? {} : { body: JSON.stringify(payload || {}) })
       }
-    });
-  }
-
-  if (settings.banner_url) {
-    const banner = $("#hero-banner-image");
-    if (banner) banner.src = safeImage(settings.banner_url);
-  }
-
-  if (settings.primary_color) {
-    document.documentElement.style.setProperty(
-      "--bronze",
-      settings.primary_color
-    );
-  }
-
-  const phone = settings.phone || "";
-  const whatsapp = settings.whatsapp || "";
-  const email = settings.email || "";
-
-  const phoneText = $("#contact-phone");
-  const phoneLink = $("#contact-phone-link");
-  const whatsappText = $("#contact-whatsapp");
-  const whatsappLink = $("#contact-whatsapp-link");
-  const emailText = $("#contact-email");
-  const emailLink = $("#contact-email-link");
-  const footerPhone = $("#footer-phone");
-  const footerEmail = $("#footer-email");
-  const footerWhatsapp = $("#footer-whatsapp");
-
-  if (phoneText) phoneText.textContent = phone || "Not available";
-  if (phoneLink) {
-    phoneLink.href = phone ? `tel:${phone.replace(/\s/g, "")}` : "#";
-  }
-
-  if (whatsappText) whatsappText.textContent = whatsapp || "Not available";
-  if (whatsappLink) {
-    const number = whatsapp.replace(/\D/g, "");
-    whatsappLink.href = number ? `https://wa.me/${number}` : "#";
-  }
-
-  if (emailText) emailText.textContent = email || "Not available";
-  if (emailLink) emailLink.href = email ? `mailto:${email}` : "#";
-
-  if (footerPhone) footerPhone.textContent = phone;
-  if (footerEmail) footerEmail.textContent = email;
-  if (footerWhatsapp) footerWhatsapp.textContent = whatsapp;
-
-  document.title = `${storeName} — Premium Store`;
-}
-
-/* =========================================
-   PRODUCTS
-========================================= */
-
-async function loadProducts() {
-  const grid = $("#product-grid");
-
-  if (grid) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <h3>Loading products...</h3>
-        <p>Please wait.</p>
-      </div>
-    `;
-  }
-
-  try {
-    const result = await apiRequest(
-      `${API}/products?select=id,name,description,price,discount_price,image_url,category,stock,active,created_at&active=eq.true&order=created_at.desc`,
-      { method: "GET" }
     );
 
-    products = Array.isArray(result) ? result : [];
+    const data = await response.json().catch(() => ({}));
 
-    renderCategories();
-    renderProducts();
-    renderWishlist();
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || data.error || "Request failed");
+    }
 
-  } catch (error) {
-    console.error("Product loading error:", error);
+    return data;
+  }
 
-    if (grid) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <h3>Products could not be loaded</h3>
-          <p>${escapeHTML(error.message)}</p>
-        </div>
-      `;
+  function notify(message, type = "success") {
+    let toast = $("#toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "toast";
+      toast.className = "toast";
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+
+    clearTimeout(notify.timer);
+    notify.timer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3000);
+  }
+
+  function setText(selector, value) {
+    const element = $(selector);
+    if (element && value !== undefined && value !== null) {
+      element.textContent = value;
     }
   }
-}
 
-function getProductPrice(product) {
-  const regular = Number(product.price || 0);
-  const discount = Number(product.discount_price || 0);
-
-  if (discount > 0 && discount < regular) return discount;
-
-  return regular;
-}
-
-function isDiscounted(product) {
-  const regular = Number(product.price || 0);
-  const discount = Number(product.discount_price || 0);
-
-  return discount > 0 && discount < regular;
-}
-
-function getDiscountPercent(product) {
-  if (!isDiscounted(product)) return 0;
-
-  const regular = Number(product.price);
-  const discount = Number(product.discount_price);
-
-  return Math.round(((regular - discount) / regular) * 100);
-}
-
-function renderCategories() {
-  const container = $(".category-list");
-
-  if (!container) return;
-
-  categories = [
-    ...new Set(
-      products
-        .map((product) => product.category)
-        .filter(Boolean)
-    )
-  ];
-
-  if (!categories.length) {
-    container.innerHTML = "";
-    return;
+  function setImage(selector, url) {
+    const element = $(selector);
+    if (element && url) {
+      element.src = url;
+    }
   }
 
-  container.innerHTML = categories.map((category) => `
-    <button
-      class="category-item ${selectedCategory === category ? "active" : ""}"
-      type="button"
-      data-category="${escapeHTML(category)}"
-    >
-      <strong>${escapeHTML(category)}</strong>
-    </button>
-  `).join("");
+  function applySettings(settings) {
+    state.settings = settings || {};
 
-  container.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedCategory = button.dataset.category;
-      selectedTab = "all";
+    const name = state.settings.store_name || "MR PRODUCT";
 
-      updateActiveTabs();
-      renderCategories();
-      renderProducts();
+    setText("#store-name", name);
+    setText("#footer-store-name", name);
+    setText("#store-description", state.settings.description || "");
 
-      $("#shop")?.scrollIntoView({ behavior: "smooth" });
-    });
-  });
-}
+    if (state.settings.logo_url) {
+      const logo = $(".brand img");
+      if (logo) logo.src = state.settings.logo_url;
+    }
 
-function getFilteredProducts() {
-  let list = [...products];
+    if (state.settings.banner_url) {
+      setImage("#hero-banner-image", state.settings.banner_url);
+    }
 
-  if (selectedCategory !== "all") {
-    list = list.filter(
-      (product) => product.category === selectedCategory
-    );
-  }
-
-  if (selectedTab === "sale") {
-    list = list.filter(isDiscounted);
-  }
-
-  if (selectedTab === "featured") {
-    list = list.filter((product) => product.stock > 0);
-  }
-
-  if (selectedTab === "new") {
-    list = list.slice(0, 12);
-  }
-
-  if (searchText) {
-    const search = searchText.toLowerCase();
-
-    list = list.filter((product) => {
-      return [
-        product.name,
-        product.description,
-        product.category
-      ].some((value) =>
-        String(value || "").toLowerCase().includes(search)
+    if (state.settings.primary_color) {
+      document.documentElement.style.setProperty(
+        "--accent",
+        state.settings.primary_color
       );
-    });
+    }
+
+    const phone = state.settings.phone || "";
+    const whatsapp = state.settings.whatsapp || "";
+    const email = state.settings.email || "";
+
+    setText("#contact-phone", phone);
+    setText("#contact-whatsapp", whatsapp);
+    setText("#contact-email", email);
+
+    const phoneLink = $("#contact-phone-link");
+    if (phoneLink && phone) phoneLink.href = `tel:${phone}`;
+
+    const whatsappLink = $("#contact-whatsapp-link");
+    if (whatsappLink && whatsapp) {
+      whatsappLink.href = `https://wa.me/${whatsapp.replace(/\D/g, "")}`;
+    }
+
+    const emailLink = $("#contact-email-link");
+    if (emailLink && email) emailLink.href = `mailto:${email}`;
+
+    setText("#footer-phone", phone);
+    setText("#footer-email", email);
+    setText("#footer-whatsapp", whatsapp);
   }
 
-  const sort = $("#product-sort")?.value || "default";
-
-  if (sort === "price-low") {
-    list.sort((a, b) => getProductPrice(a) - getProductPrice(b));
-  } else if (sort === "price-high") {
-    list.sort((a, b) => getProductPrice(b) - getProductPrice(a));
-  } else if (sort === "name") {
-    list.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sort === "discount") {
-    list.sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a));
+  async function loadSettings() {
+    try {
+      const result = await edgeFunction("admin-settings", {}, "GET");
+      applySettings(result.settings || {});
+    } catch (error) {
+      console.warn("Store settings:", error.message);
+    }
   }
 
-  return list;
-}
+  async function loadProducts() {
+    try {
+      const products = await rest(
+        "products?select=id,name,description,price,discount_price,image_url,category,stock,active,created_at&active=eq.true&order=created_at.desc"
+      );
 
-function productCard(product) {
-  const price = getProductPrice(product);
-  const discounted = isDiscounted(product);
-  const outOfStock = Number(product.stock || 0) <= 0;
-  const image = safeImage(product.image_url);
-  const liked = wishlist.includes(product.id);
+      state.products = Array.isArray(products) ? products : [];
+      renderProducts();
+      renderCategories();
+      renderWishlist();
+    } catch (error) {
+      console.error(error);
+      const grid = $("#product-grid");
+      if (grid) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <h3>Products load হচ্ছে না</h3>
+            <p>${escapeHTML(error.message)}</p>
+          </div>`;
+      }
+    }
+  }
 
-  return `
-    <article class="product-card" data-product-id="${escapeHTML(product.id)}">
+  function productPrice(product) {
+    return Number(product.discount_price || product.price || 0);
+  }
 
-      <div class="product-image-wrap">
-        ${image ? `
+  function productOldPrice(product) {
+    return Number(product.price || 0);
+  }
+
+  function productDiscount(product) {
+    const oldPrice = productOldPrice(product);
+    const newPrice = productPrice(product);
+
+    if (oldPrice > newPrice && oldPrice > 0) {
+      return Math.round(((oldPrice - newPrice) / oldPrice) * 100);
+    }
+
+    return 0;
+  }
+
+  function isWishlisted(id) {
+    return state.wishlist.some((item) => String(item) === String(id));
+  }
+
+  function productCard(product) {
+    const price = productPrice(product);
+    const oldPrice = productOldPrice(product);
+    const discount = productDiscount(product);
+    const stock = Number(product.stock || 0);
+    const outOfStock = stock <= 0;
+    const wished = isWishlisted(product.id);
+
+    return `
+      <article class="product-card" data-product-id="${escapeHTML(product.id)}">
+        <div class="product-image product-image-wrap">
           <img
-            src="${escapeHTML(image)}"
+            src="${escapeHTML(product.image_url || placeholderImage)}"
             alt="${escapeHTML(product.name)}"
             loading="lazy"
-            onerror="this.style.display='none'"
+            onerror="this.src='${placeholderImage}'"
           >
-        ` : ""}
 
-        ${discounted ? `
-          <span class="product-badge">
-            ${getDiscountPercent(product)}% OFF
-          </span>
-        ` : ""}
-
-        <button
-          class="product-wishlist ${liked ? "active" : ""}"
-          type="button"
-          data-wishlist="${escapeHTML(product.id)}"
-          aria-label="Add to wishlist"
-        >${liked ? "♥" : "♡"}</button>
-      </div>
-
-      <div class="product-info">
-        ${product.category ? `
-          <div class="product-category">
-            ${escapeHTML(product.category)}
+          <div class="product-badges">
+            ${discount ? `<span class="discount-badge">${discount}% OFF</span>` : ""}
+            ${outOfStock ? `<span class="stock-badge">Out of stock</span>` : ""}
           </div>
-        ` : ""}
 
-        <h3 class="product-name">
-          ${escapeHTML(product.name)}
-        </h3>
-
-        ${product.description ? `
-          <p class="product-description">
-            ${escapeHTML(product.description)}
-          </p>
-        ` : ""}
-
-        <div class="product-price">
-          <strong>${money(price)}</strong>
-
-          ${discounted ? `
-            <del>${money(product.price)}</del>
-          ` : ""}
+          <button
+            class="wishlist-button ${wished ? "active" : ""}"
+            type="button"
+            data-wishlist="${escapeHTML(product.id)}"
+            aria-label="Add to wishlist"
+          >${wished ? "♥" : "♡"}</button>
         </div>
 
-        <div class="product-stock ${outOfStock ? "out-of-stock" : ""}">
-          ${outOfStock ? "Out of stock" : `In stock: ${Number(product.stock)}`}
+        <div class="product-info">
+          <div class="product-category">${escapeHTML(product.category || "Beauty")}</div>
+          <h3 class="product-name">${escapeHTML(product.name)}</h3>
+
+          <div class="product-price-row">
+            <span class="product-price">${money(price)}</span>
+            ${oldPrice > price ? `<span class="product-old-price">${money(oldPrice)}</span>` : ""}
+          </div>
+
+          <div class="product-actions">
+            <button
+              class="add-to-cart"
+              type="button"
+              data-add-cart="${escapeHTML(product.id)}"
+              ${outOfStock ? "disabled" : ""}
+            >${outOfStock ? "Out of stock" : "Add to bag"}</button>
+          </div>
         </div>
-
-        <button
-          class="product-add-button"
-          type="button"
-          data-add-cart="${escapeHTML(product.id)}"
-          ${outOfStock ? "disabled" : ""}
-        >
-          ${outOfStock ? "Out of Stock" : "Add to Cart"}
-        </button>
-      </div>
-    </article>
-  `;
-}
-
-function renderProducts() {
-  const grid = $("#product-grid");
-  if (!grid) return;
-
-  const list = getFilteredProducts();
-
-  if (!list.length) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <h3>No products found</h3>
-        <p>Please try another category or search.</p>
-      </div>
-    `;
-  } else {
-    grid.innerHTML = list.map(productCard).join("");
+      </article>`;
   }
 
-  const count = $("#product-results-count");
-  if (count) {
-    count.textContent = `${list.length} products found`;
+  function filteredProducts() {
+    let products = [...state.products];
+
+    if (state.activeCategory !== "all") {
+      products = products.filter((product) =>
+        String(product.category || "").toLowerCase() ===
+        state.activeCategory.toLowerCase()
+      );
+    }
+
+    if (state.search) {
+      const query = state.search.toLowerCase();
+
+      products = products.filter((product) =>
+        [
+          product.name,
+          product.category,
+          product.description
+        ].some((value) => String(value || "").toLowerCase().includes(query))
+      );
+    }
+
+    if (state.sort === "price-low") {
+      products.sort((a, b) => productPrice(a) - productPrice(b));
+    } else if (state.sort === "price-high") {
+      products.sort((a, b) => productPrice(b) - productPrice(a));
+    } else if (state.sort === "name") {
+      products.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return products;
   }
 
-  grid.querySelectorAll("[data-add-cart]").forEach((button) => {
-    button.addEventListener("click", () => {
-      addToCart(button.dataset.addCart);
-    });
-  });
+  function renderProducts() {
+    const grid = $("#product-grid");
+    if (!grid) return;
 
-  grid.querySelectorAll("[data-wishlist]").forEach((button) => {
-    button.addEventListener("click", () => {
-      toggleWishlist(button.dataset.wishlist);
-    });
-  });
+    const products = filteredProducts();
 
-  updateActiveTabs();
-}
+    setText("#product-results-count", `${products.length} products`);
 
-/* =========================================
-   PRODUCT TABS AND SEARCH
-========================================= */
+    if (!products.length) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <h3>No products found</h3>
+          <p>অন্য কিছু search করে দেখুন।</p>
+        </div>`;
+      return;
+    }
 
-function updateActiveTabs() {
-  $$(".product-tab").forEach((button) => {
-    const tab = button.dataset.tab || button.dataset.filter || "all";
+    grid.innerHTML = products.map(productCard).join("");
+  }
 
-    button.classList.toggle("active", tab === selectedTab);
-  });
+  function renderCategories() {
+    const container = $("#categories");
+    if (!container) return;
 
-  $$(".category-item").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.category === selectedCategory
+    const categories = [
+      ...new Set(
+        state.products
+          .map((product) => String(product.category || "").trim())
+          .filter(Boolean)
+      )
+    ];
+
+    const categoryImages = [
+      "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=700",
+      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=700",
+      "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=700",
+      "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=700"
+    ];
+
+    container.innerHTML = categories.slice(0, 4).map((category, index) => `
+      <button class="category-card" type="button"
+        data-category="${escapeHTML(category)}">
+        <img src="${categoryImages[index % categoryImages.length]}" alt="${escapeHTML(category)}">
+        <h3>${escapeHTML(category)}</h3>
+      </button>
+    `).join("");
+  }
+
+  function renderWishlist() {
+    const grid = $("#wishlist-grid");
+    if (!grid) return;
+
+    const products = state.products.filter((product) =>
+      isWishlisted(product.id)
     );
-  });
-}
 
-function setupProductFilters() {
-  $$(".product-tab").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedTab =
-        button.dataset.tab ||
-        button.dataset.filter ||
-        "all";
+    setText("#wishlist-count", `${products.length} saved`);
 
-      selectedCategory = "all";
+    if (!products.length) {
+      grid.innerHTML = `
+        <div class="wishlist-empty">
+          <h3>Your wishlist is empty</h3>
+          <p>পছন্দের product wishlist-এ যোগ করুন।</p>
+        </div>`;
+      return;
+    }
 
-      updateActiveTabs();
-      renderCategories();
-      renderProducts();
-    });
-  });
+    grid.innerHTML = products.map(productCard).join("");
+  }
 
-  const searchInputs = [
-    $("#product-search"),
-    $("#mobile-product-search")
-  ].filter(Boolean);
+  function addToCart(id) {
+    const product = state.products.find(
+      (item) => String(item.id) === String(id)
+    );
 
-  searchInputs.forEach((input) => {
-    input.addEventListener("input", () => {
-      searchText = input.value.trim();
+    if (!product) return;
 
-      searchInputs.forEach((other) => {
-        if (other !== input) other.value = input.value;
+    const stock = Number(product.stock || 0);
+
+    if (stock <= 0) {
+      notify("এই product এখন stock-এ নেই।", "error");
+      return;
+    }
+
+    const existing = state.cart.find(
+      (item) => String(item.id) === String(id)
+    );
+
+    if (existing) {
+      if (existing.quantity >= stock) {
+        notify("Available stock-এর বেশি নেওয়া যাবে না।", "error");
+        return;
+      }
+
+      existing.quantity += 1;
+    } else {
+      state.cart.push({
+        id: product.id,
+        name: product.name,
+        price: productPrice(product),
+        image_url: product.image_url,
+        stock,
+        quantity: 1
       });
+    }
 
-      renderProducts();
-    });
-  });
-
-  $("#search-button")?.addEventListener("click", () => {
-    $("#shop")?.scrollIntoView({ behavior: "smooth" });
-    $("#product-search")?.focus();
-  });
-
-  $("#product-sort")?.addEventListener("change", renderProducts);
-}
-
-/* =========================================
-   WISHLIST
-========================================= */
-
-function toggleWishlist(productId) {
-  const id = String(productId);
-
-  if (wishlist.includes(id)) {
-    wishlist = wishlist.filter((item) => item !== id);
-    showMessage("Removed from wishlist");
-  } else {
-    wishlist.push(id);
-    showMessage("Added to wishlist");
+    saveStorage();
+    renderCart();
+    notify("Product cart-এ যোগ হয়েছে।");
   }
 
-  saveWishlist();
-  renderProducts();
-  renderWishlist();
-}
+  function changeQuantity(id, amount) {
+    const item = state.cart.find(
+      (product) => String(product.id) === String(id)
+    );
 
-function renderWishlist() {
-  const grid = $("#wishlist-grid");
-  const empty = $("#wishlist-empty");
-  const count = $("#wishlist-count");
+    if (!item) return;
 
-  const list = products.filter((product) =>
-    wishlist.includes(String(product.id))
-  );
+    const next = item.quantity + amount;
 
-  if (count) count.textContent = list.length;
+    if (next <= 0) {
+      state.cart = state.cart.filter(
+        (product) => String(product.id) !== String(id)
+      );
+    } else if (next <= Number(item.stock || 0)) {
+      item.quantity = next;
+    } else {
+      notify("Available stock-এর বেশি নেওয়া যাবে না।", "error");
+    }
 
-  if (!grid) return;
-
-  if (!list.length) {
-    grid.innerHTML = "";
-    if (empty) empty.hidden = false;
-    return;
+    saveStorage();
+    renderCart();
   }
 
-  if (empty) empty.hidden = true;
+  function removeCartItem(id) {
+    state.cart = state.cart.filter(
+      (item) => String(item.id) !== String(id)
+    );
 
-  grid.innerHTML = list.map(productCard).join("");
-
-  grid.querySelectorAll("[data-add-cart]").forEach((button) => {
-    button.addEventListener("click", () => {
-      addToCart(button.dataset.addCart);
-    });
-  });
-
-  grid.querySelectorAll("[data-wishlist]").forEach((button) => {
-    button.addEventListener("click", () => {
-      toggleWishlist(button.dataset.wishlist);
-    });
-  });
-}
-
-/* =========================================
-   CART
-========================================= */
-
-function findProduct(productId) {
-  return products.find(
-    (product) => String(product.id) === String(productId)
-  );
-}
-
-function addToCart(productId, quantity = 1) {
-  const product = findProduct(productId);
-
-  if (!product) {
-    showMessage("Product not found", "error");
-    return;
+    saveStorage();
+    renderCart();
   }
 
-  const stock = Number(product.stock || 0);
-
-  if (stock <= 0) {
-    showMessage("This product is out of stock", "error");
-    return;
+  function cartSubtotal() {
+    return state.cart.reduce(
+      (sum, item) => sum + Number(item.price) * Number(item.quantity),
+      0
+    );
   }
 
-  const existing = cart.find(
-    (item) => String(item.product_id) === String(productId)
-  );
+  function renderCart() {
+    const container = $("#cart-items");
+    const count = state.cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const requestedQuantity = existing
-    ? Number(existing.quantity) + Number(quantity)
-    : Number(quantity);
+    setText("#cart-count", count);
+    setText("#mobile-cart-count", count);
+    setText("#cart-count-heading", count);
+    setText("#cart-total", money(cartSubtotal()));
 
-  if (requestedQuantity > stock) {
-    showMessage(`Only ${stock} items available`, "error");
-    return;
-  }
+    if (!container) return;
 
-  if (existing) {
-    existing.quantity = requestedQuantity;
-  } else {
-    cart.push({
-      product_id: product.id,
-      quantity: Number(quantity)
-    });
-  }
+    if (!state.cart.length) {
+      container.innerHTML = `
+        <div class="cart-empty">
+          <p>আপনার shopping bag এখন খালি।</p>
+        </div>`;
+      return;
+    }
 
-  saveCart();
-  renderCart();
-  showMessage("Product added to cart");
-}
+    container.innerHTML = state.cart.map((item) => `
+      <div class="cart-item">
+        <img src="${escapeHTML(item.image_url || placeholderImage)}"
+          alt="${escapeHTML(item.name)}">
 
-function changeCartQuantity(productId, change) {
-  const item = cart.find(
-    (cartItem) => String(cartItem.product_id) === String(productId)
-  );
+        <div>
+          <h4>${escapeHTML(item.name)}</h4>
+          <p>${money(item.price)}</p>
 
-  if (!item) return;
-
-  const product = findProduct(productId);
-  if (!product) return;
-
-  const nextQuantity = Number(item.quantity) + Number(change);
-
-  if (nextQuantity <= 0) {
-    removeFromCart(productId);
-    return;
-  }
-
-  if (nextQuantity > Number(product.stock || 0)) {
-    showMessage("Available stock limit reached", "error");
-    return;
-  }
-
-  item.quantity = nextQuantity;
-
-  saveCart();
-  renderCart();
-}
-
-function removeFromCart(productId) {
-  cart = cart.filter(
-    (item) => String(item.product_id) !== String(productId)
-  );
-
-  saveCart();
-  renderCart();
-}
-
-function getCartDetails() {
-  return cart.map((item) => {
-    const product = findProduct(item.product_id);
-
-    if (!product) return null;
-
-    const quantity = Number(item.quantity || 1);
-    const price = getProductPrice(product);
-
-    return {
-      product,
-      product_id: product.id,
-      quantity,
-      price,
-      total: price * quantity
-    };
-  }).filter(Boolean);
-}
-
-function getCartSubtotal() {
-  return getCartDetails().reduce(
-    (sum, item) => sum + item.total,
-    0
-  );
-}
-
-function renderCart() {
-  const container = $("#cart-items");
-  const totalElement = $("#cart-total");
-
-  const details = getCartDetails();
-
-  const totalQuantity = details.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
-
-  if ($("#cart-count")) {
-    $("#cart-count").textContent = totalQuantity;
-  }
-
-  if ($("#mobile-cart-count")) {
-    $("#mobile-cart-count").textContent = totalQuantity;
-  }
-
-  if (!container) return;
-
-  if (!details.length) {
-    container.innerHTML = `
-      <div class="cart-empty">
-        <h3>Your cart is empty</h3>
-        <p>Add some products to continue.</p>
-      </div>
-    `;
-
-    if (totalElement) totalElement.textContent = money(0);
-    return;
-  }
-
-  container.innerHTML = details.map((item) => `
-    <div class="cart-item">
-      <img
-        src="${escapeHTML(safeImage(item.product.image_url))}"
-        alt="${escapeHTML(item.product.name)}"
-      >
-
-      <div>
-        <h4>${escapeHTML(item.product.name)}</h4>
-        <p>${money(item.price)}</p>
-
-        <div class="cart-quantity">
-          <button
-            type="button"
-            data-cart-minus="${escapeHTML(item.product_id)}"
-          >−</button>
-
-          <span>${item.quantity}</span>
-
-          <button
-            type="button"
-            data-cart-plus="${escapeHTML(item.product_id)}"
-          >+</button>
+          <div class="cart-item-quantity">
+            <button type="button" data-quantity="-1" data-id="${escapeHTML(item.id)}">−</button>
+            <span>${item.quantity}</span>
+            <button type="button" data-quantity="1" data-id="${escapeHTML(item.id)}">+</button>
+          </div>
         </div>
+
+        <button class="cart-item-remove" type="button"
+          data-remove-cart="${escapeHTML(item.id)}">Remove</button>
       </div>
-
-      <button
-        type="button"
-        data-cart-remove="${escapeHTML(item.product_id)}"
-      >Remove</button>
-    </div>
-  `).join("");
-
-  container.querySelectorAll("[data-cart-minus]").forEach((button) => {
-    button.addEventListener("click", () => {
-      changeCartQuantity(button.dataset.cartMinus, -1);
-    });
-  });
-
-  container.querySelectorAll("[data-cart-plus]").forEach((button) => {
-    button.addEventListener("click", () => {
-      changeCartQuantity(button.dataset.cartPlus, 1);
-    });
-  });
-
-  container.querySelectorAll("[data-cart-remove]").forEach((button) => {
-    button.addEventListener("click", () => {
-      removeFromCart(button.dataset.cartRemove);
-    });
-  });
-
-  if (totalElement) {
-    totalElement.textContent = money(getCartSubtotal());
+    `).join("");
   }
-}
 
-/* =========================================
-   CART DRAWER
-========================================= */
+  function toggleWishlist(id) {
+    if (isWishlisted(id)) {
+      state.wishlist = state.wishlist.filter(
+        (item) => String(item) !== String(id)
+      );
+      notify("Wishlist থেকে সরানো হয়েছে।");
+    } else {
+      state.wishlist.push(id);
+      notify("Wishlist-এ যোগ হয়েছে।");
+    }
 
-function openCart() {
-  $("#cart-drawer")?.classList.add("open");
-  $("#overlay")?.classList.add("active");
-  document.body.classList.add("no-scroll");
-}
+    saveStorage();
+    renderProducts();
+    renderWishlist();
+  }
 
-function closeCart() {
-  $("#cart-drawer")?.classList.remove("open");
-  $("#overlay")?.classList.remove("active");
-  document.body.classList.remove("no-scroll");
-}
+  function openCart() {
+    $("#cart-drawer")?.classList.add("open");
+    $("#overlay")?.classList.add("active");
+    document.body.classList.add("no-scroll");
+  }
 
-function setupCartDrawer() {
-  $("#cart-open")?.addEventListener("click", openCart);
-  $("#mobile-cart-open")?.addEventListener("click", openCart);
-  $("#cart-close")?.addEventListener("click", closeCart);
-  $("#continue-shopping")?.addEventListener("click", closeCart);
-
-  $("#overlay")?.addEventListener("click", () => {
-    closeCart();
-    closeMobileMenu();
-  });
-}
-
-/* =========================================
-   MOBILE MENU
-========================================= */
-
-function openMobileMenu() {
-  $("#mobile-menu")?.classList.add("open");
-  $("#overlay")?.classList.add("active");
-  document.body.classList.add("no-scroll");
-}
-
-function closeMobileMenu() {
-  $("#mobile-menu")?.classList.remove("open");
-
-  if (!$("#cart-drawer")?.classList.contains("open")) {
+  function closeCart() {
+    $("#cart-drawer")?.classList.remove("open");
     $("#overlay")?.classList.remove("active");
     document.body.classList.remove("no-scroll");
   }
-}
 
-function setupMobileMenu() {
-  $("#mobile-menu-open")?.addEventListener("click", openMobileMenu);
-  $("#mobile-menu-close")?.addEventListener("click", closeMobileMenu);
-
-  $$("#mobile-menu a").forEach((link) => {
-    link.addEventListener("click", closeMobileMenu);
-  });
-}
-
-/* =========================================
-   CHECKOUT DIALOG
-========================================= */
-
-function openCheckout() {
-  if (!cart.length) {
-    showMessage("Your cart is empty", "error");
-    return;
-  }
-
-  const dialog = $("#order-dialog");
-
-  if (!dialog) {
-    showMessage("Checkout form not found", "error");
-    return;
-  }
-
-  closeCart();
-
-  if (typeof dialog.showModal === "function") {
-    dialog.showModal();
-  } else {
-    dialog.setAttribute("open", "");
-  }
-
-  renderCheckoutSummary();
-  updatePaymentDetails();
-  previewRepeatDiscount();
-}
-
-function closeCheckout() {
-  const dialog = $("#order-dialog");
-
-  if (!dialog) return;
-
-  if (typeof dialog.close === "function") {
-    dialog.close();
-  } else {
-    dialog.removeAttribute("open");
-  }
-}
-
-function setupCheckout() {
-  $("#checkout-open")?.addEventListener("click", openCheckout);
-  $("#order-close")?.addEventListener("click", closeCheckout);
-
-  $("#order-dialog")?.addEventListener("click", (event) => {
-    if (event.target === $("#order-dialog")) {
-      closeCheckout();
+  function openCheckout() {
+    if (!state.cart.length) {
+      notify("আগে cart-এ product যোগ করুন।", "error");
+      return;
     }
-  });
-}
 
-/* =========================================
-   PAYMENT SETTINGS
-========================================= */
+    closeCart();
 
-async function loadPaymentSettings() {
-  try {
-    const result = await callFunction("admin-settings", null, "GET");
+    const dialog = $("#order-dialog");
 
-    paymentSettings = result?.settings || {};
-    updatePaymentDetails();
-
-  } catch (error) {
-    console.warn("Payment settings:", error.message);
-  }
-}
-
-function getSelectedPayment() {
-  return $('input[name="payment"]:checked')?.value ||
-    $('input[name="payment_method"]:checked')?.value ||
-    "";
-}
-
-function updatePaymentDetails() {
-  const method = getSelectedPayment();
-  const details = $("#payment-details");
-  const info = $("#payment-info-text");
-
-  if (!details || !info) return;
-
-  let text = "";
-
-  if (method === "bkash") {
-    text = paymentSettings.bkash_number
-      ? `bKash Number: ${paymentSettings.bkash_number}`
-      : "bKash payment information will be provided by the store.";
-  } else if (method === "nagad") {
-    text = paymentSettings.nagad_number
-      ? `Nagad Number: ${paymentSettings.nagad_number}`
-      : "Nagad payment information will be provided by the store.";
-  } else if (method === "bank") {
-    text = paymentSettings.bank_details ||
-      "Bank payment information will be provided by the store.";
-  } else {
-    text = paymentSettings.payment_instructions ||
-      "Follow the instructions provided by the store.";
-  }
-
-  info.textContent = text;
-  details.hidden = false;
-}
-
-function setupPaymentMethods() {
-  $$('input[name="payment"], input[name="payment_method"]').forEach((input) => {
-    input.addEventListener("change", updatePaymentDetails);
-  });
-}
-
-/* =========================================
-   CHECKOUT SUMMARY
-========================================= */
-
-function getDeliveryCharge() {
-  const element = $('[name="delivery_charge"]');
-  return Number(element?.value || 0);
-}
-
-function renderCheckoutSummary() {
-  const subtotal = getCartSubtotal();
-
-  const subtotalElement = $("#dialog-total");
-  const discountElement = $("#dialog-discount");
-  const repeatElement = $("#dialog-repeat-discount");
-  const totalDiscountElement = $("#dialog-total-discount");
-  const grandTotalElement = $("#dialog-grand-total");
-
-  const totalDiscount = couponDiscount + repeatDiscount;
-  const grandTotal = Math.max(
-    0,
-    subtotal - totalDiscount + getDeliveryCharge()
-  );
-
-  if (subtotalElement) {
-    subtotalElement.textContent = money(subtotal);
-  }
-
-  if (discountElement) {
-    discountElement.textContent = money(couponDiscount);
-  }
-
-  if (repeatElement) {
-    repeatElement.textContent = money(repeatDiscount);
-  }
-
-  if (totalDiscountElement) {
-    totalDiscountElement.textContent = money(totalDiscount);
-  }
-
-  if (grandTotalElement) {
-    grandTotalElement.textContent = money(grandTotal);
-  }
-}
-
-/* =========================================
-   CUSTOMER DETAILS
-========================================= */
-
-function getCustomerDetails() {
-  const getValue = (...selectors) => {
-    for (const selector of selectors) {
-      const element = $(selector);
-      if (element) return element.value.trim();
+    if (dialog && typeof dialog.showModal === "function") {
+      dialog.showModal();
+    } else {
+      dialog?.setAttribute("open", "");
     }
-    return "";
-  };
 
-  return {
-    name: getValue(
-      "#customer-name",
-      "#name",
-      '[name="name"]',
-      '[name="customer_name"]'
-    ),
-
-    phone: getValue(
-      "#customer-phone",
-      "#phone",
-      '[name="phone"]',
-      '[name="customer_phone"]'
-    ),
-
-    whatsapp: getValue(
-      "#customer-whatsapp",
-      "#whatsapp",
-      '[name="whatsapp"]'
-    ),
-
-    address: getValue(
-      "#customer-address",
-      "#address",
-      '[name="address"]',
-      '[name="customer_address"]'
-    ),
-
-    district: getValue(
-      "#customer-district",
-      "#district",
-      '[name="district"]'
-    ),
-
-    area: getValue(
-      "#customer-area",
-      "#area",
-      '[name="area"]'
-    )
-  };
-}
-
-function validateCustomer(customer) {
-  if (!customer.name) {
-    return "Please enter your name.";
+    updateCheckoutSummary();
+    previewRepeatDiscount();
   }
 
-  if (!customer.phone) {
-    return "Please enter your phone number.";
+  function closeCheckout() {
+    const dialog = $("#order-dialog");
+
+    if (dialog?.open) {
+      dialog.close();
+    } else {
+      dialog?.removeAttribute("open");
+    }
   }
 
-  const digits = customer.phone.replace(/\D/g, "");
-
-  if (digits.length < 10) {
-    return "Please enter a valid phone number.";
+  function checkoutDiscount() {
+    return Number(state.coupon?.discount_amount || 0);
   }
 
-  if (!customer.address) {
-    return "Please enter your full address.";
+  function updateCheckoutSummary() {
+    const subtotal = cartSubtotal();
+    const couponDiscount = checkoutDiscount();
+    const repeatDiscount = Number(state.repeatDiscount || 0);
+    const totalDiscount = Math.min(subtotal, couponDiscount + repeatDiscount);
+    const grandTotal = Math.max(0, subtotal - totalDiscount);
+
+    setText("#dialog-total", money(subtotal));
+    setText("#dialog-discount", money(couponDiscount));
+    setText("#dialog-repeat-discount", money(repeatDiscount));
+    setText("#dialog-total-discount", money(totalDiscount));
+    setText("#dialog-grand-total", money(grandTotal));
   }
 
-  return "";
-}
-
-/* =========================================
-   REPEAT CUSTOMER DISCOUNT
-========================================= */
-
-async function previewRepeatDiscount() {
-  const customer = getCustomerDetails();
-  const subtotal = getCartSubtotal();
-
-  if (!customer.phone || !customer.address || subtotal <= 0) {
-    repeatDiscount = 0;
-    repeatOrderCount = 0;
-    repeatDiscountPercent = 0;
-    renderCheckoutSummary();
-    return;
+  function selectedPayment() {
+    const selected = $('input[name="payment_method"]:checked');
+    return selected?.value || state.selectedPayment;
   }
 
-  try {
-    const result = await postOrderAction({
-      action: "preview_repeat_discount",
-      customer,
-      subtotal,
-      coupon_discount: couponDiscount
-    });
+  function updatePaymentDetails() {
+    const method = selectedPayment();
+    state.selectedPayment = method;
 
-    if (result?.ok) {
-      repeatDiscount = Number(
-        result.repeat_discount ??
-        result.discount ??
-        0
+    const box = $("#payment-details");
+    const text = $("#payment-info-text");
+
+    if (!box || !text) return;
+
+    const settings = state.settings;
+
+    const details = {
+      bkash: settings.bkash_number
+        ? `bKash Number: ${settings.bkash_number}\nPayment type: Send Money`
+        : "Admin এখনো bKash payment details যোগ করেননি।",
+      nagad: settings.nagad_number
+        ? `Nagad Number: ${settings.nagad_number}\nPayment type: Send Money`
+        : "Admin এখনো Nagad payment details যোগ করেননি।",
+      bank: settings.bank_details ||
+        settings.bank_instructions ||
+        "Bank payment details এখনো যোগ করা হয়নি।"
+    };
+
+    text.textContent = details[method] || "";
+  }
+
+  async function previewRepeatDiscount() {
+    if (!state.cart.length) return;
+
+    const phone = $("#customer-phone")?.value.trim() || "";
+    const address = $("#customer-address")?.value.trim() || "";
+
+    if (!phone || !address) return;
+
+    try {
+      const result = await edgeFunction("place-order", {
+        action: "preview_repeat_discount",
+        customer: {
+          name: $("#customer-name")?.value.trim() || "",
+          phone,
+          address
+        }
+      });
+
+      state.repeatDiscount = Number(
+        result.repeat_discount || result.discount || 0
       );
 
-      repeatOrderCount = Number(
-        result.total_orders ??
-        result.repeat_order_count ??
-        result.order_count ??
-        0
-      );
-
-      repeatDiscountPercent = Number(
-        result.discount_percent ??
-        result.repeat_discount_percent ??
-        0
-      );
+      setText("#repeat-order-count", result.total_orders || 0);
+      setText("#repeat-discount-percent", result.discount_percent || 0);
 
       const message = $("#repeat-discount-message");
 
       if (message) {
-        message.textContent = repeatDiscount > 0
-          ? `Congratulations! You received ${repeatDiscountPercent}% repeat customer discount.`
-          : "Your repeat customer discount will be checked automatically.";
+        message.textContent = state.repeatDiscount > 0
+          ? `আপনার repeat customer discount: ${money(state.repeatDiscount)}`
+          : "আপনার repeat customer discount এখনো প্রযোজ্য নয়।";
       }
-    }
-  } catch (error) {
-    console.warn("Repeat discount preview:", error.message);
-  }
 
-  const count = $("#repeat-order-count");
-  const percent = $("#repeat-discount-percent");
-
-  if (count) count.textContent = repeatOrderCount;
-  if (percent) percent.textContent = `${repeatDiscountPercent}%`;
-
-  renderCheckoutSummary();
-}
-
-function setupRepeatDiscountPreview() {
-  let timer;
-
-  [
-    "#customer-phone",
-    "#phone",
-    '[name="phone"]',
-    "#customer-address",
-    "#address",
-    '[name="address"]'
-  ].forEach((selector) => {
-    $(selector)?.addEventListener("input", () => {
-      clearTimeout(timer);
-      timer = setTimeout(previewRepeatDiscount, 700);
-    });
-  });
-}
-
-/* =========================================
-   COUPONS
-========================================= */
-
-async function applyCoupon() {
-  const input = $("#coupon-code");
-  const message = $("#coupon-message");
-
-  const code = input?.value.trim().toUpperCase();
-
-  if (!code) {
-    if (message) message.textContent = "Enter a coupon code.";
-    return;
-  }
-
-  if (getCartSubtotal() <= 0) {
-    if (message) message.textContent = "Your cart is empty.";
-    return;
-  }
-
-  const button = $("#apply-coupon");
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Checking...";
-  }
-
-  try {
-    const result = await postOrderAction({
-      action: "validate_coupon",
-      coupon_code: code,
-      subtotal: getCartSubtotal()
-    });
-
-    if (!result?.ok) {
-      throw new Error(result?.message || "Invalid coupon code.");
-    }
-
-    couponDiscount = Number(
-      result.discount ??
-      result.coupon_discount ??
-      0
-    );
-
-    currentCoupon = code;
-
-    if (message) {
-      message.textContent =
-        `Coupon applied! You saved ${money(couponDiscount)}.`;
-    }
-
-    showMessage("Coupon applied successfully");
-
-    await previewRepeatDiscount();
-    renderCheckoutSummary();
-
-  } catch (error) {
-    currentCoupon = null;
-    couponDiscount = 0;
-
-    if (message) message.textContent = error.message;
-
-    renderCheckoutSummary();
-
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = "Apply";
+      updateCheckoutSummary();
+    } catch (error) {
+      console.warn("Repeat discount:", error.message);
     }
   }
-}
 
-function setupCoupon() {
-  $("#apply-coupon")?.addEventListener("click", applyCoupon);
-}
+  async function applyCoupon() {
+    const input = $("#coupon-code");
+    const message = $("#coupon-message");
+    const code = input?.value.trim();
 
-/* =========================================
-   PLACE ORDER
-========================================= */
-
-function setFormMessage(message, type = "error") {
-  const element = $("#form-message");
-
-  if (!element) return;
-
-  element.textContent = message;
-  element.style.color = type === "success"
-    ? "#8dba9c"
-    : "#e49b9b";
-}
-
-async function placeOrder(event) {
-  event.preventDefault();
-
-  if (isSubmittingOrder) return;
-
-  const customer = getCustomerDetails();
-  const validationError = validateCustomer(customer);
-
-  if (validationError) {
-    setFormMessage(validationError);
-    return;
-  }
-
-  if (!cart.length) {
-    setFormMessage("Your cart is empty.");
-    return;
-  }
-
-  const paymentMethod = getSelectedPayment();
-
-  if (!paymentMethod) {
-    setFormMessage("Please select a payment method.");
-    return;
-  }
-
-  const items = getCartDetails();
-
-  for (const item of items) {
-    if (item.quantity > Number(item.product.stock || 0)) {
-      setFormMessage(
-        `${item.product.name} does not have enough stock.`
-      );
+    if (!code) {
+      if (message) message.textContent = "Coupon code লিখুন।";
       return;
     }
-  }
 
-  const note =
-    $("#order-note")?.value.trim() ||
-    $("#customer-note")?.value.trim() ||
-    "";
-
-  const submitButton =
-    $("#place-order-button") ||
-    $("#order-form")?.querySelector('[type="submit"]');
-
-  const originalText = submitButton?.textContent;
-
-  isSubmittingOrder = true;
-
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = "Placing Order...";
-  }
-
-  setFormMessage("Please wait. Your order is being processed.", "success");
-
-  const payload = {
-    customer,
-    payment_method: paymentMethod,
-    items: items.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity
-    })),
-    note,
-    coupon_code: currentCoupon || ""
-  };
-
-  try {
-    const result = await postOrderAction(payload);
-
-    if (!result?.ok) {
-      throw new Error(result?.message || "Order could not be placed.");
-    }
-
-    const orderNumber = result.order_number || "";
-
-    cart = [];
-    saveCart();
-
-    currentCoupon = null;
-    couponDiscount = 0;
-    repeatDiscount = 0;
-
-    renderCart();
-
-    const form = $("#order-form");
-    form?.reset();
-
-    closeCheckout();
-
-    const message = orderNumber
-      ? `Your order has been placed successfully! Order number: ${orderNumber}`
-      : "Your order has been placed successfully!";
-
-    showMessage(message);
-
-    if (orderNumber) {
-      const trackingUrl =
-        `track-order.html?order=${encodeURIComponent(orderNumber)}`;
-
-      setTimeout(() => {
-        const shouldTrack = confirm(
-          `${message}\n\nWould you like to track your order now?`
-        );
-
-        if (shouldTrack) {
-          window.location.href = trackingUrl;
-        }
-      }, 350);
-    }
-
-    await loadProducts();
-
-  } catch (error) {
-    console.error("Place order error:", error);
-    setFormMessage(error.message || "Something went wrong.");
-    showMessage(error.message || "Order failed", "error");
-
-  } finally {
-    isSubmittingOrder = false;
-
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = originalText || "Place Order";
-    }
-  }
-}
-
-function setupOrderForm() {
-  $("#order-form")?.addEventListener("submit", placeOrder);
-}
-
-/* =========================================
-   MOBILE NAVIGATION
-========================================= */
-
-function setupMobileNavigation() {
-  $$(".mobile-nav-item").forEach((button) => {
-    button.addEventListener("click", () => {
-      const target = button.dataset.target;
-
-      if (target) {
-        document.querySelector(target)?.scrollIntoView({
-          behavior: "smooth"
-        });
-      }
-
-      $$(".mobile-nav-item").forEach((item) => {
-        item.classList.remove("active");
+    try {
+      const result = await edgeFunction("place-order", {
+        action: "validate_coupon",
+        coupon_code: code,
+        subtotal: cartSubtotal()
       });
 
-      button.classList.add("active");
-    });
-  });
-}
+      if (result.valid === false || result.ok === false) {
+        throw new Error(result.message || "Coupon valid নয়।");
+      }
 
-/* =========================================
-   FOOTER YEAR
-========================================= */
+      state.coupon = {
+        code,
+        discount_amount: Number(
+          result.discount_amount || result.discount || 0
+        )
+      };
 
-function setupFooter() {
-  const year = $("#year");
+      if (message) {
+        message.textContent = result.message || "Coupon applied হয়েছে।";
+        message.className = "success-message";
+      }
 
-  if (year) {
-    year.textContent = new Date().getFullYear();
+      updateCheckoutSummary();
+    } catch (error) {
+      state.coupon = null;
+
+      if (message) {
+        message.textContent = error.message;
+        message.className = "error-message";
+      }
+
+      updateCheckoutSummary();
+    }
   }
-}
 
-/* =========================================
-   GENERAL NAVIGATION
-========================================= */
+  function formValue(id) {
+    return $(`#${id}`)?.value.trim() || "";
+  }
 
-function setupNavigation() {
-  $$('a[href^="#"]').forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const target = link.getAttribute("href");
+  function showFormMessage(message, type = "error") {
+    const element = $("#form-message");
+    if (!element) return;
 
-      if (!target || target === "#") return;
+    element.textContent = message;
+    element.className = type === "success"
+      ? "success-message"
+      : "error-message";
+  }
 
-      const element = document.querySelector(target);
+  async function submitOrder(event) {
+    event.preventDefault();
 
-      if (element) {
-        event.preventDefault();
+    if (state.busy) return;
 
-        element.scrollIntoView({
-          behavior: "smooth"
-        });
+    if (!state.cart.length) {
+      showFormMessage("আপনার cart খালি।");
+      return;
+    }
+
+    const customer = {
+      name: formValue("customer-name"),
+      phone: formValue("customer-phone"),
+      whatsapp: formValue("customer-whatsapp"),
+      address: formValue("customer-address"),
+      district: formValue("customer-district"),
+      area: formValue("customer-area")
+    };
+
+    if (!customer.name || !customer.phone || !customer.address) {
+      showFormMessage("নাম, ফোন এবং ঠিকানা পূরণ করুন।");
+      return;
+    }
+
+    const paymentMethod = selectedPayment();
+
+    if (!["bkash", "nagad", "bank"].includes(paymentMethod)) {
+      showFormMessage("একটি payment method নির্বাচন করুন।");
+      return;
+    }
+
+    const button = $("#place-order-button");
+    state.busy = true;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Processing...";
+    }
+
+    try {
+      const result = await edgeFunction("place-order", {
+        customer,
+        payment_method: paymentMethod,
+        items: state.cart.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity
+        })),
+        note: formValue("order-note"),
+        coupon_code: state.coupon?.code || ""
+      });
+
+      if (!result.ok) {
+        throw new Error(result.message || "Order place করা যায়নি।");
+      }
+
+      state.cart = [];
+      state.coupon = null;
+      state.repeatDiscount = 0;
+
+      saveStorage();
+      renderCart();
+      closeCheckout();
+
+      const orderNumber = result.order_number || "";
+
+      notify(
+        orderNumber
+          ? `Order সফল হয়েছে! Order ID: ${orderNumber}`
+          : "আপনার order সফলভাবে গ্রহণ করা হয়েছে।"
+      );
+
+      $("#order-form")?.reset();
+
+      setTimeout(() => {
+        if (orderNumber) {
+          window.location.href =
+            `track-order.html?order=${encodeURIComponent(orderNumber)}`;
+        }
+      }, 1800);
+
+    } catch (error) {
+      showFormMessage(error.message || "Order place করা যায়নি।");
+    } finally {
+      state.busy = false;
+
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Place Order";
+      }
+    }
+  }
+
+  function setupEvents() {
+    document.addEventListener("click", (event) => {
+      const addButton = event.target.closest("[data-add-cart]");
+      if (addButton) {
+        addToCart(addButton.dataset.addCart);
+        return;
+      }
+
+      const wishlistButton = event.target.closest("[data-wishlist]");
+      if (wishlistButton) {
+        toggleWishlist(wishlistButton.dataset.wishlist);
+        return;
+      }
+
+      const quantityButton = event.target.closest("[data-quantity]");
+      if (quantityButton) {
+        changeQuantity(
+          quantityButton.dataset.id,
+          Number(quantityButton.dataset.quantity)
+        );
+        return;
+      }
+
+      const removeButton = event.target.closest("[data-remove-cart]");
+      if (removeButton) {
+        removeCartItem(removeButton.dataset.removeCart);
+        return;
+      }
+
+      const categoryButton = event.target.closest("[data-category]");
+      if (categoryButton) {
+        state.activeCategory = categoryButton.dataset.category;
+        renderProducts();
+
+        $("#shop")?.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      const tab = event.target.closest(".product-tab");
+      if (tab) {
+        $$(".product-tab").forEach((item) => item.classList.remove("active"));
+        tab.classList.add("active");
+
+        state.activeCategory = tab.dataset.category || "all";
+        renderProducts();
       }
     });
-  });
-}
 
-/* =========================================
-   INITIALIZATION
-========================================= */
+    $("#cart-open")?.addEventListener("click", openCart);
+    $("#mobile-cart-open")?.addEventListener("click", openCart);
+    $("#cart-close")?.addEventListener("click", closeCart);
+    $("#continue-shopping")?.addEventListener("click", closeCart);
 
-async function initializeStore() {
-  loadCart();
-  loadWishlist();
+    $("#overlay")?.addEventListener("click", closeCart);
 
-  renderCart();
+    $("#checkout-open")?.addEventListener("click", openCheckout);
+    $("#order-close")?.addEventListener("click", closeCheckout);
 
-  setupProductFilters();
-  setupCartDrawer();
-  setupMobileMenu();
-  setupCheckout();
-  setupPaymentMethods();
-  setupCoupon();
-  setupOrderForm();
-  setupRepeatDiscountPreview();
-  setupMobileNavigation();
-  setupFooter();
-  setupNavigation();
+    $("#order-dialog")?.addEventListener("click", (event) => {
+      if (event.target === $("#order-dialog")) {
+        closeCheckout();
+      }
+    });
 
-  await Promise.all([
-    loadStoreSettings(),
-    loadPaymentSettings(),
-    loadProducts()
-  ]);
+    $("#order-form")?.addEventListener("submit", submitOrder);
+    $("#apply-coupon")?.addEventListener("click", applyCoupon);
 
-  renderCart();
-  renderWishlist();
-}
+    $("#product-search")?.addEventListener("input", (event) => {
+      state.search = event.target.value.trim();
+      renderProducts();
+    });
 
-document.addEventListener("DOMContentLoaded", initializeStore);
+    $("#mobile-product-search")?.addEventListener("input", (event) => {
+      state.search = event.target.value.trim();
+
+      const desktopSearch = $("#product-search");
+      if (desktopSearch) desktopSearch.value = state.search;
+
+      renderProducts();
+    });
+
+    $("#product-sort")?.addEventListener("change", (event) => {
+      state.sort = event.target.value;
+      renderProducts();
+    });
+
+    $$('input[name="payment_method"]').forEach((input) => {
+      input.addEventListener("change", updatePaymentDetails);
+    });
+
+    ["customer-name", "customer-phone", "customer-address"].forEach((id) => {
+      $(`#${id}`)?.addEventListener("blur", previewRepeatDiscount);
+    });
+
+    $("#mobile-menu-open")?.addEventListener("click", () => {
+      $("#mobile-menu")?.classList.add("open");
+      document.body.classList.add("no-scroll");
+    });
+
+    $("#mobile-menu-close")?.addEventListener("click", closeMobileMenu);
+
+    $$("#mobile-menu a").forEach((link) => {
+      link.addEventListener("click", closeMobileMenu);
+    });
+
+    $("#year") && ($("#year").textContent = new Date().getFullYear());
+  }
+
+  function closeMobileMenu() {
+    $("#mobile-menu")?.classList.remove("open");
+    document.body.classList.remove("no-scroll");
+  }
+
+  async function init() {
+    setupEvents();
+    renderCart();
+
+    await Promise.all([
+      loadSettings(),
+      loadProducts()
+    ]);
+
+    updatePaymentDetails();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
