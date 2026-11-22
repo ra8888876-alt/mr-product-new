@@ -1,714 +1,264 @@
+"use strict";
+
 const CONFIG = window.MR_PRODUCT_CONFIG || {};
 
-const SUPABASE_URL = CONFIG.supabaseUrl || "";
-const SUPABASE_KEY = CONFIG.publishableKey || "";
-
-const $ = (selector) => document.querySelector(selector);
+const SUPABASE_URL = (CONFIG.supabaseUrl || "").replace(/\/$/, "");
+const SUPABASE_KEY = CONFIG.publishableKey || CONFIG.anonKey || "";
 
 const money = (amount) =>
   "৳" + Number(amount || 0).toLocaleString("en-BD", {
-    minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
 
 const escapeHTML = (value) =>
-  String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  String(value ?? "").replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#039;"
-  })[char]);
+  }[character]));
+
+const $ = (selector) => document.querySelector(selector);
+
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+const CART_KEY = "mr_product_cart";
+const WISHLIST_KEY = "mr_product_wishlist";
 
 let products = [];
-let cart = [];
-let paymentSettings = null;
-let storeSettings = null;
+let cart = loadJSON(CART_KEY, []);
+let wishlist = loadJSON(WISHLIST_KEY, []);
+let activeCategory = "all";
 let searchTerm = "";
+let couponData = null;
+let repeatDiscountData = null;
+let paymentSettings = {};
+let storeSettings = {};
 
-let appliedCoupon = null;
+function loadJSON(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
 
-let repeatDiscount = {
-  previous_delivered_orders: 0,
-  repeat_percent: 0,
-  repeat_discount: 0
-};
+function saveCart() {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
 
-let repeatPreviewTimer = null;
-let repeatPreviewRequest = 0;
+function saveWishlist() {
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+}
 
-// =====================================
-// API HELPER
-// =====================================
+function getHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`
+  };
+}
 
 async function postOrderAction(payload) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error("Store connection is not configured.");
+  }
+
   const response = await fetch(
     `${SUPABASE_URL}/functions/v1/place-order`,
     {
       method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      },
+      headers: getHeaders(),
       body: JSON.stringify(payload)
     }
   );
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(
-      result.error || "Request could not be completed."
-    );
+  if (!response.ok || result.error) {
+    throw new Error(result.error || result.message || "Request failed.");
   }
 
   return result;
 }
 
-// =====================================
-// WISHLIST
-// =====================================
-
-const WISHLIST_KEY = "mr_product_wishlist";
-
-function loadWishlist() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(WISHLIST_KEY) || "[]"
-    );
-
-    return Array.isArray(saved)
-      ? saved.map(String)
-      : [];
-
-  } catch {
-    return [];
-  }
-}
-
-let wishlist = loadWishlist();
-
-function saveWishlist() {
-  localStorage.setItem(
-    WISHLIST_KEY,
-    JSON.stringify(wishlist)
+async function fetchFunction(name, options = {}) {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/${name}`,
+    {
+      ...options,
+      headers: {
+        ...getHeaders(),
+        ...(options.headers || {})
+      }
+    }
   );
 
-  renderProducts();
-  renderWishlist();
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result.error || result.message || "Request failed.");
+  }
+
+  return result;
 }
-
-// =====================================
-// YEAR
-// =====================================
-
-if ($("#year")) {
-  $("#year").textContent = new Date().getFullYear();
-}
-
-// =====================================
-// PRODUCT PRICE
-// =====================================
 
 function getProductPrice(product) {
-  const price = Number(product.price || 0);
-  const discount = Number(product.discount_price || 0);
+  const original = Number(product.price || 0);
+  const discounted = Number(product.discount_price || 0);
 
-  return discount > 0 && discount < price
-    ? discount
-    : price;
+  if (discounted > 0 && discounted < original) {
+    return discounted;
+  }
+
+  return original;
 }
 
-// =====================================
-// CART SUBTOTAL
-// =====================================
+function getProductImage(product) {
+  return product.image_url ||
+    "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?auto=format&fit=crop&w=700&q=80";
+}
 
-function getCartSubtotal() {
-  return cart.reduce(
-    (sum, item) => sum + item.price * item.qty,
+function getProductStock(product) {
+  return Number(product.stock ?? 0);
+}
+
+function isProductAvailable(product) {
+  return product.active !== false && getProductStock(product) > 0;
+}
+
+function calculateSubtotal() {
+  return cart.reduce((total, item) => {
+    const product = products.find(
+      (p) => String(p.id) === String(item.id)
+    );
+
+    const price = product ? getProductPrice(product) : Number(item.price || 0);
+
+    return total + price * Number(item.quantity || 0);
+  }, 0);
+}
+
+function getCouponDiscount() {
+  return Number(
+    couponData?.discount_amount ??
+    couponData?.discount ??
+    couponData?.amount ??
     0
   );
 }
 
-// =====================================
-// DISCOUNT TOTALS
-// =====================================
-
-function getCouponDiscount() {
-  return Math.min(
-    getCartSubtotal(),
-    Math.max(0, Number(appliedCoupon?.discount || 0))
-  );
-}
-
 function getRepeatDiscount() {
-  return Math.min(
-    Math.max(0, getCartSubtotal() - getCouponDiscount()),
-    Math.max(0, Number(repeatDiscount.repeat_discount || 0))
+  return Number(
+    repeatDiscountData?.discount_amount ??
+    repeatDiscountData?.discount ??
+    0
   );
 }
 
-function updateCouponTotals() {
-  const subtotal = getCartSubtotal();
-  const couponDiscount = getCouponDiscount();
-  const repeat = getRepeatDiscount();
-
-  const totalDiscount = Math.min(
-    subtotal,
-    couponDiscount + repeat
-  );
-
-  const total = Math.max(
+function getGrandTotal() {
+  return Math.max(
     0,
-    subtotal - totalDiscount
-  );
-
-  if ($("#dialog-total")) {
-    $("#dialog-total").textContent = money(subtotal);
-  }
-
-  if ($("#dialog-discount")) {
-    $("#dialog-discount").textContent =
-      money(couponDiscount);
-  }
-
-  if ($("#dialog-repeat-discount")) {
-    $("#dialog-repeat-discount").textContent =
-      money(repeat);
-  }
-
-  if ($("#dialog-total-discount")) {
-    $("#dialog-total-discount").textContent =
-      money(totalDiscount);
-  }
-
-  if ($("#dialog-grand-total")) {
-    $("#dialog-grand-total").textContent =
-      money(total);
-  }
-
-  if ($("#repeat-order-count")) {
-    $("#repeat-order-count").textContent =
-      Number(
-        repeatDiscount.previous_delivered_orders || 0
-      );
-  }
-
-  if ($("#repeat-discount-percent")) {
-    $("#repeat-discount-percent").textContent =
-      Number(repeatDiscount.repeat_percent || 0);
-  }
-}
-
-// =====================================
-// RESET REPEAT DISCOUNT
-// =====================================
-
-function resetRepeatDiscount(message = "") {
-  repeatPreviewRequest++;
-
-  repeatDiscount = {
-    previous_delivered_orders: 0,
-    repeat_percent: 0,
-    repeat_discount: 0
-  };
-
-  if ($("#repeat-discount-message")) {
-    $("#repeat-discount-message").textContent =
-      message ||
-      "Enter your delivery details to check your reward.";
-  }
-
-  updateCouponTotals();
-}
-
-// =====================================
-// GET CHECKOUT CUSTOMER
-// =====================================
-
-function getCheckoutCustomer() {
-  const form = $("#order-form");
-
-  if (!form) return null;
-
-  const formData = new FormData(form);
-
-  return {
-    name: String(formData.get("name") || "").trim(),
-    phone: String(formData.get("phone") || "").trim(),
-    whatsapp: String(formData.get("whatsapp") || "").trim(),
-    district: String(formData.get("district") || "").trim(),
-    area: String(formData.get("area") || "").trim(),
-    address: String(formData.get("address") || "").trim()
-  };
-}
-
-// =====================================
-// REPEAT CUSTOMER DISCOUNT PREVIEW
-// =====================================
-
-async function previewRepeatDiscount() {
-  if (!cart.length) {
-    resetRepeatDiscount();
-    return;
-  }
-
-  const customer = getCheckoutCustomer();
-
-  if (
-    !customer ||
-    !customer.phone ||
-    !customer.district ||
-    !customer.area ||
-    !customer.address
-  ) {
-    resetRepeatDiscount(
-      "Complete your phone number and delivery address to check your reward."
-    );
-
-    return;
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    resetRepeatDiscount(
-      "Discount service is currently unavailable."
-    );
-
-    return;
-  }
-
-  const requestNumber = ++repeatPreviewRequest;
-
-  if ($("#repeat-discount-message")) {
-    $("#repeat-discount-message").textContent =
-      "Checking your previous delivered orders...";
-  }
-
-  try {
-    const result = await postOrderAction({
-      action: "preview_repeat_discount",
-      customer,
-      subtotal: getCartSubtotal(),
-      coupon_discount: getCouponDiscount()
-    });
-
-    if (requestNumber !== repeatPreviewRequest) {
-      return;
-    }
-
-    if (result.ok !== true) {
-      throw new Error(
-        result.error || "Could not check repeat discount."
-      );
-    }
-
-    repeatDiscount = {
-      previous_delivered_orders: Number(
-        result.previous_delivered_orders || 0
-      ),
-      repeat_percent: Number(
-        result.repeat_percent || 0
-      ),
-      repeat_discount: Number(
-        result.repeat_discount || 0
-      )
-    };
-
-    if ($("#repeat-discount-message")) {
-      if (repeatDiscount.repeat_percent > 0) {
-        $("#repeat-discount-message").textContent =
-          `Congratulations! You have ${repeatDiscount.repeat_percent}% repeat customer discount.`;
-      } else {
-        $("#repeat-discount-message").textContent =
-          "Your next repeat customer reward is waiting. Keep shopping with MR PRODUCT!";
-      }
-    }
-
-    updateCouponTotals();
-
-  } catch (error) {
-    console.error("Repeat discount preview error:", error);
-
-    if (requestNumber !== repeatPreviewRequest) {
-      return;
-    }
-
-    resetRepeatDiscount(
-      "Unable to check your reward right now. Your order can still be submitted."
-    );
-  }
-}
-
-function scheduleRepeatPreview() {
-  clearTimeout(repeatPreviewTimer);
-
-  repeatPreviewTimer = setTimeout(() => {
-    previewRepeatDiscount();
-  }, 650);
-}
-
-// =====================================
-// CLEAR COUPON
-// =====================================
-
-function clearAppliedCoupon(showMessage = false) {
-  appliedCoupon = null;
-
-  const input = $("#coupon-code");
-
-  if (input) {
-    input.value = "";
-  }
-
-  if ($("#coupon-message")) {
-    $("#coupon-message").textContent = showMessage
-      ? "Cart changed. Please apply your coupon again."
-      : "";
-  }
-
-  updateCouponTotals();
-  scheduleRepeatPreview();
-}
-
-// =====================================
-// APPLY COUPON
-// =====================================
-
-async function applyCoupon() {
-  const input = $("#coupon-code");
-  const button = $("#apply-coupon");
-  const message = $("#coupon-message");
-
-  if (!input || !button || !message) return;
-
-  const code = input.value.trim().toUpperCase();
-
-  if (!code) {
-    message.textContent = "Please enter a coupon code.";
-    return;
-  }
-
-  if (!cart.length) {
-    message.textContent = "Your cart is empty.";
-    return;
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    message.textContent =
-      "Store database is not configured.";
-    return;
-  }
-
-  button.disabled = true;
-  message.textContent = "Checking coupon...";
-
-  try {
-    const result = await postOrderAction({
-      action: "validate_coupon",
-      coupon_code: code,
-      subtotal: getCartSubtotal()
-    });
-
-    if (result.ok !== true) {
-      throw new Error(
-        result.error || "Coupon could not be applied."
-      );
-    }
-
-    appliedCoupon = {
-      code: result.coupon_code,
-      discount: Number(result.discount || 0)
-    };
-
-    message.textContent =
-      `Coupon ${result.coupon_code} applied successfully! You saved ${money(result.discount)}.`;
-
-    updateCouponTotals();
-    scheduleRepeatPreview();
-
-  } catch (error) {
-    appliedCoupon = null;
-    updateCouponTotals();
-
-    message.textContent =
-      error.message || "Invalid coupon code.";
-
-  } finally {
-    button.disabled = false;
-  }
-}
-
-if ($("#apply-coupon")) {
-  $("#apply-coupon").addEventListener(
-    "click",
-    applyCoupon
+    calculateSubtotal() - getCouponDiscount() - getRepeatDiscount()
   );
 }
 
-if ($("#coupon-code")) {
-  $("#coupon-code").addEventListener(
-    "keydown",
-    (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        applyCoupon();
-      }
-    }
-  );
-}
-
-// =====================================
-// LOAD STORE SETTINGS
-// =====================================
+/* STORE SETTINGS */
 
 async function loadStoreSettings() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return;
-
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/admin-settings`,
-      {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
+    const result = await fetchFunction("admin-settings", {
+      method: "GET"
+    });
 
-    if (!response.ok) {
-      throw new Error(
-        "Could not load store settings."
-      );
-    }
+    storeSettings = result.settings || result.store_settings || result || {};
 
-    const result = await response.json();
-
-    storeSettings = result.settings || null;
-
-    if (storeSettings) {
-      applyStoreBranding(storeSettings);
-    }
-
+    applyStoreSettings();
   } catch (error) {
-    console.error("Store settings error:", error);
+    console.warn("Store settings:", error.message);
   }
 }
 
-// =====================================
-// APPLY STORE BRANDING
-// =====================================
+function applyStoreSettings() {
+  const settings = storeSettings;
 
-function applyStoreBranding(settings) {
-  if (settings.store_name) {
-    const storeName = settings.store_name.trim();
+  const storeName = settings.store_name || "MR PRODUCT";
 
-    document.title = `${storeName} — Premium Store`;
+  $$(".brand-name").forEach((element) => {
+    element.textContent = storeName;
+  });
 
-    document.querySelectorAll(".brand b").forEach(
-      (element) => {
-        element.textContent = storeName;
-      }
-    );
+  document.title = `${storeName} — Premium Shopping`;
 
-    const footerText = document.querySelector(
-      "footer > span"
-    );
+  const description = settings.description;
 
-    if (footerText) {
-      footerText.innerHTML =
-        `©️ <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
-    }
+  if (description) {
+    const aboutText = $(".about-copy > p");
+    if (aboutText) aboutText.textContent = description;
   }
 
   if (settings.logo_url) {
-    document.querySelectorAll(".brand-mark").forEach(
-      (element) => {
-        element.innerHTML = "";
-
-        const image = document.createElement("img");
-
-        image.src = settings.logo_url;
-        image.alt = settings.store_name || "Store Logo";
-
-        image.style.width = "100%";
-        image.style.height = "100%";
-        image.style.objectFit = "contain";
-        image.style.display = "block";
-
-        element.appendChild(image);
-      }
-    );
-  }
-
-  if (settings.primary_color) {
-    const color = settings.primary_color.trim();
-
-    if (/^#[0-9a-fA-F]{6}$/.test(color)) {
-      document.documentElement.style.setProperty(
-        "--gold",
-        color
-      );
-
-      document.documentElement.style.setProperty(
-        "--primary-color",
-        color
-      );
-
-      const themeColor = $(
-        'meta[name="theme-color"]'
-      );
-
-      if (themeColor) {
-        themeColor.content = color;
-      }
-    }
+    $$(".brand-mark").forEach((element) => {
+      element.innerHTML = `<img src="${escapeHTML(settings.logo_url)}" alt="${escapeHTML(storeName)} logo">`;
+      element.style.background = "transparent";
+    });
   }
 
   if (settings.banner_url) {
-    const saleBanner = $(".sale-banner");
+    const banner = $("#hero-banner-image");
+    if (banner) banner.src = settings.banner_url;
+  }
 
-    if (saleBanner) {
-      saleBanner.style.backgroundImage = `
-        linear-gradient(
-          90deg,
-          rgba(13,13,13,.94),
-          rgba(13,13,13,.55)
-        ),
-        url("${settings.banner_url}")
-      `;
+  if (settings.primary_color) {
+    document.documentElement.style.setProperty(
+      "--accent",
+      settings.primary_color
+    );
+  }
 
-      saleBanner.style.backgroundSize = "cover";
-      saleBanner.style.backgroundPosition = "center";
-      saleBanner.style.backgroundRepeat = "no-repeat";
-    }
-
-    const hero = $(".hero");
-
-    if (hero) {
-      hero.style.backgroundImage = `
-        linear-gradient(
-          90deg,
-          rgba(13,13,13,.94),
-          rgba(13,13,13,.48)
-        ),
-        url("${settings.banner_url}")
-      `;
-
-      hero.style.backgroundSize = "cover";
-      hero.style.backgroundPosition = "center";
+  if (settings.phone) {
+    const phone = $("#contact-phone");
+    if (phone) {
+      phone.href = `tel:${settings.phone}`;
+      phone.innerHTML = `Phone: <span>${escapeHTML(settings.phone)}</span>`;
     }
   }
 
-  if (settings.description) {
-    const description = settings.description.trim();
-
-    const saleDescription = $(
-      ".sale-content p:not(.eyebrow)"
-    );
-
-    if (saleDescription) {
-      saleDescription.textContent = description;
-    }
-
-    const heroDescription = $(
-      ".hero-copy > p:not(.eyebrow)"
-    );
-
-    if (heroDescription) {
-      heroDescription.textContent = description;
-    }
-
-    const aboutDescription = $(
-      "#about > p:not(.eyebrow)"
-    );
-
-    if (aboutDescription) {
-      aboutDescription.textContent = description;
+  if (settings.whatsapp) {
+    const whatsapp = $("#contact-whatsapp");
+    if (whatsapp) {
+      const number = String(settings.whatsapp).replace(/\D/g, "");
+      whatsapp.href = `https://wa.me/${number}`;
+      whatsapp.innerHTML = `WhatsApp: <span>${escapeHTML(settings.whatsapp)}</span>`;
     }
   }
 
-  const contactSection = $("#contact");
-
-  if (contactSection) {
-    const contactParagraph =
-      contactSection.querySelector("div + p");
-
-    if (contactParagraph) {
-      const contactItems = [];
-
-      if (settings.phone) {
-        contactItems.push({
-          label: "Phone",
-          value: settings.phone,
-          href:
-            "tel:" +
-            settings.phone.replace(/[^\d+]/g, "")
-        });
-      }
-
-      if (settings.whatsapp) {
-        const number =
-          settings.whatsapp.replace(/\D/g, "");
-
-        contactItems.push({
-          label: "WhatsApp",
-          value: settings.whatsapp,
-          href: "https://wa.me/" + number
-        });
-      }
-
-      if (settings.email) {
-        contactItems.push({
-          label: "Email",
-          value: settings.email,
-          href: "mailto:" + settings.email
-        });
-      }
-
-      if (contactItems.length) {
-        contactParagraph.innerHTML =
-          contactItems.map((item) => `
-            <div style="margin:10px 0">
-              <strong style="color:var(--gold)">
-                ${escapeHTML(item.label)}:
-              </strong>
-
-              <a
-                href="${escapeHTML(item.href)}"
-                style="color:var(--cream);text-decoration:underline"
-              >
-                ${escapeHTML(item.value)}
-              </a>
-            </div>
-          `).join("");
-      }
+  if (settings.email) {
+    const email = $("#contact-email");
+    if (email) {
+      email.href = `mailto:${settings.email}`;
+      email.innerHTML = `Email: <span>${escapeHTML(settings.email)}</span>`;
     }
   }
 }
 
-// =====================================
-// LOAD PRODUCTS
-// =====================================
+/* PRODUCTS */
 
 async function loadProducts() {
   const grid = $("#product-grid");
 
-  if (!grid) return;
-
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    grid.textContent =
-      "Store database is not configured.";
-
+    if (grid) {
+      grid.innerHTML = `<div class="empty-state">Store connection is not configured.</div>`;
+    }
     return;
   }
 
-  grid.textContent = "Loading products...";
-
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,discount_price,image_url,category,stock,active&active=eq.true&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,discount_price,image_url,category,stock,active,created_at&active=eq.true&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -718,478 +268,210 @@ async function loadProducts() {
     );
 
     if (!response.ok) {
-      throw new Error(await response.text());
+      throw new Error("Could not load products.");
     }
 
     products = await response.json();
 
     renderProducts();
+    renderCategories();
     renderWishlist();
-
   } catch (error) {
-    console.error(
-      "Product loading error:",
-      error
-    );
+    console.error(error);
 
-    grid.textContent =
-      "Products could not be loaded. Please try again later.";
+    if (grid) {
+      grid.innerHTML = `<div class="empty-state">Products could not be loaded. Please refresh the page.</div>`;
+    }
   }
 }
 
-// =====================================
-// PRODUCT CARD
-// =====================================
+function getFilteredProducts() {
+  let list = [...products];
 
-function createProductCard(product, isWishlist = false) {
-  const oldPrice = Number(product.price || 0);
-  const currentPrice = getProductPrice(product);
+  if (activeCategory === "sale") {
+    list = list.filter((product) => {
+      const original = Number(product.price || 0);
+      const discounted = Number(product.discount_price || 0);
+      return discounted > 0 && discounted < original;
+    });
+  } else if (activeCategory === "new") {
+    list = list.slice(0, 8);
+  } else if (activeCategory === "popular") {
+    list = list.filter((product) => getProductStock(product) > 0);
+  } else if (
+    activeCategory !== "all" &&
+    activeCategory !== "new" &&
+    activeCategory !== "popular"
+  ) {
+    list = list.filter((product) =>
+      String(product.category || "").toLowerCase() ===
+      activeCategory.toLowerCase()
+    );
+  }
 
-  const id = String(product.id);
-  const saved = wishlist.includes(id);
-  const stock = Number(product.stock || 0);
+  if (searchTerm) {
+    list = list.filter((product) => {
+      const text = `${product.name || ""} ${product.category || ""} ${product.description || ""}`.toLowerCase();
+      return text.includes(searchTerm);
+    });
+  }
 
-  const image = product.image_url
-    ? `
-      <div class="product-image">
-        <img
-          src="${escapeHTML(product.image_url)}"
-          alt="${escapeHTML(product.name)}"
-          loading="lazy"
-        >
-      </div>
-    `
-    : `
-      <div class="product-image">
-        MR
-      </div>
-    `;
-
-  return `
-    <article class="product-card">
-
-      ${image}
-
-      ${
-        !isWishlist
-          ? `
-            <button
-              class="wishlist-toggle ${saved ? "active" : ""}"
-              data-wishlist-toggle="${escapeHTML(id)}"
-              type="button"
-              aria-label="${saved ? "Remove from wishlist" : "Add to wishlist"}"
-              aria-pressed="${saved}"
-            >
-              ${saved ? "♥️" : "♡"}
-            </button>
-          `
-          : ""
-      }
-
-      <h3>${escapeHTML(product.name)}</h3>
-
-      <p class="muted small">
-        ${escapeHTML(product.description || "")}
-      </p>
-
-      <div class="price">
-        ${
-          currentPrice < oldPrice
-            ? `
-              <del class="old-price">${money(oldPrice)}</del>
-              <strong>${money(currentPrice)}</strong>
-            `
-            : money(currentPrice)
-        }
-      </div>
-
-      ${
-        isWishlist
-          ? `
-            <div class="wishlist-actions">
-
-              <button
-                class="button gold-button"
-                data-add="${escapeHTML(id)}"
-                type="button"
-                ${stock <= 0 ? "disabled" : ""}
-              >
-                ${stock <= 0 ? "Out of stock" : "Add to cart"}
-              </button>
-
-              <button
-                class="remove-wishlist"
-                data-wishlist-remove="${escapeHTML(id)}"
-                type="button"
-              >
-                Remove
-              </button>
-
-            </div>
-          `
-          : `
-            <button
-              class="button gold-button"
-              data-add="${escapeHTML(id)}"
-              type="button"
-              ${stock <= 0 ? "disabled" : ""}
-            >
-              ${stock <= 0 ? "Out of stock" : "Add to cart"}
-            </button>
-          `
-      }
-
-    </article>
-  `;
+  return list;
 }
-
-// =====================================
-// SEARCH PRODUCTS
-// =====================================
 
 function renderProducts() {
   const grid = $("#product-grid");
-
   if (!grid) return;
 
-  const filteredProducts = products.filter(
-    (product) => {
-      const searchText = [
-        product.name,
-        product.description,
-        product.category
-      ].join(" ").toLowerCase();
+  const list = getFilteredProducts();
 
-      return searchText.includes(
-        searchTerm.toLowerCase()
-      );
-    }
-  );
-
-  if (!filteredProducts.length) {
-    grid.innerHTML = `
-      <div class="wishlist-empty">
-        No products found.
-        <p>Try another search.</p>
-      </div>
-    `;
-
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state">No products found.</div>`;
     return;
   }
 
-  grid.innerHTML = filteredProducts
-    .map((product) => createProductCard(product))
-    .join("");
-}
+  grid.innerHTML = list.map((product) => {
+    const price = getProductPrice(product);
+    const original = Number(product.price || 0);
+    const discounted = price < original;
+    const stock = getProductStock(product);
+    const isSaved = wishlist.some(
+      (id) => String(id) === String(product.id)
+    );
 
-const searchInput = $("#product-search");
-const searchButton = $("#search-button");
+    return `
+      <article class="product-card">
+        <div class="product-image">
+          ${discounted ? `<span class="product-badge sale">SPECIAL PRICE</span>` : ""}
+          ${stock <= 0 ? `<span class="product-badge">SOLD OUT</span>` : ""}
+          <button
+            class="wishlist-toggle ${isSaved ? "active" : ""}"
+            type="button"
+            data-wishlist="${escapeHTML(product.id)}"
+            aria-label="Add to wishlist"
+          >${isSaved ? "♥" : "♡"}</button>
+          <img
+            src="${escapeHTML(getProductImage(product))}"
+            alt="${escapeHTML(product.name)}"
+            loading="lazy"
+          >
+        </div>
 
-if (searchInput) {
-  searchInput.addEventListener("input", () => {
-    searchTerm = searchInput.value.trim();
-    renderProducts();
-  });
+        <div class="product-info">
+          <span class="product-category">${escapeHTML(product.category || "COLLECTION")}</span>
+          <h3>${escapeHTML(product.name)}</h3>
 
-  searchInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      searchTerm = searchInput.value.trim();
-      renderProducts();
+          <div class="product-price">
+            <span>${money(price)}</span>
+            ${discounted ? `<span class="old-price">${money(original)}</span>` : ""}
+          </div>
 
-      $("#shop")?.scrollIntoView({
-        behavior: "smooth"
-      });
-    }
-  });
-}
+          <div class="stock-label ${stock <= 0 ? "out" : ""}">
+            ${stock <= 0 ? "Currently unavailable" : `${stock} in stock`}
+          </div>
 
-if (searchButton) {
-  searchButton.addEventListener("click", () => {
-    searchTerm = searchInput?.value.trim() || "";
-    renderProducts();
-
-    $("#shop")?.scrollIntoView({
-      behavior: "smooth"
-    });
-  });
-}
-
-// =====================================
-// WISHLIST DISPLAY
-// =====================================
-
-function renderWishlist() {
-  const grid = $("#wishlist-grid");
-  const count = $("#wishlist-count");
-
-  if (!grid || !count) return;
-
-  const savedProducts = products.filter(
-    (product) =>
-      wishlist.includes(String(product.id))
-  );
-
-  count.textContent =
-    `${savedProducts.length} Saved`;
-
-  if (!savedProducts.length) {
-    grid.innerHTML = `
-      <div class="wishlist-empty">
-        <span>♡</span>
-        Your wishlist is empty.
-        <p>Explore products and save your favorites.</p>
-      </div>
+          <div class="product-actions">
+            <button
+              type="button"
+              data-add="${escapeHTML(product.id)}"
+              ${stock <= 0 ? "disabled" : ""}
+            >${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}
+            </button>
+          </div>
+        </div>
+      </article>
     `;
+  }).join("");
+}
 
-    return;
-  }
+function renderCategories() {
+  const container = $(".category-menu");
+  if (!container) return;
 
-  grid.innerHTML = savedProducts
-    .map((product) =>
-      createProductCard(product, true)
+  const categories = [
+    ...new Set(
+      products
+        .map((product) => String(product.category || "").trim())
+        .filter(Boolean)
     )
-    .join("");
+  ];
+
+  container.innerHTML = `
+    <button type="button" class="active" data-category="all">All products</button>
+    ${categories.map((category) => `
+      <button type="button" data-category="${escapeHTML(category)}">
+        ${escapeHTML(category)}
+      </button>
+    `).join("")}
+  `;
 }
 
-// =====================================
-// WISHLIST ACTIONS
-// =====================================
+/* WISHLIST */
 
 function toggleWishlist(id) {
-  id = String(id);
+  const exists = wishlist.some(
+    (item) => String(item) === String(id)
+  );
 
-  if (wishlist.includes(id)) {
+  if (exists) {
     wishlist = wishlist.filter(
-      (item) => item !== id
+      (item) => String(item) !== String(id)
     );
   } else {
     wishlist.push(id);
   }
 
   saveWishlist();
+  renderProducts();
+  renderWishlist();
 }
 
-const productGrid = $("#product-grid");
-const wishlistGrid = $("#wishlist-grid");
+function renderWishlist() {
+  const grid = $("#wishlist-grid");
+  const count = $("#wishlist-count");
 
-if (productGrid) {
-  productGrid.addEventListener("click", (event) => {
-    const button = event.target.closest(
-      "[data-wishlist-toggle]"
-    );
+  if (count) count.textContent = wishlist.length;
+  if (!grid) return;
 
-    if (!button) return;
-
-    toggleWishlist(
-      button.dataset.wishlistToggle
-    );
-  });
-}
-
-if (wishlistGrid) {
-  wishlistGrid.addEventListener("click", (event) => {
-    const button = event.target.closest(
-      "[data-wishlist-remove]"
-    );
-
-    if (!button) return;
-
-    toggleWishlist(
-      button.dataset.wishlistRemove
-    );
-  });
-}
-
-// =====================================
-// PAYMENT SETTINGS
-// =====================================
-
-async function loadPaymentSettings() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return;
-
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/admin-settings`,
-      {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Could not load payment information."
-      );
-    }
-
-    const result = await response.json();
-
-    paymentSettings = result.settings || null;
-
-  } catch (error) {
-    console.error(
-      "Payment settings error:",
-      error
-    );
-
-    paymentSettings = null;
-  }
-}
-
-// =====================================
-// SHOW PAYMENT DETAILS
-// =====================================
-
-function showPaymentDetails() {
-  const detailsBox = $("#payment-details");
-  const infoText = $("#payment-info-text");
-  const paymentSelect = $('select[name="payment"]');
-
-  if (!detailsBox || !infoText || !paymentSelect) {
-    return;
-  }
-
-  const method = paymentSelect.value;
-
-  if (!method) {
-    detailsBox.hidden = true;
-    infoText.textContent = "";
-    return;
-  }
-
-  if (!paymentSettings) {
-    detailsBox.hidden = false;
-
-    infoText.textContent =
-      "Payment information is currently unavailable. Please contact the store.";
-
-    return;
-  }
-
-  let details = "";
-
-  if (method === "bkash") {
-    details = paymentSettings.bkash_number || "";
-  }
-
-  if (method === "nagad") {
-    details = paymentSettings.nagad_number || "";
-  }
-
-  if (method === "bank") {
-    details = paymentSettings.bank_details || "";
-  }
-
-  const instructions =
-    paymentSettings.payment_instructions || "";
-
-  if (!details && !instructions) {
-    detailsBox.hidden = false;
-
-    infoText.textContent =
-      "Payment details have not been added yet.";
-
-    return;
-  }
-
-  const lines = [];
-
-  if (method === "bkash") {
-    lines.push("bKash Payment Details");
-  }
-
-  if (method === "nagad") {
-    lines.push("Nagad Payment Details");
-  }
-
-  if (method === "bank") {
-    lines.push("Bank Transfer Details");
-  }
-
-  if (details) {
-    lines.push(details);
-  }
-
-  if (instructions) {
-    lines.push("");
-    lines.push("Payment Instructions:");
-    lines.push(instructions);
-  }
-
-  detailsBox.hidden = false;
-  infoText.textContent = lines.join("\n");
-}
-
-// =====================================
-// CART
-// =====================================
-
-function renderCart() {
-  const cartCount = $("#cart-count");
-  const mobileCartCount = $("#mobile-cart-count");
-  const cartItems = $("#cart-items");
-  const cartTotal = $("#cart-total");
-
-  const totalQuantity = cart.reduce(
-    (total, item) => total + item.qty,
-    0
+  const savedProducts = products.filter((product) =>
+    wishlist.some((id) => String(id) === String(product.id))
   );
 
-  if (cartCount) {
-    cartCount.textContent = totalQuantity;
+  if (!savedProducts.length) {
+    grid.innerHTML = `<div class="empty-state">Your saved products will appear here.</div>`;
+    return;
   }
 
-  if (mobileCartCount) {
-    mobileCartCount.textContent = totalQuantity;
-  }
+  grid.innerHTML = savedProducts.map((product) => {
+    const price = getProductPrice(product);
+    const stock = getProductStock(product);
 
-  if (cartItems) {
-    cartItems.innerHTML = cart.length
-      ? cart.map((item) => `
-          <div class="cart-line">
-            <div>
-              <b>${escapeHTML(item.name)}</b>
-
-              <div class="muted small">
-                ${money(item.price)} × ${item.qty}
-              </div>
-            </div>
-
-            <div class="qty">
-
-              <button
-                type="button"
-                data-dec="${escapeHTML(item.id)}"
-              >−</button>
-
-              ${item.qty}
-
-              <button
-                type="button"
-                data-inc="${escapeHTML(item.id)}"
-              >+</button>
-
-            </div>
+    return `
+      <article class="product-card">
+        <div class="product-image">
+          <button
+            class="wishlist-toggle active"
+            type="button"
+            data-wishlist="${escapeHTML(product.id)}"
+          >♥</button>
+          <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name)}" loading="lazy">
+        </div>
+        <div class="product-info">
+          <span class="product-category">${escapeHTML(product.category || "COLLECTION")}</span>
+          <h3>${escapeHTML(product.name)}</h3>
+          <div class="product-price">${money(price)}</div>
+          <div class="product-actions">
+            <button type="button" data-add="${escapeHTML(product.id)}" ${stock <= 0 ? "disabled" : ""}>
+              ${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}
+            </button>
           </div>
-        `).join("")
-      : '<p class="muted">Your cart is empty.</p>';
-  }
-
-  const total = getCartSubtotal();
-
-  if (cartTotal) {
-    cartTotal.textContent = money(total);
-  }
-
-  updateCouponTotals();
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
-// =====================================
-// ADD TO CART
-// =====================================
+/* CART */
 
 function addToCart(id) {
   const product = products.find(
@@ -1198,439 +480,629 @@ function addToCart(id) {
 
   if (!product) return;
 
-  const item = cart.find(
-    (entry) => String(entry.id) === String(id)
-  );
-
-  const stock = Number(product.stock || 0);
+  const stock = getProductStock(product);
 
   if (stock <= 0) {
-    alert("This product is out of stock.");
+    alert("This product is currently out of stock.");
     return;
   }
 
-  if (item) {
-    if (item.qty >= stock) {
-      alert("Maximum available stock reached.");
+  const existing = cart.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  if (existing) {
+    if (existing.quantity >= stock) {
+      alert("You cannot add more than the available stock.");
       return;
     }
 
-    item.qty++;
-
+    existing.quantity += 1;
   } else {
     cart.push({
       id: product.id,
       name: product.name,
       price: getProductPrice(product),
-      qty: 1,
-      stock
+      image_url: getProductImage(product),
+      quantity: 1
     });
   }
 
-  clearAppliedCoupon(true);
+  saveCart();
   renderCart();
-
-  alert("Product added to cart!");
 }
 
-// =====================================
-// PRODUCT CART BUTTONS
-// =====================================
-
-if (productGrid) {
-  productGrid.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-add]");
-
-    if (!button) return;
-
-    addToCart(button.dataset.add);
-  });
-}
-
-if (wishlistGrid) {
-  wishlistGrid.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-add]");
-
-    if (!button) return;
-
-    addToCart(button.dataset.add);
-  });
-}
-
-// =====================================
-// CART QUANTITY
-// =====================================
-
-if ($("#cart-items")) {
-  $("#cart-items").addEventListener(
-    "click",
-    (event) => {
-      const button = event.target.closest(
-        "[data-inc], [data-dec]"
-      );
-
-      if (!button) return;
-
-      const id =
-        button.dataset.inc || button.dataset.dec;
-
-      const item = cart.find(
-        (entry) => String(entry.id) === String(id)
-      );
-
-      if (!item) return;
-
-      if (button.dataset.inc) {
-        if (item.qty >= item.stock) {
-          alert("Maximum available stock reached.");
-          return;
-        }
-
-        item.qty++;
-
-      } else {
-        item.qty--;
-      }
-
-      if (item.qty <= 0) {
-        cart = cart.filter(
-          (entry) => String(entry.id) !== String(id)
-        );
-      }
-
-      clearAppliedCoupon(true);
-      renderCart();
-    }
+function changeCartQuantity(id, change) {
+  const item = cart.find(
+    (product) => String(product.id) === String(id)
   );
-}
 
-// =====================================
-// CART OPEN / CLOSE
-// =====================================
+  if (!item) return;
 
-function openCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) {
+  const product = products.find(
+    (p) => String(p.id) === String(id)
+  );
+
+  const stock = product ? getProductStock(product) : 0;
+  const next = item.quantity + change;
+
+  if (next <= 0) {
+    cart = cart.filter(
+      (product) => String(product.id) !== String(id)
+    );
+  } else if (next > stock) {
+    alert("Available stock limit reached.");
     return;
+  } else {
+    item.quantity = next;
   }
 
-  $("#overlay").hidden = false;
+  saveCart();
+  renderCart();
+  renderCheckoutTotals();
+}
 
-  $("#cart-drawer").classList.add("open");
-
-  $("#cart-drawer").setAttribute(
-    "aria-hidden",
-    "false"
+function removeFromCart(id) {
+  cart = cart.filter(
+    (item) => String(item.id) !== String(id)
   );
+
+  saveCart();
+  renderCart();
+  renderCheckoutTotals();
+}
+
+function renderCart() {
+  const container = $("#cart-items");
+  const count = $("#cart-count");
+  const mobileCount = $("#mobile-cart-count");
+
+  const totalQuantity = cart.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
+
+  if (count) count.textContent = totalQuantity;
+  if (mobileCount) mobileCount.textContent = totalQuantity;
+
+  if (container) {
+    if (!cart.length) {
+      container.innerHTML = `<div class="empty-state">Your shopping bag is empty.</div>`;
+    } else {
+      container.innerHTML = cart.map((item) => `
+        <div class="cart-item">
+          <img src="${escapeHTML(item.image_url || "")}" alt="${escapeHTML(item.name)}">
+          <div>
+            <h4>${escapeHTML(item.name)}</h4>
+            <div class="cart-item-price">${money(item.price)}</div>
+            <div class="cart-quantity">
+              <button type="button" data-quantity="${escapeHTML(item.id)}" data-change="-1">−</button>
+              <span>${Number(item.quantity)}</span>
+              <button type="button" data-quantity="${escapeHTML(item.id)}" data-change="1">+</button>
+            </div>
+          </div>
+          <button class="cart-remove" type="button" data-remove="${escapeHTML(item.id)}">Remove</button>
+        </div>
+      `).join("");
+    }
+  }
+
+  const total = $("#cart-total");
+  if (total) total.textContent = money(calculateSubtotal());
+
+  renderCheckoutTotals();
+}
+
+function openCart() {
+  $("#cart-drawer")?.classList.add("active");
+  $("#overlay")?.classList.add("active");
+  document.body.classList.add("no-scroll");
 }
 
 function closeCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) {
+  $("#cart-drawer")?.classList.remove("active");
+  $("#overlay")?.classList.remove("active");
+  document.body.classList.remove("no-scroll");
+}
+
+/* PAYMENT SETTINGS */
+
+async function loadPaymentSettings() {
+  try {
+    const result = await fetchFunction("admin-settings", {
+      method: "GET"
+    });
+
+    paymentSettings =
+      result.payment_settings ||
+      result.paymentSettings ||
+      result.settings ||
+      result ||
+      {};
+  } catch (error) {
+    console.warn("Payment settings:", error.message);
+  }
+}
+
+function getPaymentInformation(method) {
+  const settings = paymentSettings;
+
+  const paymentMap = {
+    bkash: [
+      settings.bkash_number,
+      settings.bkash_account,
+      settings.bkash_instructions
+    ],
+    nagad: [
+      settings.nagad_number,
+      settings.nagad_account,
+      settings.nagad_instructions
+    ],
+    bank: [
+      settings.bank_name,
+      settings.bank_account,
+      settings.bank_branch,
+      settings.bank_instructions
+    ]
+  };
+
+  const values = paymentMap[method] || [];
+
+  return values
+    .filter(Boolean)
+    .join("\n") || "Please contact our team for payment instructions.";
+}
+
+function updatePaymentInformation() {
+  const method = $('select[name="payment"]')?.value;
+  const box = $("#payment-details");
+  const text = $("#payment-info-text");
+
+  if (!box || !text) return;
+
+  if (!method) {
+    text.textContent = "Select a payment method to see payment instructions.";
     return;
   }
 
-  $("#overlay").hidden = true;
-
-  $("#cart-drawer").classList.remove("open");
-
-  $("#cart-drawer").setAttribute(
-    "aria-hidden",
-    "true"
-  );
+  text.textContent = getPaymentInformation(method);
 }
 
-if ($("#cart-open")) {
-  $("#cart-open").addEventListener(
-    "click",
-    openCart
-  );
-}
+/* COUPON */
 
-if ($("#mobile-cart-open")) {
-  $("#mobile-cart-open").addEventListener(
-    "click",
-    openCart
-  );
-}
+async function applyCoupon() {
+  const input = $("#coupon-code");
+  const message = $("#coupon-message");
+  const code = input?.value.trim();
 
-if ($("#cart-close")) {
-  $("#cart-close").addEventListener(
-    "click",
-    closeCart
-  );
-}
+  if (!code) {
+    if (message) message.textContent = "Enter a coupon code.";
+    return;
+  }
 
-if ($("#overlay")) {
-  $("#overlay").addEventListener(
-    "click",
-    closeCart
-  );
-}
+  if (!cart.length) {
+    if (message) message.textContent = "Your cart is empty.";
+    return;
+  }
 
-// =====================================
-// CHECKOUT
-// =====================================
+  if (message) message.textContent = "Checking coupon...";
 
-if ($("#checkout-open")) {
-  $("#checkout-open").addEventListener(
-    "click",
-    () => {
-      if (!cart.length) {
-        alert("Your cart is empty.");
-        return;
+  try {
+    const result = await postOrderAction({
+      action: "validate_coupon",
+      coupon_code: code,
+      subtotal: calculateSubtotal()
+    });
+
+    if (result.valid === false || result.error) {
+      couponData = null;
+      if (message) {
+        message.textContent = result.message || result.error || "Invalid coupon.";
       }
-
-      closeCart();
-
-      $("#order-dialog").showModal();
-
-      renderCart();
-      showPaymentDetails();
-      scheduleRepeatPreview();
-    }
-  );
-}
-
-if ($("#order-close")) {
-  $("#order-close").addEventListener(
-    "click",
-    () => {
-      $("#order-dialog").close();
-    }
-  );
-}
-
-// =====================================
-// CUSTOMER INPUT - REPEAT PREVIEW
-// =====================================
-
-if ($("#order-form")) {
-  $("#order-form").addEventListener(
-    "input",
-    (event) => {
-      const name = event.target.name;
-
-      if (
-        ["phone", "district", "area", "address"].includes(name)
-      ) {
-        scheduleRepeatPreview();
+    } else {
+      couponData = result;
+      if (message) {
+        message.textContent = result.message || "Coupon applied successfully.";
       }
     }
-  );
 
-  $("#order-form").addEventListener(
-    "change",
-    (event) => {
-      const name = event.target.name;
+    renderCheckoutTotals();
+  } catch (error) {
+    couponData = null;
+    if (message) message.textContent = error.message;
+    renderCheckoutTotals();
+  }
+}
 
-      if (
-        ["phone", "district", "area", "address"].includes(name)
-      ) {
-        scheduleRepeatPreview();
-      }
+/* REPEAT CUSTOMER DISCOUNT */
+
+let repeatPreviewTimer;
+
+function scheduleRepeatDiscountPreview() {
+  clearTimeout(repeatPreviewTimer);
+
+  repeatPreviewTimer = setTimeout(() => {
+    previewRepeatDiscount();
+  }, 650);
+}
+
+async function previewRepeatDiscount() {
+  const form = $("#order-form");
+  if (!form) return;
+
+  const formData = new FormData(form);
+
+  const customer = {
+    name: formData.get("name") || "",
+    phone: formData.get("phone") || "",
+    whatsapp: formData.get("whatsapp") || "",
+    district: formData.get("district") || "",
+    area: formData.get("area") || "",
+    address: formData.get("address") || ""
+  };
+
+  if (!customer.phone || !customer.address) {
+    repeatDiscountData = null;
+    renderCheckoutTotals();
+    return;
+  }
+
+  try {
+    const result = await postOrderAction({
+      action: "preview_repeat_discount",
+      customer,
+      subtotal: calculateSubtotal(),
+      coupon_discount: getCouponDiscount()
+    });
+
+    repeatDiscountData = result;
+    renderCheckoutTotals();
+
+    const count = $("#repeat-order-count");
+    const percent = $("#repeat-discount-percent");
+
+    if (count) {
+      count.textContent = result.total_orders ?? result.order_count ?? 0;
     }
-  );
+
+    if (percent) {
+      percent.textContent = `${result.discount_percent ?? result.percent ?? 0}%`;
+    }
+
+    const message = $("#repeat-discount-message");
+
+    if (message) {
+      message.style.display =
+        getRepeatDiscount() > 0 ? "flex" : "none";
+    }
+  } catch (error) {
+    console.warn("Repeat discount preview:", error.message);
+  }
 }
 
-// =====================================
-// PAYMENT METHOD CHANGE
-// =====================================
+/* CHECKOUT TOTALS */
 
-const paymentSelect = $('select[name="payment"]');
+function renderCheckoutTotals() {
+  const subtotal = calculateSubtotal();
+  const couponDiscount = getCouponDiscount();
+  const repeatDiscount = getRepeatDiscount();
+  const totalDiscount = couponDiscount + repeatDiscount;
+  const grandTotal = Math.max(0, subtotal - totalDiscount);
 
-if (paymentSelect) {
-  paymentSelect.addEventListener(
-    "change",
-    showPaymentDetails
-  );
+  const values = {
+    "#dialog-total": subtotal,
+    "#dialog-discount": couponDiscount,
+    "#dialog-repeat-discount": repeatDiscount,
+    "#dialog-total-discount": totalDiscount,
+    "#dialog-grand-total": grandTotal
+  };
+
+  Object.entries(values).forEach(([selector, value]) => {
+    const element = $(selector);
+    if (element) element.textContent = money(value);
+  });
 }
 
-// =====================================
-// PLACE ORDER
-// =====================================
+function openCheckout() {
+  if (!cart.length) {
+    alert("Your shopping bag is empty.");
+    return;
+  }
 
-if ($("#order-form")) {
-  $("#order-form").addEventListener(
-    "submit",
-    async (event) => {
-      event.preventDefault();
+  closeCart();
 
-      const form = event.currentTarget;
-      const message = $("#form-message");
+  const dialog = $("#order-dialog");
 
-      const submitButton = form.querySelector(
-        '[type="submit"]'
+  if (dialog && !dialog.open) {
+    dialog.showModal();
+  }
+
+  renderCheckoutTotals();
+  updatePaymentInformation();
+  scheduleRepeatDiscountPreview();
+}
+
+/* PLACE ORDER */
+
+async function submitOrder(event) {
+  event.preventDefault();
+
+  const form = $("#order-form");
+  const message = $("#form-message");
+  const submitButton = form?.querySelector('[type="submit"]');
+
+  if (!form || !cart.length) {
+    if (message) message.textContent = "Your cart is empty.";
+    return;
+  }
+
+  const formData = new FormData(form);
+
+  const customer = {
+    name: String(formData.get("name") || "").trim(),
+    phone: String(formData.get("phone") || "").trim(),
+    whatsapp: String(formData.get("whatsapp") || "").trim(),
+    district: String(formData.get("district") || "").trim(),
+    area: String(formData.get("area") || "").trim(),
+    address: String(formData.get("address") || "").trim()
+  };
+
+  const paymentMethod = String(formData.get("payment") || "");
+
+  if (!customer.name || !customer.phone || !customer.district ||
+      !customer.area || !customer.address) {
+    if (message) message.textContent = "Please complete all required fields.";
+    return;
+  }
+
+  if (!["bkash", "nagad", "bank"].includes(paymentMethod)) {
+    if (message) message.textContent = "Please select a valid payment method.";
+    return;
+  }
+
+  for (const item of cart) {
+    const product = products.find(
+      (p) => String(p.id) === String(item.id)
+    );
+
+    if (!product || getProductStock(product) < item.quantity) {
+      if (message) {
+        message.textContent = `${item.name} does not have enough stock. Please update your cart.`;
+      }
+      return;
+    }
+  }
+
+  const items = cart.map((item) => {
+    const product = products.find(
+      (p) => String(p.id) === String(item.id)
+    );
+
+    const price = product
+      ? getProductPrice(product)
+      : Number(item.price || 0);
+
+    return {
+      product_id: item.id,
+      product_name: item.name,
+      quantity: item.quantity,
+      unit_price: price,
+      total_price: price * item.quantity
+    };
+  });
+
+  const payload = {
+    action: "place_order",
+    customer,
+    payment_method: paymentMethod,
+    items,
+    note: String(formData.get("note") || "").trim(),
+    coupon_code: couponData?.coupon?.code ||
+      $("#coupon-code")?.value.trim() ||
+      null
+  };
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting order...";
+  }
+
+  if (message) {
+    message.style.color = "var(--muted)";
+    message.textContent = "Please wait. Your order is being submitted...";
+  }
+
+  try {
+    const result = await postOrderAction(payload);
+
+    const orderNumber =
+      result.order_number ||
+      result.order?.order_number ||
+      result.data?.order_number ||
+      result.id ||
+      "Submitted";
+
+    const total =
+      result.grand_total ??
+      result.order?.grand_total ??
+      getGrandTotal();
+
+    cart = [];
+    couponData = null;
+    repeatDiscountData = null;
+
+    saveCart();
+    renderCart();
+
+    form.reset();
+
+    const couponMessage = $("#coupon-message");
+    if (couponMessage) couponMessage.textContent = "";
+
+    const dialog = $("#order-dialog");
+    if (dialog?.open) dialog.close();
+
+    alert(
+      `Thank you! Your order has been placed successfully.\n\nOrder Number: ${orderNumber}\nTotal: ${money(total)}\n\nYou can track your order from the Track Order page.`
+    );
+
+    window.location.href =
+      `track-order.html?order=${encodeURIComponent(orderNumber)}`;
+
+  } catch (error) {
+    if (message) {
+      message.style.color = "var(--danger)";
+      message.textContent = error.message || "Could not place your order. Please try again.";
+    }
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = 'Place order <span>↗</span>';
+    }
+  }
+}
+
+/* SEARCH AND FILTERS */
+
+function runSearch() {
+  const input = $("#product-search");
+  searchTerm = String(input?.value || "").trim().toLowerCase();
+
+  renderProducts();
+
+  $("#products")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+/* EVENT LISTENERS */
+
+document.addEventListener("click", (event) => {
+  const addButton = event.target.closest("[data-add]");
+  if (addButton) {
+    addToCart(addButton.dataset.add);
+    return;
+  }
+
+  const wishlistButton = event.target.closest("[data-wishlist]");
+  if (wishlistButton) {
+    toggleWishlist(wishlistButton.dataset.wishlist);
+    return;
+  }
+
+  const quantityButton = event.target.closest("[data-quantity]");
+  if (quantityButton) {
+    changeCartQuantity(
+      quantityButton.dataset.quantity,
+      Number(quantityButton.dataset.change)
+    );
+    return;
+  }
+
+  const removeButton = event.target.closest("[data-remove]");
+  if (removeButton) {
+    removeFromCart(removeButton.dataset.remove);
+    return;
+  }
+
+  const categoryButton = event.target.closest("[data-category]");
+  if (categoryButton) {
+    activeCategory = categoryButton.dataset.category;
+
+    $$(".product-tab").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.category === activeCategory
       );
+    });
 
-      if (!cart.length) {
-        message.textContent = "Your cart is empty.";
-        return;
-      }
-
-      if (!SUPABASE_URL || !SUPABASE_KEY) {
-        message.textContent =
-          "Store database is not configured.";
-
-        return;
-      }
-
-      const formData = new FormData(form);
-
-      const customer = {
-        name: String(
-          formData.get("name") || ""
-        ).trim(),
-
-        phone: String(
-          formData.get("phone") || ""
-        ).trim(),
-
-        whatsapp: String(
-          formData.get("whatsapp") || ""
-        ).trim(),
-
-        district: String(
-          formData.get("district") || ""
-        ).trim(),
-
-        area: String(
-          formData.get("area") || ""
-        ).trim(),
-
-        address: String(
-          formData.get("address") || ""
-        ).trim()
-      };
-
-      const paymentMethod = String(
-        formData.get("payment") || ""
+    $$(".category-menu button").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.category === activeCategory
       );
+    });
 
-      const note = String(
-        formData.get("note") || ""
-      ).trim();
+    renderProducts();
+    return;
+  }
+});
 
-      if (
-        !customer.name ||
-        !customer.phone ||
-        !customer.district ||
-        !customer.area ||
-        !customer.address
-      ) {
-        message.textContent =
-          "Please complete all required fields.";
+$("#cart-open")?.addEventListener("click", openCart);
+$("#mobile-cart-open")?.addEventListener("click", openCart);
+$("#cart-close")?.addEventListener("click", closeCart);
+$("#overlay")?.addEventListener("click", closeCart);
 
-        return;
-      }
+$("#checkout-open")?.addEventListener("click", openCheckout);
 
-      if (
-        !["bkash", "nagad", "bank"].includes(
-          paymentMethod
-        )
-      ) {
-        message.textContent =
-          "Please select a valid payment method.";
+$("#order-close")?.addEventListener("click", () => {
+  $("#order-dialog")?.close();
+});
 
-        return;
-      }
+$("#order-dialog")?.addEventListener("click", (event) => {
+  if (event.target === $("#order-dialog")) {
+    $("#order-dialog").close();
+  }
+});
 
-      submitButton.disabled = true;
+$("#search-button")?.addEventListener("click", () => {
+  $("#product-search")?.focus();
+  $("#products")?.scrollIntoView({ behavior: "smooth" });
+});
 
-      message.textContent =
-        "Submitting your order...";
+$("#search-submit")?.addEventListener("click", runSearch);
 
-      try {
-        const result = await postOrderAction({
-          customer,
+$("#product-search")?.addEventListener("input", (event) => {
+  searchTerm = event.target.value.trim().toLowerCase();
+  renderProducts();
+});
 
-          payment_method: paymentMethod,
+$("#product-search")?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") runSearch();
+});
 
-          items: cart.map((item) => ({
-            product_id: item.id,
-            quantity: item.qty
-          })),
+$("#apply-coupon")?.addEventListener("click", applyCoupon);
 
-          note,
+$('select[name="payment"]')?.addEventListener(
+  "change",
+  updatePaymentInformation
+);
 
-          coupon_code: appliedCoupon
-            ? appliedCoupon.code
-            : null
-        });
+$("#order-form")?.addEventListener("submit", submitOrder);
 
-        if (result.ok !== true) {
-          throw new Error(
-            result.error || "Order could not be completed."
-          );
-        }
+$("#order-form")?.addEventListener("input", (event) => {
+  const field = event.target.name;
 
-        const orderSubtotal = Number(
-          result.subtotal ?? getCartSubtotal()
-        );
+  if (["name", "phone", "whatsapp", "district", "area", "address"].includes(field)) {
+    scheduleRepeatDiscountPreview();
+  }
+});
 
-        const couponAmount = Number(
-          result.discount || 0
-        );
+$$(".product-tab").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeCategory = button.dataset.category;
 
-        const repeatAmount = Number(
-          result.repeat_discount || 0
-        );
+    $$(".product-tab").forEach((tab) => {
+      tab.classList.toggle("active", tab === button);
+    });
 
-        const finalTotal = Number(
-          result.total ??
-          Math.max(
-            0,
-            orderSubtotal - couponAmount - repeatAmount
-          )
-        );
+    renderProducts();
+  });
+});
 
-        cart = [];
-        appliedCoupon = null;
+/* STARTUP */
 
-        resetRepeatDiscount();
+function initializeStore() {
+  const year = $("#year");
+  if (year) year.textContent = new Date().getFullYear();
 
-        renderCart();
+  renderCart();
+  renderWishlist();
 
-        form.reset();
-
-        if ($("#coupon-message")) {
-          $("#coupon-message").textContent = "";
-        }
-
-        if ($("#coupon-code")) {
-          $("#coupon-code").value = "";
-        }
-
-        showPaymentDetails();
-
-        message.textContent =
-          `Order successful! Order number: ${result.order_number}. Subtotal: ${money(orderSubtotal)}. Coupon Discount: ${money(couponAmount)}. Repeat Discount: ${money(repeatAmount)}. Final Total: ${money(finalTotal)}.`;
-
-      } catch (error) {
-        console.error(
-          "Order submission error:",
-          error
-        );
-
-        message.textContent =
-          error.message ||
-          "Something went wrong. Please try again.";
-
-      } finally {
-        submitButton.disabled = false;
-      }
-    }
-  );
+  loadProducts();
+  loadPaymentSettings();
+  loadStoreSettings();
 }
 
-// =====================================
-// START STORE
-// =====================================
-
-renderCart();
-
-renderWishlist();
-
-loadProducts();
-
-loadPaymentSettings();
-
-loadStoreSettings();
+initializeStore();
