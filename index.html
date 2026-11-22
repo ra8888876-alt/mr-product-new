@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#202225">
-  <meta name="description" content="MR PRODUCT — Premium Shopping Experience. Discover beauty, skincare, fashion and lifestyle products.">
+  <meta name="theme-color" content="#f7f6f1">
+  <meta name="description" content="MR PRODUCT — Discover carefully selected beauty, skincare and lifestyle products.">
   <title>MR PRODUCT — Premium Store</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
 
   <!-- ANNOUNCEMENT -->
   <div class="announcement-bar">
-    <p>Welcome to MR PRODUCT — Your Premium Shopping Destination</p>
+    <p>Thoughtfully selected products. Delivered to your door.</p>
   </div>
 
   <!-- HEADER -->
@@ -26,321 +26,340 @@
     <div class="header-main">
 
       <button class="mobile-menu-button" id="mobile-menu-open" aria-label="Open menu">
-        ☰
+        <span></span><span></span>
       </button>
 
       <a href="#" class="brand">
-        <span class="brand-mark">MR</span>
         <span class="brand-text" id="store-name">MR PRODUCT</span>
       </a>
 
-      <div class="header-search">
-        <input type="search" id="product-search" placeholder="Search products...">
-        <button id="search-button" aria-label="Search">⌕</button>
-      </div>
+      <nav class="desktop-nav">
+        <a href="#shop">Shop All</a>
+        <a href="#categories">Beauty</a>
+        <a href="#deals">Collections</a>
+        <a href="#about">Our Story</a>
+        <a href="#contact">Contact</a>
+      </nav>
 
       <div class="header-actions">
-        <a href="#wishlist" class="header-action">♡</a>
-        <button class="header-action" id="cart-open">
-          🛍 <span id="cart-count">0</span>
+        <div class="header-search">
+          <input type="search" id="product-search" placeholder="Search products...">
+          <button id="search-button" aria-label="Search">⌕</button>
+        </div>
+
+        <a href="#wishlist" class="header-action" aria-label="Wishlist">♡</a>
+
+        <button class="header-action" id="cart-open" aria-label="Shopping bag">
+          <span class="bag-icon">♧</span>
+          <span id="cart-count">0</span>
         </button>
       </div>
 
     </div>
-
-    <nav class="desktop-nav">
-      <a href="#">Home</a>
-      <a href="#categories">Categories</a>
-      <a href="#shop">Shop</a>
-      <a href="#deals">Special Deals</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-      <a href="track-order.html">Track Order</a>
-    </nav>
   </header>
 
   <!-- MOBILE MENU -->
   <div class="mobile-menu" id="mobile-menu">
-    <button id="mobile-menu-close">✕</button>
+    <div class="mobile-menu-header">
+      <span>MR PRODUCT</span>
+      <button id="mobile-menu-close" aria-label="Close menu">✕</button>
+    </div>
+
     <a href="#">Home</a>
+    <a href="#shop">Shop All</a>
     <a href="#categories">Categories</a>
-    <a href="#shop">Shop</a>
-    <a href="#deals">Special Deals</a>
+    <a href="#deals">Collections</a>
     <a href="#wishlist">Wishlist</a>
-    <a href="#about">About</a>
+    <a href="#about">Our Story</a>
     <a href="#contact">Contact</a>
     <a href="track-order.html">Track Order</a>
   </div>
 
   <!-- HERO -->
-  <section class="hero-section">
-    <div class="hero-content">
+  <main>
 
-      <div class="hero-text">
-        <span class="hero-label">WELCOME TO MR PRODUCT</span>
+    <section class="hero-section">
+      <div class="hero-content">
 
-        <h1>Discover Your<br><span>Perfect Style</span></h1>
+        <div class="hero-text">
+          <span class="hero-label">THE MR PRODUCT COLLECTION</span>
 
-        <p>
-          Explore premium beauty, skincare and lifestyle products
-          carefully selected for you.
-        </p>
+          <h1>
+            Little things<br>
+            for a more<br>
+            <em>beautiful</em> you.
+          </h1>
 
-        <div class="hero-buttons">
-          <a href="#shop" class="btn-primary">Shop Now</a>
-          <a href="#about" class="btn-secondary">Discover More</a>
+          <p>
+            Discover everyday essentials and thoughtfully
+            selected favourites that make every day feel special.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="#shop" class="btn-primary">Explore collection</a>
+            <a href="#about" class="btn-text">Our story <span>↗</span></a>
+          </div>
+
+          <div class="hero-social-proof">
+            <div class="hero-avatar-group">
+              <span>✦</span>
+              <span>✦</span>
+              <span>✦</span>
+            </div>
+            <div>
+              <strong>Made for everyday living</strong>
+              <small>Discover your new favourites</small>
+            </div>
+          </div>
         </div>
 
-        <div class="hero-highlights">
-          <div>
-            <strong>100%</strong>
-            <span>Quality Products</span>
+        <div class="hero-image-wrap">
+          <div class="hero-image-frame">
+            <img
+              id="hero-banner-image"
+              src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1200&q=85"
+              alt="MR PRODUCT featured collection"
+            >
           </div>
-          <div>
-            <strong>Premium</strong>
-            <span>Shopping Experience</span>
+
+          <div class="hero-floating-card">
+            <span class="floating-star">✳</span>
+            <div>
+              <small>CURATED FOR YOU</small>
+              <strong>Everyday favourites</strong>
+            </div>
           </div>
         </div>
+
+      </div>
+    </section>
+
+    <!-- BENEFITS -->
+    <section class="benefits-section">
+      <div class="benefit-item">
+        <span class="benefit-icon">✳</span>
+        <span>Thoughtfully selected</span>
       </div>
 
-      <div class="hero-image-wrap">
-        <div class="hero-image-frame">
+      <div class="benefit-item">
+        <span class="benefit-icon">↗</span>
+        <span>Delivery across Bangladesh</span>
+      </div>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">♡</span>
+        <span>Here to help you</span>
+      </div>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">✓</span>
+        <span>A simple shopping experience</span>
+      </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="categories-section section-container">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">FIND YOUR FAVOURITE</span>
+          <h2>Shop by category</h2>
+        </div>
+        <a href="#shop" class="view-all-link">View all <span>↗</span></a>
+      </div>
+
+      <div class="category-list" id="categories">
+        <!-- Categories loaded from Supabase -->
+      </div>
+    </section>
+
+    <!-- FEATURED COLLECTION -->
+    <section class="deals-section" id="deals">
+      <div class="deals-banner">
+
+        <div class="deals-banner-content">
+          <span class="eyebrow">A LITTLE SOMETHING SPECIAL</span>
+          <h2>Find your<br>new favourite.</h2>
+          <p>Explore our latest collection and discover something made for you.</p>
+          <a href="#shop" class="btn-primary">Shop the collection <span>↗</span></a>
+        </div>
+
+        <div class="deals-banner-image">
           <img
-            id="hero-banner-image"
             src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1000&q=85"
-            alt="Premium beauty products"
+            alt="Featured beauty collection"
           >
         </div>
 
-        <div class="hero-floating-card">
-          <span>✦</span>
-          <div>
-            <strong>Premium Collection</strong>
-            <small>Made for your lifestyle</small>
-          </div>
+      </div>
+    </section>
+
+    <!-- SHOP -->
+    <section class="shop-section section-container" id="shop">
+
+      <div class="shop-heading">
+        <div>
+          <span class="eyebrow">THE COLLECTION</span>
+          <h2>This week's favourites</h2>
+          <p>Good things, selected just for you.</p>
         </div>
 
-        <div class="hero-decoration"></div>
+        <div class="shop-search-mobile">
+          <input type="search" id="mobile-product-search" placeholder="Search products...">
+        </div>
       </div>
 
-    </div>
-  </section>
+      <div class="product-toolbar">
 
-  <!-- BENEFITS -->
-  <section class="benefits-section">
-    <div class="benefit-item">
-      <span class="benefit-icon">✦</span>
-      <div>
-        <strong>Premium Quality</strong>
-        <small>Carefully selected products</small>
-      </div>
-    </div>
+        <div class="product-tabs">
+          <button class="product-tab active" data-category="all">All products</button>
+          <button class="product-tab" data-category="new">New arrivals</button>
+          <button class="product-tab" data-category="popular">Popular</button>
+        </div>
 
-    <div class="benefit-item">
-      <span class="benefit-icon">🚚</span>
-      <div>
-        <strong>Fast Delivery</strong>
-        <small>Across Bangladesh</small>
-      </div>
-    </div>
+        <div class="product-sort">
+          <select id="product-sort" aria-label="Sort products">
+            <option value="newest">Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+        </div>
 
-    <div class="benefit-item">
-      <span class="benefit-icon">♡</span>
-      <div>
-        <strong>Customer Care</strong>
-        <small>We care about you</small>
-      </div>
-    </div>
-
-    <div class="benefit-item">
-      <span class="benefit-icon">✓</span>
-      <div>
-        <strong>Secure Shopping</strong>
-        <small>Easy order experience</small>
-      </div>
-    </div>
-  </section>
-
-  <!-- CATEGORIES -->
-  <section class="categories-section section-container">
-    <div class="section-heading">
-      <span>EXPLORE COLLECTIONS</span>
-      <h2>Shop By Category</h2>
-      <p>Find your favourite products.</p>
-    </div>
-
-    <div class="category-list" id="categories">
-      <!-- Categories loaded by app.js -->
-    </div>
-  </section>
-
-  <!-- DEALS -->
-  <section class="deals-section" id="deals">
-    <div class="deals-banner">
-      <div class="deals-banner-content">
-        <span class="deals-tag">SPECIAL COLLECTION</span>
-        <h2>Discover Something<br>Beautiful</h2>
-        <p>Explore our latest products and special offers.</p>
-        <a href="#shop" class="btn-primary">Explore Deals</a>
-      </div>
-      <div class="deals-banner-decoration">MR</div>
-    </div>
-  </section>
-
-  <!-- SHOP -->
-  <section class="shop-section section-container" id="shop">
-
-    <div class="shop-heading">
-      <div>
-        <span>OUR COLLECTION</span>
-        <h2>Explore Products</h2>
-        <p>Find something special for yourself.</p>
       </div>
 
-      <div class="shop-search-mobile">
-        <input type="search" id="mobile-product-search" placeholder="Search products...">
-      </div>
-    </div>
-
-    <div class="product-toolbar">
-      <div class="product-tabs">
-        <button class="product-tab active" data-category="all">All Products</button>
-        <button class="product-tab" data-category="new">New Arrivals</button>
-        <button class="product-tab" data-category="popular">Popular</button>
+      <div class="product-results-info">
+        <span id="product-results-count">Loading products...</span>
       </div>
 
-      <div class="product-sort">
-        <select id="product-sort">
-          <option value="newest">Latest Products</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="product-results-info">
-      <span id="product-results-count">Loading products...</span>
-    </div>
-
-    <div class="product-grid" id="product-grid">
-      <!-- Products loaded by app.js -->
-    </div>
-
-    <div class="empty-state" id="empty-products" hidden>
-      <span>♡</span>
-      <h3>No Products Found</h3>
-      <p>Please try another search.</p>
-    </div>
-
-  </section>
-
-  <!-- WISHLIST -->
-  <section class="wishlist-section section-container" id="wishlist">
-    <div class="section-heading">
-      <span>YOUR FAVOURITES</span>
-      <h2>My Wishlist <span id="wishlist-count">0</span></h2>
-      <p>Your favourite products in one place.</p>
-    </div>
-
-    <div class="product-grid wishlist-grid" id="wishlist-grid"></div>
-
-    <div class="wishlist-empty" id="wishlist-empty">
-      <span>♡</span>
-      <p>Your wishlist is empty.</p>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="about-section" id="about">
-    <div class="about-layout section-container">
-
-      <div class="about-image">
-        <img
-          src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=85"
-          alt="MR PRODUCT collection"
-        >
-        <div class="about-image-caption">MR PRODUCT</div>
+      <div class="product-grid" id="product-grid">
+        <!-- Products loaded from Supabase -->
       </div>
 
-      <div class="about-content">
-        <span>ABOUT OUR STORE</span>
-        <h2>A Better Shopping Experience</h2>
-
-        <p id="store-description">
-          Welcome to MR PRODUCT. We bring you carefully selected
-          products with quality, style and customer satisfaction
-          at the heart of everything we do.
-        </p>
-
-        <a href="#shop" class="btn-primary">Explore Products</a>
+      <div class="empty-state" id="empty-products" hidden>
+        <span>✳</span>
+        <h3>Nothing here just yet.</h3>
+        <p>Try another search or explore our collection.</p>
       </div>
 
-    </div>
-  </section>
+    </section>
 
-  <!-- CONTACT -->
-  <section class="contact-section section-container" id="contact">
-    <div class="section-heading">
-      <span>GET IN TOUCH</span>
-      <h2>Contact Us</h2>
-      <p>We are here to help you.</p>
-    </div>
+    <!-- WISHLIST -->
+    <section class="wishlist-section section-container" id="wishlist">
 
-    <div class="contact-grid">
-
-      <div class="contact-card">
-        <span>☎</span>
-        <h3>Phone</h3>
-        <a id="contact-phone-link" href="#">
-          <span id="contact-phone">Contact us</span>
-        </a>
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">SAVED FOR LATER</span>
+          <h2>Your favourites <span id="wishlist-count">0</span></h2>
+        </div>
       </div>
 
-      <div class="contact-card">
-        <span>◉</span>
-        <h3>WhatsApp</h3>
-        <a id="contact-whatsapp-link" href="#" target="_blank">
-          <span id="contact-whatsapp">Message us</span>
-        </a>
+      <div class="product-grid wishlist-grid" id="wishlist-grid"></div>
+
+      <div class="wishlist-empty" id="wishlist-empty">
+        <span>♡</span>
+        <p>You haven't saved anything yet.</p>
+        <a href="#shop" class="btn-text">Explore products ↗</a>
       </div>
 
-      <div class="contact-card">
-        <span>✉</span>
-        <h3>Email</h3>
-        <a id="contact-email-link" href="#">
-          <span id="contact-email">Email us</span>
-        </a>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about-section" id="about">
+      <div class="about-layout section-container">
+
+        <div class="about-image">
+          <img
+            src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=85"
+            alt="MR PRODUCT collection"
+          >
+          <div class="about-image-caption">A LITTLE MORE YOU.</div>
+        </div>
+
+        <div class="about-content">
+          <span class="eyebrow">GET TO KNOW US</span>
+          <h2>Good things<br>should feel <em>simple.</em></h2>
+
+          <p id="store-description">
+            Welcome to MR PRODUCT. We believe finding your
+            everyday favourites should be simple, enjoyable
+            and personal. Explore our carefully selected collection.
+          </p>
+
+          <a href="#shop" class="btn-primary">Discover MR PRODUCT <span>↗</span></a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact-section section-container" id="contact">
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">WE'RE HERE FOR YOU</span>
+          <h2>Let's talk.</h2>
+          <p>Questions? We'd love to hear from you.</p>
+        </div>
       </div>
 
-    </div>
-  </section>
+      <div class="contact-grid">
+
+        <div class="contact-card">
+          <span class="contact-icon">↗</span>
+          <h3>Give us a call</h3>
+          <a id="contact-phone-link" href="#">
+            <span id="contact-phone">Contact us</span>
+          </a>
+        </div>
+
+        <div class="contact-card">
+          <span class="contact-icon">◉</span>
+          <h3>WhatsApp</h3>
+          <a id="contact-whatsapp-link" href="#" target="_blank">
+            <span id="contact-whatsapp">Send a message</span>
+          </a>
+        </div>
+
+        <div class="contact-card">
+          <span class="contact-icon">✉</span>
+          <h3>Drop us an email</h3>
+          <a id="contact-email-link" href="#">
+            <span id="contact-email">Email us</span>
+          </a>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
 
   <!-- FOOTER -->
   <footer class="site-footer">
+
     <div class="footer-main">
 
       <div class="footer-brand">
         <a href="#" class="footer-logo" id="footer-store-name">MR PRODUCT</a>
-        <p>Your premium shopping destination.</p>
+        <p>Thoughtfully selected things<br>for everyday living.</p>
       </div>
 
       <div class="footer-column">
-        <h3>Quick Links</h3>
-        <a href="#shop">Shop</a>
-        <a href="#about">About Us</a>
-        <a href="#contact">Contact</a>
-        <a href="track-order.html">Track Order</a>
+        <h3>Explore</h3>
+        <a href="#shop">Shop all</a>
+        <a href="#categories">Categories</a>
+        <a href="#deals">Collections</a>
+        <a href="#wishlist">Wishlist</a>
       </div>
 
       <div class="footer-column">
-        <h3>Customer Service</h3>
-        <a href="track-order.html">Order Tracking</a>
-        <a href="#contact">Help & Support</a>
-        <a href="#contact">Contact Us</a>
+        <h3>Help</h3>
+        <a href="track-order.html">Track your order</a>
+        <a href="#contact">Contact us</a>
+        <a href="#about">Our story</a>
       </div>
 
       <div class="footer-column">
-        <h3>Contact</h3>
+        <h3>Say hello</h3>
         <p id="footer-phone"></p>
         <p id="footer-email"></p>
         <p id="footer-whatsapp"></p>
@@ -349,31 +368,35 @@
     </div>
 
     <div class="footer-bottom">
-      <p>© <span id="year"></span> MR PRODUCT. All Rights Reserved.</p>
+      <p>© <span id="year"></span> MR PRODUCT. All rights reserved.</p>
+      <a href="#">Back to top ↑</a>
     </div>
+
   </footer>
 
   <!-- MOBILE BOTTOM NAV -->
   <nav class="mobile-bottom-nav">
+
     <a href="#" class="mobile-nav-item">
       <span>⌂</span>
       <small>Home</small>
     </a>
 
     <a href="#shop" class="mobile-nav-item">
-      <span>▦</span>
+      <span>⌕</span>
       <small>Shop</small>
     </a>
 
     <a href="#wishlist" class="mobile-nav-item">
       <span>♡</span>
-      <small>Wishlist</small>
+      <small>Saved</small>
     </a>
 
     <button class="mobile-nav-item" id="mobile-cart-open">
-      <span>🛍 <i id="mobile-cart-count">0</i></span>
-      <small>Cart</small>
+      <span>♧ <i id="mobile-cart-count">0</i></span>
+      <small>Bag</small>
     </button>
+
   </nav>
 
   <!-- OVERLAY -->
@@ -384,43 +407,47 @@
 
     <div class="cart-header">
       <div>
-        <span>YOUR SHOPPING</span>
-        <h2>Shopping Cart</h2>
+        <span class="eyebrow">YOUR SELECTION</span>
+        <h2>Your bag <span id="cart-count-heading"></span></h2>
       </div>
       <button id="cart-close" aria-label="Close cart">✕</button>
     </div>
 
     <div id="cart-items">
       <div class="cart-empty">
-        <span>🛍</span>
-        <p>Your cart is empty.</p>
+        <span>♧</span>
+        <p>Your bag is waiting for something lovely.</p>
       </div>
     </div>
 
     <div class="cart-footer">
+
       <div class="cart-total-row">
         <span>Subtotal</span>
         <strong id="cart-total">৳0</strong>
       </div>
 
+      <p class="cart-note">Delivery charges are calculated separately.</p>
+
       <button class="btn-primary" id="checkout-open">
-        Proceed to Checkout
+        Continue to checkout <span>↗</span>
       </button>
 
       <button class="btn-secondary" id="continue-shopping">
-        Continue Shopping
+        Continue shopping
       </button>
+
     </div>
 
   </aside>
 
-  <!-- CHECKOUT DIALOG -->
+  <!-- CHECKOUT -->
   <dialog id="order-dialog" class="checkout-dialog">
 
     <div class="checkout-header">
       <div>
-        <span>MR PRODUCT</span>
-        <h2>Complete Your Order</h2>
+        <span class="eyebrow">ALMOST YOURS</span>
+        <h2>Complete your order.</h2>
       </div>
       <button id="order-close" aria-label="Close checkout">✕</button>
     </div>
@@ -431,22 +458,22 @@
 
         <!-- CUSTOMER DETAILS -->
         <section class="checkout-section">
-          <h3>01. Customer Information</h3>
+          <h3>01. Delivery details</h3>
 
           <div class="form-grid">
 
             <div class="form-field">
-              <label for="customer-name">Full Name *</label>
+              <label for="customer-name">Full name *</label>
               <input type="text" id="customer-name" name="name" required placeholder="Your name">
             </div>
 
             <div class="form-field">
-              <label for="customer-phone">Phone Number *</label>
+              <label for="customer-phone">Phone number *</label>
               <input type="tel" id="customer-phone" name="phone" required placeholder="01XXXXXXXXX">
             </div>
 
             <div class="form-field">
-              <label for="customer-whatsapp">WhatsApp Number</label>
+              <label for="customer-whatsapp">WhatsApp number</label>
               <input type="tel" id="customer-whatsapp" name="whatsapp" placeholder="WhatsApp number">
             </div>
 
@@ -461,7 +488,7 @@
             </div>
 
             <div class="form-field full-width">
-              <label for="customer-address">Full Delivery Address *</label>
+              <label for="customer-address">Full address *</label>
               <textarea id="customer-address" name="address" required rows="3" placeholder="House, road, area and district"></textarea>
             </div>
 
@@ -470,7 +497,7 @@
 
         <!-- PAYMENT -->
         <section class="checkout-section">
-          <h3>02. Payment Method</h3>
+          <h3>02. Payment method</h3>
 
           <div class="payment-methods">
 
@@ -486,19 +513,19 @@
 
             <label class="payment-option">
               <input type="radio" name="payment_method" value="bank">
-              <span>Bank Transfer</span>
+              <span>Bank transfer</span>
             </label>
 
           </div>
 
           <div id="payment-details">
-            <p id="payment-info-text">Select a payment method to view payment instructions.</p>
+            <p id="payment-info-text">Choose a payment method to see payment instructions.</p>
           </div>
         </section>
 
         <!-- COUPON -->
         <section class="checkout-section">
-          <h3>03. Discount Coupon</h3>
+          <h3>03. Offers & discounts</h3>
 
           <div class="coupon-row">
             <input type="text" id="coupon-code" placeholder="Enter coupon code">
@@ -507,19 +534,18 @@
 
           <p id="coupon-message"></p>
           <p id="repeat-discount-message"></p>
-          <p>
-            Previous Orders:
+
+          <div class="repeat-customer-info">
+            <span>Previous orders</span>
             <strong id="repeat-order-count">0</strong>
-          </p>
-          <p>
-            Repeat Customer Discount:
+            <span>Your repeat discount</span>
             <strong id="repeat-discount-percent">0%</strong>
-          </p>
+          </div>
         </section>
 
-        <!-- ORDER SUMMARY -->
+        <!-- SUMMARY -->
         <section class="checkout-section">
-          <h3>04. Order Summary</h3>
+          <h3>04. Order summary</h3>
 
           <div class="summary-row">
             <span>Subtotal</span>
@@ -527,22 +553,22 @@
           </div>
 
           <div class="summary-row">
-            <span>Coupon Discount</span>
+            <span>Coupon discount</span>
             <strong id="dialog-discount">৳0</strong>
           </div>
 
           <div class="summary-row">
-            <span>Repeat Customer Discount</span>
+            <span>Repeat customer discount</span>
             <strong id="dialog-repeat-discount">৳0</strong>
           </div>
 
           <div class="summary-row">
-            <span>Total Discount</span>
+            <span>Total discount</span>
             <strong id="dialog-total-discount">৳0</strong>
           </div>
 
           <div class="summary-row grand-total">
-            <span>Grand Total</span>
+            <span>Total to pay</span>
             <strong id="dialog-grand-total">৳0</strong>
           </div>
 
@@ -550,23 +576,24 @@
 
         <!-- NOTE -->
         <section class="checkout-section">
-          <h3>05. Order Note</h3>
-          <textarea id="order-note" name="note" rows="3" placeholder="Any special instructions? (Optional)"></textarea>
+          <h3>05. Anything else?</h3>
+          <textarea id="order-note" name="note" rows="3" placeholder="Add a note to your order (optional)"></textarea>
         </section>
 
         <p id="form-message" role="alert"></p>
 
         <button type="submit" class="btn-primary" id="place-order-button">
-          Place Order
+          Place my order <span>↗</span>
         </button>
 
         <p class="checkout-security-note">
-          Your order information will be handled securely.
+          Thank you for shopping with MR PRODUCT.
         </p>
 
       </div>
 
     </form>
+
   </dialog>
 
   <!-- SCRIPTS -->
