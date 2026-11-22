@@ -1,1237 +1,777 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#202225">
-  <meta name="description" content="MR PRODUCT — Discover premium fashion, beauty, electronics, watches and lifestyle products.">
+  <meta name="description" content="MR PRODUCT — Premium Shopping Experience. Discover beauty, skincare, fashion and lifestyle products.">
 
   <title>MR PRODUCT — Premium Shopping</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css">
 
-  <style>
-    :root {
-      --bg: #202225;
-      --panel: #303338;
-      --panel-2: #272a2e;
-      --gold: #b9a58b;
-      --primary-color: #b9a58b;
-      --cream: #e9e8e4;
-      --muted: #a8aaa9;
-      --line: #45484c;
-
-      --graphite-silver: #d7d9d8;
-      --smoky-sage: #8d9a96;
-      --luxury-radius: 18px;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--cream);
-      font-family: "DM Sans", sans-serif;
-    }
-
-    h1, h2, h3 {
-      letter-spacing: -0.5px;
-    }
-
-    .topbar {
-      background: rgba(32, 34, 37, 0.96);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(16px);
-    }
-
-    .brand-mark {
-      background: linear-gradient(135deg, #d7d9d8, #b9a58b);
-      color: #202225;
-      border-radius: 12px;
-      font-weight: 900;
-    }
-
-    .brand b {
-      color: var(--graphite-silver);
-      letter-spacing: 2px;
-    }
-
-    .brand small {
-      color: var(--gold);
-      letter-spacing: 2.5px;
-    }
-
-    .header-search {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      border-radius: 30px;
-      overflow: hidden;
-    }
-
-    .header-search input {
-      color: var(--cream);
-    }
-
-    .header-search input::placeholder {
-      color: #9b9d9c;
-    }
-
-    .header-search button {
-      color: var(--bg);
-      background: var(--gold);
-    }
-
-    .desktop-nav a {
-      color: #d7d9d8;
-      transition: color .25s ease;
-    }
-
-    .desktop-nav a:hover {
-      color: var(--gold);
-    }
-
-    .cart-pill {
-      background: var(--gold);
-      color: #202225;
-      border-radius: 30px;
-      font-weight: 800;
-    }
-
-    .category-menu {
-      background: #272a2e;
-      border-bottom: 1px solid var(--line);
-      padding-top: 14px;
-      padding-bottom: 14px;
-    }
-
-    .category-item {
-      border: 1px solid transparent;
-      border-radius: 30px;
-      color: #d7d9d8;
-      transition: .25s ease;
-    }
-
-    .category-item:hover,
-    .category-item.active {
-      background: var(--gold);
-      color: #202225;
-      border-color: var(--gold);
-    }
-
-    .sale-banner {
-      position: relative;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 85% 20%, rgba(141,154,150,.22), transparent 35%),
-        linear-gradient(120deg, #303338 0%, #202225 55%, #36383b 100%);
-      border: 1px solid #484b4e;
-      border-radius: 24px;
-      margin: 30px auto;
-      min-height: 360px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.22);
-    }
-
-    .sale-content {
-      position: relative;
-      z-index: 2;
-    }
-
-    .eyebrow {
-      color: var(--gold);
-      letter-spacing: 3px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .sale-content h1 {
-      color: var(--graphite-silver);
-      font-family: "Playfair Display", serif;
-      font-size: clamp(36px, 5vw, 64px);
-      line-height: 1.12;
-    }
-
-    .sale-content h1 em {
-      color: var(--gold);
-      font-style: normal;
-    }
-
-    .sale-content > p:not(.eyebrow) {
-      color: #c0c2c0;
-    }
-
-    .sale-decoration {
-      opacity: .9;
-    }
-
-    .sale-decoration span {
-      color: rgba(215,217,216,.12);
-      font-family: "Playfair Display", serif;
-      font-size: clamp(100px, 18vw, 220px);
-    }
-
-    .sale-decoration strong {
-      color: var(--gold);
-    }
-
-    .gold-button {
-      background: linear-gradient(135deg, #d7c4a7, #a99578);
-      color: #202225;
-      border: none;
-      border-radius: 30px;
-      font-weight: 800;
-      transition: transform .25s ease, box-shadow .25s ease;
-    }
-
-    .gold-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(185,165,139,.22);
-    }
-
-    .store-benefits {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--luxury-radius);
-      padding: 22px;
-    }
-
-    .store-benefits > div {
-      color: var(--cream);
-    }
-
-    .store-benefits span {
-      color: var(--gold);
-    }
-
-    .store-benefits small {
-      color: var(--muted);
-    }
-
-    .deals-section,
-    .shop-section,
-    .wishlist-section {
-      margin-top: 55px;
-    }
-
-    .section-heading h2,
-    .wishlist-heading h2 {
-      color: var(--graphite-silver);
-      font-family: "Playfair Display", serif;
-      font-size: clamp(25px, 3vw, 34px);
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .deal-card {
-      border: 1px solid var(--line);
-      border-radius: var(--luxury-radius);
-      overflow: hidden;
-      transition: transform .3s ease, border-color .3s ease;
-    }
-
-    .deal-card:hover {
-      transform: translateY(-5px);
-      border-color: var(--gold);
-    }
-
-    .clearance-deal {
-      background: linear-gradient(135deg, #34383b, #25282b);
-    }
-
-    .premium-deal {
-      background: linear-gradient(135deg, #39413f, #262a2c);
-    }
-
-    .deal-card h3 {
-      color: var(--graphite-silver);
-      font-family: "Playfair Display", serif;
-    }
-
-    .deal-card strong {
-      color: var(--gold);
-    }
-
-    .product-tabs {
-      border-bottom: 1px solid var(--line);
-      margin-top: 45px;
-    }
-
-    .product-tab {
-      color: var(--muted);
-    }
-
-    .product-tab.active,
-    .product-tab:hover {
-      color: var(--gold);
-      border-color: var(--gold);
-    }
-
-    .product-grid {
-      gap: 22px;
-    }
-
-    .product-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 17px;
-      overflow: hidden;
-      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
-    }
-
-    .product-card:hover {
-      transform: translateY(-6px);
-      border-color: var(--gold);
-      box-shadow: 0 15px 35px rgba(0,0,0,.2);
-    }
-
-    .product-card img {
-      transition: transform .45s ease;
-    }
-
-    .product-card:hover img {
-      transform: scale(1.045);
-    }
-
-    .product-card h3,
-    .product-card .product-name {
-      color: var(--graphite-silver);
-    }
-
-    .wishlist-section {
-      background: #272a2e;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 25px;
-    }
-
-    .wishlist-count {
-      color: var(--gold);
-    }
-
-    .wishlist-empty {
-      color: var(--muted);
-    }
-
-    .wishlist-empty span {
-      color: var(--gold);
-    }
-
-    .promise {
-      background: linear-gradient(135deg, #303338, #25282b);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 55px 25px;
-      margin-top: 60px;
-      text-align: center;
-    }
-
-    .promise h2 {
-      font-family: "Playfair Display", serif;
-      color: var(--graphite-silver);
-      font-size: clamp(30px, 4vw, 44px);
-    }
-
-    .promise > p:last-child {
-      color: var(--muted);
-    }
-
-    .contact {
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      padding: 35px 0;
-      margin-top: 45px;
-    }
-
-    .contact h2 {
-      color: var(--graphite-silver);
-      font-family: "Playfair Display", serif;
-    }
-
-    footer {
-      background: #191b1e;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      padding-bottom: 100px;
-    }
-
-    footer a {
-      color: var(--graphite-silver);
-    }
-
-    .mobile-bottom-nav {
-      background: rgba(32,34,37,.97);
-      border-top: 1px solid var(--line);
-      backdrop-filter: blur(15px);
-    }
-
-    .mobile-nav-item {
-      color: var(--muted);
-    }
-
-    .mobile-nav-item.active,
-    .mobile-nav-item:hover {
-      color: var(--gold);
-    }
-
-    .overlay {
-      background: rgba(0,0,0,.7);
-      backdrop-filter: blur(4px);
-    }
-
-    .cart-drawer,
-    .order-dialog {
-      background: #25282b;
-      color: var(--cream);
-      border: 1px solid var(--line);
-    }
-
-    .drawer-head {
-      border-bottom: 1px solid var(--line);
-    }
-
-    .icon-button {
-      color: var(--graphite-silver);
-      background: #383b3e;
-    }
-
-    .cart-items {
-      color: var(--cream);
-    }
-
-    .total-row {
-      border-color: var(--line);
-    }
-
-    .order-dialog input,
-    .order-dialog select,
-    .order-dialog textarea {
-      background: #303338;
-      color: var(--cream);
-      border: 1px solid #505459;
-      border-radius: 9px;
-    }
-
-    .order-dialog input:focus,
-    .order-dialog select:focus,
-    .order-dialog textarea:focus {
-      outline: none;
-      border-color: var(--gold);
-    }
-
-    .order-dialog label {
-      color: var(--graphite-silver);
-    }
-
-    .payment-details,
-    .coupon-section {
-      background: #303338;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
-    }
-
-    .form-message {
-      color: var(--gold);
-    }
-
-    @media (max-width: 700px) {
-      .sale-banner {
-        min-height: 310px;
-        margin: 18px 12px;
-        border-radius: 18px;
-      }
-
-      .sale-content h1 {
-        font-size: 37px;
-      }
-
-      .store-benefits {
-        margin: 15px 12px;
-        padding: 15px 10px;
-      }
-
-      .deals-section,
-      .shop-section {
-        margin-left: 12px;
-        margin-right: 12px;
-      }
-
-      .wishlist-section {
-        margin: 35px 12px;
-        padding: 17px;
-      }
-
-      .promise {
-        margin: 35px 12px;
-        padding: 35px 18px;
-      }
-
-      .contact {
-        margin: 0 12px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: .01ms !important;
-        transition-duration: .01ms !important;
-      }
-    }
-  </style>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 
 <body>
 
-<header class="topbar">
-
-  <a class="brand" href="index.html" aria-label="MR PRODUCT Home">
-    <span class="brand-mark">MR</span>
-    <span>
-      <b>MR PRODUCT</b>
-      <small>PREMIUM STORE</small>
-    </span>
-  </a>
-
-  <div class="header-search">
-    <input
-      type="search"
-      id="product-search"
-      placeholder="Search products..."
-      aria-label="Search products"
-    >
-
-    <button
-      type="button"
-      id="search-button"
-      aria-label="Search"
-    >⌕</button>
+  <!-- ANNOUNCEMENT BAR -->
+  <div class="announcement-bar">
+    <p>WELCOME TO MR PRODUCT — PREMIUM SHOPPING EXPERIENCE</p>
   </div>
 
-  <nav class="desktop-nav" aria-label="Main navigation">
-    <a href="#shop">Home</a>
-    <a href="#categories">Categories</a>
-    <a href="#deals">Deals</a>
-    <a href="#wishlist">Wishlist ♡</a>
-    <a href="track-order.html">Track Order</a>
-    <a href="account.html">Account</a>
-  </nav>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-main">
 
-  <button class="cart-pill" id="cart-open" type="button">
-    🛒 Cart <span id="cart-count">0</span>
-  </button>
+      <button class="mobile-menu-button" id="mobile-menu-open" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-</header>
-
-
-<main>
-
-  <!-- CATEGORY NAVIGATION -->
-
-  <section class="category-menu" id="categories">
-
-    <a href="#shop" class="category-item active">All</a>
-    <a href="#shop" class="category-item">Electronics</a>
-    <a href="#shop" class="category-item">Fashion</a>
-    <a href="#shop" class="category-item">Beauty</a>
-    <a href="#shop" class="category-item">Watches</a>
-    <a href="#shop" class="category-item">Home</a>
-    <a href="#shop" class="category-item">Accessories</a>
-
-  </section>
-
-
-  <!-- PREMIUM HERO -->
-
-  <section class="sale-banner">
-
-    <div class="sale-content">
-
-      <p class="eyebrow">THE ART OF PREMIUM SHOPPING</p>
-
-      <h1>
-        DISCOVER
-        <br>
-        <em>YOUR STYLE.</em>
-      </h1>
-
-      <p>
-        A curated collection of quality products.
-        Designed for your everyday lifestyle.
-      </p>
-
-      <a href="#shop" class="button gold-button">
-        EXPLORE COLLECTION →
+      <a href="index.html" class="brand">
+        <span class="brand-mark">MR</span>
+        <span class="brand-text">
+          <strong id="store-name">MR PRODUCT</strong>
+          <small>PREMIUM COLLECTION</small>
+        </span>
       </a>
 
-    </div>
-
-    <div class="sale-decoration">
-      <span>MR</span>
-      <strong>COLLECTION</strong>
-      <small>QUALITY IN EVERY DETAIL</small>
-    </div>
-
-  </section>
-
-
-  <!-- STORE BENEFITS -->
-
-  <section class="store-benefits">
-
-    <div>
-      <span>✦</span>
-      <strong>Premium Products</strong>
-      <small>Carefully selected</small>
-    </div>
-
-    <div>
-      <span>♢</span>
-      <strong>Secure Payments</strong>
-      <small>Trusted payment options</small>
-    </div>
-
-    <div>
-      <span>↗</span>
-      <strong>Order Tracking</strong>
-      <small>Track your delivery</small>
-    </div>
-
-  </section>
-
-
-  <!-- EXCLUSIVE DEALS -->
-
-  <section class="deals-section" id="deals">
-
-    <div class="section-heading">
-
-      <div>
-        <p class="eyebrow">CURATED OFFERS</p>
-        <h2>Exclusive Deals</h2>
-      </div>
-
-      <a href="#shop" class="view-all">
-        View All →
-      </a>
-
-    </div>
-
-    <div class="deal-banners">
-
-      <a href="#shop" class="deal-card clearance-deal">
-
-        <span>✦ SPECIAL OFFER</span>
-
-        <h3>Clearance Deals</h3>
-
-        <p>Discover amazing prices</p>
-
-        <strong>SHOP NOW →</strong>
-
-      </a>
-
-
-      <a href="#shop" class="deal-card premium-deal">
-
-        <span>✧ PREMIUM SELECTION</span>
-
-        <h3>Premium Collection</h3>
-
-        <p>Exclusive products for you</p>
-
-        <strong>EXPLORE →</strong>
-
-      </a>
-
-    </div>
-
-  </section>
-
-
-  <!-- PRODUCT COLLECTION TABS -->
-
-  <section class="product-tabs" aria-label="Product collections">
-
-    <a href="#shop" class="product-tab active">
-      All Products
-    </a>
-
-    <a href="#shop" class="product-tab">
-      🔥 Deals
-    </a>
-
-    <a href="#shop" class="product-tab">
-      ⭐ Best Selling
-    </a>
-
-    <a href="#shop" class="product-tab">
-      New Arrivals
-    </a>
-
-  </section>
-
-
-  <!-- PRODUCT STORE -->
-
-  <section class="shop-section" id="shop">
-
-    <div class="section-heading">
-
-      <div>
-        <p class="eyebrow">THE COLLECTION</p>
-        <h2>Discover Products</h2>
-      </div>
-
-      <p class="muted">
-        Quality products, selected for you.
-      </p>
-
-    </div>
-
-    <div
-      class="product-grid"
-      id="product-grid"
-      aria-live="polite"
-    ></div>
-
-  </section>
-
-
-  <!-- WISHLIST -->
-
-  <section class="wishlist-section" id="wishlist">
-
-    <div class="wishlist-heading">
-
-      <div>
-        <p class="eyebrow">YOUR PERSONAL COLLECTION</p>
-
-        <h2>My Wishlist ♡</h2>
-
-        <p class="muted small">
-          Save your favorite products for later.
-        </p>
-      </div>
-
-      <span class="wishlist-count" id="wishlist-count">
-        0 Saved
-      </span>
-
-    </div>
-
-    <div class="product-grid" id="wishlist-grid">
-
-      <div class="wishlist-empty">
-
-        <span>♡</span>
-
-        Your wishlist is empty.
-
-        <p>
-          Explore products and save your favorites.
-        </p>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- BRAND PROMISE -->
-
-  <section class="promise" id="about">
-
-    <p class="eyebrow">
-      THE MR PRODUCT PROMISE
-    </p>
-
-    <h2>
-      Quality in every detail.
-    </h2>
-
-    <p>
-      Discover a premium shopping experience
-      with carefully selected products.
-    </p>
-
-  </section>
-
-
-  <!-- CONTACT -->
-
-  <section class="contact" id="contact">
-
-    <div>
-
-      <p class="eyebrow">HERE TO HELP</p>
-
-      <h2>
-        We're here for you.
-      </h2>
-
-    </div>
-
-    <p>
-      Contact information is managed through our store settings.
-    </p>
-
-  </section>
-
-</main>
-
-
-<!-- FOOTER -->
-
-<footer>
-
-  <a class="brand" href="index.html">
-
-    <span class="brand-mark">MR</span>
-
-    <span>
-      <b>MR PRODUCT</b>
-      <small>PREMIUM STORE</small>
-    </span>
-
-  </a>
-
-  <span>
-    © <span id="year"></span> MR PRODUCT
-  </span>
-
-  <a href="#wishlist">Wishlist ♡</a>
-
-  <a href="track-order.html">Track Order</a>
-
-  <a href="account.html">Account</a>
-
-</footer>
-
-
-<!-- MOBILE NAVIGATION -->
-
-<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
-
-  <a href="#" class="mobile-nav-item active">
-
-    <span>⌂</span>
-
-    Home
-
-  </a>
-
-
-  <a href="#categories" class="mobile-nav-item">
-
-    <span>☷</span>
-
-    Categories
-
-  </a>
-
-
-  <a href="account.html" class="mobile-nav-item">
-
-    <span>♙</span>
-
-    Account
-
-  </a>
-
-
-  <button
-    type="button"
-    class="mobile-nav-item"
-    id="mobile-cart-open"
-  >
-
-    <span>🛒</span>
-
-    Cart
-
-    <b id="mobile-cart-count">0</b>
-
-  </button>
-
-</nav>
-
-
-<!-- CART OVERLAY -->
-
-<div class="overlay" id="overlay" hidden></div>
-
-
-<!-- CART DRAWER -->
-
-<aside
-  class="cart-drawer"
-  id="cart-drawer"
-  aria-label="Shopping cart"
-  aria-hidden="true"
->
-
-  <div class="drawer-head">
-
-    <h2>Your cart</h2>
-
-    <button
-      class="icon-button"
-      id="cart-close"
-      type="button"
-      aria-label="Close cart"
-    >×</button>
-
-  </div>
-
-
-  <div id="cart-items" class="cart-items"></div>
-
-
-  <div class="cart-bottom">
-
-    <div class="total-row">
-
-      <span>Subtotal</span>
-
-      <b id="cart-total">৳0</b>
-
-    </div>
-
-    <button
-      class="button gold-button full"
-      id="checkout-open"
-      type="button"
-    >
-      Continue to order
-    </button>
-
-  </div>
-
-</aside>
-
-
-<!-- ORDER CHECKOUT -->
-
-<dialog id="order-dialog" class="order-dialog">
-
-  <form id="order-form">
-
-    <div class="drawer-head">
-
-      <div>
-
-        <p class="eyebrow">SECURE CHECKOUT</p>
-
-        <h2>Delivery details</h2>
-
-      </div>
-
-      <button
-        class="icon-button"
-        type="button"
-        id="order-close"
-        aria-label="Close order form"
-      >×</button>
-
-    </div>
-
-
-    <p class="muted small">
-      Your order total is calculated using current database prices.
-      Payment is subject to manual verification.
-    </p>
-
-
-    <label>
-
-      Full name
-
-      <input
-        name="name"
-        type="text"
-        required
-        autocomplete="name"
-      >
-
-    </label>
-
-
-    <label>
-
-      Mobile number
-
-      <input
-        name="phone"
-        type="tel"
-        required
-        inputmode="tel"
-        autocomplete="tel"
-      >
-
-    </label>
-
-
-    <label>
-
-      WhatsApp number (optional)
-
-      <input
-        name="whatsapp"
-        type="tel"
-        inputmode="tel"
-      >
-
-    </label>
-
-
-    <label>
-
-      District
-
-      <input
-        name="district"
-        type="text"
-        required
-        autocomplete="address-level1"
-      >
-
-    </label>
-
-
-    <label>
-
-      Area / Thana
-
-      <input
-        name="area"
-        type="text"
-        required
-      >
-
-    </label>
-
-
-    <label>
-
-      Full delivery address
-
-      <textarea
-        name="address"
-        rows="3"
-        required
-        autocomplete="street-address"
-      ></textarea>
-
-    </label>
-
-
-    <label>
-
-      Payment method
-
-      <select name="payment" required>
-
-        <option value="">
-          Choose payment method
-        </option>
-
-        <option value="bkash">
-          bKash
-        </option>
-
-        <option value="nagad">
-          Nagad
-        </option>
-
-        <option value="bank">
-          Bank transfer
-        </option>
-
-      </select>
-
-    </label>
-
-
-    <div
-      id="payment-details"
-      class="payment-details"
-      hidden
-      aria-live="polite"
-    >
-
-      <h3>Payment Information</h3>
-
-      <p id="payment-info-text"></p>
-
-    </div>
-
-
-    <!-- COUPON -->
-
-    <div class="coupon-section">
-
-      <h3>Have a Coupon?</h3>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-
+      <div class="header-search">
         <input
-          type="text"
-          id="coupon-code"
-          placeholder="Enter coupon code"
+          type="search"
+          id="product-search"
+          placeholder="Search products..."
           autocomplete="off"
-          style="flex:1;min-width:0;"
         >
+        <button id="search-button" type="button" aria-label="Search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.8" cy="10.8" r="6.8"></circle>
+            <path d="m16 16 5 5"></path>
+          </svg>
+        </button>
+      </div>
 
-        <button
-          type="button"
-          id="apply-coupon"
-          class="button gold-button"
-        >
-          Apply
+      <div class="header-actions">
+
+        <a href="account.html" class="header-action" aria-label="My account">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21c.5-4.3 3.5-6.5 8-6.5s7.5 2.2 8 6.5"></path>
+          </svg>
+          <span>Account</span>
+        </a>
+
+        <button class="header-action cart-header-button" id="cart-open" type="button">
+          <span class="cart-icon-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.5L22 8H6"></path>
+              <circle cx="10" cy="21" r="1"></circle>
+              <circle cx="18" cy="21" r="1"></circle>
+            </svg>
+            <span class="cart-count" id="cart-count">0</span>
+          </span>
+          <span>Cart</span>
         </button>
 
       </div>
-
-      <p
-        id="coupon-message"
-        class="form-message"
-        role="status"
-        aria-live="polite"
-      ></p>
-
     </div>
 
+    <!-- DESKTOP NAVIGATION -->
+    <nav class="desktop-nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="#categories">Categories</a>
+      <a href="#deals">Special Offers</a>
+      <a href="#shop">Shop</a>
+      <a href="#about">About Us</a>
+      <a href="#contact">Contact</a>
+      <a href="track-order.html">Track Order</a>
+    </nav>
 
-    <!-- REPEAT CUSTOMER DISCOUNT -->
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu" id="mobile-menu">
+      <button class="mobile-menu-close" id="mobile-menu-close" type="button">×</button>
+      <a href="index.html">Home</a>
+      <a href="#categories">Categories</a>
+      <a href="#deals">Special Offers</a>
+      <a href="#shop">Shop</a>
+      <a href="#about">About Us</a>
+      <a href="#contact">Contact</a>
+      <a href="track-order.html">Track Order</a>
+      <a href="account.html">My Account</a>
+    </div>
 
-    <div
-      class="repeat-discount-box"
-      style="margin:15px 0;padding:14px;border:1px solid var(--gold);border-radius:12px;background:rgba(185,165,139,.07);"
-    >
+  </header>
 
-      <h3 style="margin:0 0 8px;">
-        🎁 Repeat Customer Reward
-      </h3>
+  <main>
 
-      <p
-        id="repeat-discount-message"
-        class="muted small"
-        role="status"
-        aria-live="polite"
-      >
-        Enter your delivery details to check your reward.
-      </p>
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="home">
 
+      <div class="hero-content">
+        <div class="hero-text">
+          <span class="hero-label">DISCOVER THE DIFFERENCE</span>
 
-      <div class="total-row">
+          <h1>
+            Style That Defines
+            <span>Your Lifestyle.</span>
+          </h1>
 
-        <span>Previous Delivered Orders</span>
+          <p>
+            Discover premium products, beautiful collections and
+            exclusive deals — all in one place.
+          </p>
 
-        <b id="repeat-order-count">0</b>
+          <div class="hero-buttons">
+            <a href="#shop" class="button button-primary">SHOP NOW</a>
+            <a href="#categories" class="button button-outline">EXPLORE COLLECTION</a>
+          </div>
+
+          <div class="hero-highlights">
+            <div>
+              <strong>100%</strong>
+              <span>Quality Focus</span>
+            </div>
+            <div>
+              <strong>Premium</strong>
+              <span>Collections</span>
+            </div>
+            <div>
+              <strong>Secure</strong>
+              <span>Shopping</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-image-wrap">
+          <div class="hero-image-frame">
+            <img
+              id="hero-banner-image"
+              src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1100&q=85"
+              alt="MR PRODUCT premium collection"
+            >
+          </div>
+
+          <div class="hero-floating-card">
+            <span class="floating-card-icon">✦</span>
+            <div>
+              <strong>Premium Choice</strong>
+              <small>Made for your lifestyle</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-decoration hero-decoration-one"></div>
+      <div class="hero-decoration hero-decoration-two"></div>
+
+    </section>
+
+    <!-- BENEFITS -->
+    <section class="benefits-section">
+      <div class="benefit-item">
+        <span class="benefit-icon">✦</span>
+        <div>
+          <strong>Premium Quality</strong>
+          <small>Carefully selected products</small>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">◇</span>
+        <div>
+          <strong>Secure Shopping</strong>
+          <small>Safe ordering experience</small>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">↗</span>
+        <div>
+          <strong>Easy Ordering</strong>
+          <small>Simple checkout process</small>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">♡</span>
+        <div>
+          <strong>Customer Care</strong>
+          <small>We value every customer</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="categories-section section-container" id="categories">
+
+      <div class="section-heading">
+        <div>
+          <span class="section-eyebrow">EXPLORE OUR COLLECTION</span>
+          <h2>Shop By Category</h2>
+        </div>
+
+        <a href="#shop" class="text-link">View All Products <span>→</span></a>
+      </div>
+
+      <div class="category-list" id="categories">
+        <button class="category-chip active" type="button" data-category="all">
+          All Products
+        </button>
+      </div>
+
+    </section>
+
+    <!-- SPECIAL DEALS -->
+    <section class="deals-section" id="deals">
+      <div class="section-container">
+
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">DON'T MISS OUT</span>
+            <h2>Special Deals</h2>
+            <p>Explore selected products at special prices.</p>
+          </div>
+
+          <a href="#shop" class="text-link">Shop Deals <span>→</span></a>
+        </div>
+
+        <div class="deals-banner">
+          <div class="deals-banner-content">
+            <span class="deals-tag">EXCLUSIVE COLLECTION</span>
+            <h3>Find Your New Favourite</h3>
+            <p>Discover something special from MR PRODUCT.</p>
+            <a href="#shop" class="button button-light">EXPLORE NOW</a>
+          </div>
+
+          <div class="deals-banner-decoration">MR</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PRODUCT SHOP -->
+    <section class="shop-section section-container" id="shop">
+
+      <div class="section-heading shop-heading">
+        <div>
+          <span class="section-eyebrow">HANDPICKED FOR YOU</span>
+          <h2>Our Products</h2>
+          <p>Discover our latest and most popular collections.</p>
+        </div>
+
+        <div class="shop-search-mobile">
+          <input
+            type="search"
+            id="mobile-product-search"
+            placeholder="Search products..."
+          >
+        </div>
+      </div>
+
+      <!-- PRODUCT FILTERS -->
+      <div class="product-toolbar">
+        <div class="product-tabs">
+          <button class="product-tab active" type="button" data-filter="all">
+            All Products
+          </button>
+
+          <button class="product-tab" type="button" data-filter="new">
+            New Arrivals
+          </button>
+
+          <button class="product-tab" type="button" data-filter="discount">
+            On Sale
+          </button>
+        </div>
+
+        <div class="product-sort">
+          <label for="product-sort">Sort By</label>
+          <select id="product-sort">
+            <option value="latest">Latest</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PRODUCT COUNT -->
+      <div class="product-results-info">
+        <span id="product-results-count">Discover our collection</span>
+      </div>
+
+      <!-- PRODUCT GRID -->
+      <div class="product-grid" id="product-grid">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading products...</p>
+        </div>
+      </div>
+
+      <div class="empty-state" id="empty-products" hidden>
+        <span>◇</span>
+        <h3>No Products Found</h3>
+        <p>Try another search or category.</p>
+      </div>
+
+    </section>
+
+    <!-- WISHLIST -->
+    <section class="wishlist-section section-container" id="wishlist">
+
+      <div class="section-heading">
+        <div>
+          <span class="section-eyebrow">YOUR FAVOURITES</span>
+          <h2>My Wishlist <span class="wishlist-heading-count" id="wishlist-count">0</span></h2>
+          <p>Products you have saved for later.</p>
+        </div>
+      </div>
+
+      <div class="product-grid wishlist-grid" id="wishlist-grid"></div>
+
+      <div class="wishlist-empty" id="wishlist-empty">
+        <span>♡</span>
+        <p>Your wishlist is empty.</p>
+      </div>
+
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about-section" id="about">
+      <div class="section-container about-layout">
+
+        <div class="about-image">
+          <img
+            src="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1000&q=85"
+            alt="MR PRODUCT collection"
+          >
+          <div class="about-image-caption">
+            <span>MR PRODUCT</span>
+            <small>PREMIUM SHOPPING EXPERIENCE</small>
+          </div>
+        </div>
+
+        <div class="about-content">
+          <span class="section-eyebrow">OUR STORY</span>
+          <h2>Quality. Style.<br><span>Confidence.</span></h2>
+
+          <p id="store-description">
+            Welcome to MR PRODUCT. We believe shopping should be simple,
+            enjoyable and reliable. Explore our carefully selected
+            collections and find products that match your lifestyle.
+          </p>
+
+          <a href="#shop" class="button button-primary">DISCOVER MORE</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact-section section-container" id="contact">
+
+      <div class="section-heading">
+        <div>
+          <span class="section-eyebrow">WE ARE HERE FOR YOU</span>
+          <h2>Get In Touch</h2>
+          <p>Have a question? Contact MR PRODUCT.</p>
+        </div>
+      </div>
+
+      <div class="contact-grid">
+
+        <a href="#" class="contact-card" id="contact-phone-link">
+          <span class="contact-card-icon">☎</span>
+          <div>
+            <strong>Call Us</strong>
+            <span id="contact-phone">Contact number</span>
+          </div>
+        </a>
+
+        <a href="#" class="contact-card" id="contact-whatsapp-link" target="_blank" rel="noopener">
+          <span class="contact-card-icon">◉</span>
+          <div>
+            <strong>WhatsApp</strong>
+            <span id="contact-whatsapp">Chat with us</span>
+          </div>
+        </a>
+
+        <a href="#" class="contact-card" id="contact-email-link">
+          <span class="contact-card-icon">✉</span>
+          <div>
+            <strong>Email</strong>
+            <span id="contact-email">Email us</span>
+          </div>
+        </a>
 
       </div>
 
+    </section>
 
-      <div class="total-row">
+  </main>
 
-        <span>
-          Repeat Discount (
-          <span id="repeat-discount-percent">0</span>%
-          )
-        </span>
+  <!-- FOOTER -->
+  <footer class="site-footer">
 
-        <b id="dialog-repeat-discount">৳0</b>
+    <div class="footer-main section-container">
 
+      <div class="footer-brand">
+        <a href="index.html" class="brand footer-logo">
+          <span class="brand-mark">MR</span>
+          <span class="brand-text">
+            <strong id="footer-store-name">MR PRODUCT</strong>
+            <small>PREMIUM COLLECTION</small>
+          </span>
+        </a>
+
+        <p>
+          Discover premium products and enjoy a better shopping experience
+          with MR PRODUCT.
+        </p>
+      </div>
+
+      <div class="footer-column">
+        <h3>Quick Links</h3>
+        <a href="index.html">Home</a>
+        <a href="#shop">Shop</a>
+        <a href="#categories">Categories</a>
+        <a href="#deals">Special Offers</a>
+      </div>
+
+      <div class="footer-column">
+        <h3>Customer Service</h3>
+        <a href="account.html">My Account</a>
+        <a href="track-order.html">Track Order</a>
+        <a href="#contact">Contact Us</a>
+        <a href="#about">About Us</a>
+      </div>
+
+      <div class="footer-column">
+        <h3>Contact Information</h3>
+        <span id="footer-phone">Phone: Not available</span>
+        <span id="footer-email">Email: Not available</span>
+        <span id="footer-whatsapp">WhatsApp: Not available</span>
       </div>
 
     </div>
 
-
-    <label>
-
-      Order note (optional)
-
-      <textarea
-        name="note"
-        rows="2"
-      ></textarea>
-
-    </label>
-
-
-    <!-- ORDER TOTALS -->
-
-    <div class="total-row">
-
-      <span>Subtotal</span>
-
-      <b id="dialog-total">৳0</b>
-
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> MR PRODUCT. All Rights Reserved.</p>
+      <p>PREMIUM SHOPPING EXPERIENCE</p>
     </div>
 
+  </footer>
 
-    <div class="total-row">
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="mobile-bottom-nav">
 
-      <span>Coupon Discount</span>
+    <a href="index.html" class="mobile-nav-item active">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
 
-      <b id="dialog-discount">৳0</b>
+    <a href="#categories" class="mobile-nav-item">
+      <span>▦</span>
+      <small>Categories</small>
+    </a>
 
-    </div>
-
-
-    <div class="total-row">
-
-      <strong>Total Discount</strong>
-
-      <strong id="dialog-total-discount">৳0</strong>
-
-    </div>
-
-
-    <div class="total-row">
-
-      <strong>Final Total</strong>
-
-      <strong id="dialog-grand-total">৳0</strong>
-
-    </div>
-
-
-    <button
-      class="button gold-button full"
-      type="submit"
-    >
-      Place order
+    <button class="mobile-nav-item" id="mobile-cart-open" type="button">
+      <span class="mobile-cart-icon">
+        ♧
+        <b id="mobile-cart-count">0</b>
+      </span>
+      <small>Cart</small>
     </button>
 
+    <a href="#wishlist" class="mobile-nav-item">
+      <span>♡</span>
+      <small>Wishlist</small>
+    </a>
 
-    <p
-      id="form-message"
-      class="form-message"
-      role="status"
-      aria-live="polite"
-    ></p>
+    <a href="account.html" class="mobile-nav-item">
+      <span>♙</span>
+      <small>Account</small>
+    </a>
 
-  </form>
+  </nav>
 
-</dialog>
+  <!-- CART OVERLAY -->
+  <div class="overlay" id="overlay"></div>
 
+  <!-- CART DRAWER -->
+  <aside class="cart-drawer" id="cart-drawer">
 
-<!-- KEEP EXISTING JAVASCRIPT -->
+    <div class="cart-header">
+      <div>
+        <span class="section-eyebrow">YOUR SELECTION</span>
+        <h2>Shopping Cart</h2>
+      </div>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+      <button class="icon-button" id="cart-close" type="button" aria-label="Close cart">
+        ×
+      </button>
+    </div>
+
+    <div class="cart-items" id="cart-items">
+      <div class="cart-empty">
+        <span>♧</span>
+        <h3>Your cart is empty</h3>
+        <p>Add something you love.</p>
+      </div>
+    </div>
+
+    <div class="cart-footer">
+
+      <div class="cart-subtotal-row">
+        <span>Subtotal</span>
+        <strong id="cart-total">৳0</strong>
+      </div>
+
+      <p class="cart-shipping-note">Delivery charge will be calculated separately.</p>
+
+      <button class="button button-primary cart-checkout-button" id="checkout-open" type="button">
+        PROCEED TO CHECKOUT
+      </button>
+
+      <a href="#shop" class="continue-shopping" id="continue-shopping">
+        Continue Shopping
+      </a>
+
+    </div>
+
+  </aside>
+
+  <!-- CHECKOUT DIALOG -->
+  <dialog class="checkout-dialog" id="order-dialog">
+
+    <div class="checkout-header">
+      <div>
+        <span class="section-eyebrow">ALMOST THERE</span>
+        <h2>Complete Your Order</h2>
+      </div>
+
+      <button class="icon-button" id="order-close" type="button" aria-label="Close checkout">
+        ×
+      </button>
+    </div>
+
+    <form id="order-form">
+
+      <div class="checkout-content">
+
+        <!-- CUSTOMER INFORMATION -->
+        <section class="checkout-section">
+          <h3>Customer Information</h3>
+
+          <div class="form-grid">
+
+            <div class="form-field full-width">
+              <label for="customer-name">Full Name *</label>
+              <input
+                type="text"
+                id="customer-name"
+                name="name"
+                placeholder="Enter your full name"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label for="customer-phone">Phone Number *</label>
+              <input
+                type="tel"
+                id="customer-phone"
+                name="phone"
+                placeholder="01XXXXXXXXX"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label for="customer-whatsapp">WhatsApp Number</label>
+              <input
+                type="tel"
+                id="customer-whatsapp"
+                name="whatsapp"
+                placeholder="WhatsApp number"
+              >
+            </div>
+
+            <div class="form-field">
+              <label for="customer-district">District *</label>
+              <input
+                type="text"
+                id="customer-district"
+                name="district"
+                placeholder="Your district"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label for="customer-area">Area / Thana *</label>
+              <input
+                type="text"
+                id="customer-area"
+                name="area"
+                placeholder="Your area"
+                required
+              >
+            </div>
+
+            <div class="form-field full-width">
+              <label for="customer-address">Full Delivery Address *</label>
+              <textarea
+                id="customer-address"
+                name="address"
+                rows="3"
+                placeholder="House, road, area and full address"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-field full-width">
+              <label for="order-note">Order Note (Optional)</label>
+              <textarea
+                id="order-note"
+                name="note"
+                rows="2"
+                placeholder="Any special instructions?"
+              ></textarea>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- PAYMENT METHOD -->
+        <section class="checkout-section">
+          <h3>Payment Method</h3>
+
+          <div class="payment-methods">
+
+            <label class="payment-option">
+              <input type="radio" name="payment" value="bkash" required>
+              <span class="payment-option-content">
+                <strong>bKash</strong>
+                <small>Pay using bKash</small>
+              </span>
+            </label>
+
+            <label class="payment-option">
+              <input type="radio" name="payment" value="nagad">
+              <span class="payment-option-content">
+                <strong>Nagad</strong>
+                <small>Pay using Nagad</small>
+              </span>
+            </label>
+
+            <label class="payment-option">
+              <input type="radio" name="payment" value="bank">
+              <span class="payment-option-content">
+                <strong>Bank Transfer</strong>
+                <small>Pay directly to bank</small>
+              </span>
+            </label>
+
+          </div>
+
+          <div class="payment-details" id="payment-details" hidden>
+            <h4>Payment Information</h4>
+            <p id="payment-info-text"></p>
+          </div>
+
+        </section>
+
+        <!-- COUPON -->
+        <section class="checkout-section">
+          <h3>Discount Coupon</h3>
+
+          <div class="coupon-input-row">
+            <input
+              type="text"
+              id="coupon-code"
+              placeholder="Enter coupon code"
+              autocomplete="off"
+            >
+            <button type="button" id="apply-coupon">APPLY</button>
+          </div>
+
+          <p class="coupon-message" id="coupon-message"></p>
+
+        </section>
+
+        <!-- REPEAT CUSTOMER DISCOUNT -->
+        <section class="checkout-section repeat-discount-section" id="repeat-discount-message" hidden>
+          <div>
+            <strong>Repeat Customer Discount</strong>
+            <p>
+              Previous orders:
+              <span id="repeat-order-count">0</span>
+            </p>
+          </div>
+
+          <strong id="repeat-discount-percent">0%</strong>
+        </section>
+
+        <!-- ORDER SUMMARY -->
+        <section class="checkout-section order-summary">
+          <h3>Order Summary</h3>
+
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <strong id="dialog-total">৳0</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Coupon Discount</span>
+            <strong id="dialog-discount">৳0</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Repeat Customer Discount</span>
+            <strong id="dialog-repeat-discount">৳0</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Total Discount</span>
+            <strong id="dialog-total-discount">৳0</strong>
+          </div>
+
+          <div class="summary-grand-total">
+            <span>Grand Total</span>
+            <strong id="dialog-grand-total">৳0</strong>
+          </div>
+
+          <p class="delivery-summary-note">
+            Delivery charge, if applicable, will be confirmed separately.
+          </p>
+
+        </section>
+
+        <div class="form-message" id="form-message" role="status"></div>
+
+        <button class="button button-primary place-order-button" id="place-order-button" type="submit">
+          PLACE ORDER
+        </button>
+
+        <p class="checkout-security-note">
+          Your order information will be handled securely.
+        </p>
+
+      </div>
+
+    </form>
+
+  </dialog>
+
+  <!-- JAVASCRIPT -->
+  <script src="app.js"></script>
 
 </body>
 </html>
