@@ -2,1035 +2,580 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101010">
-<title>MR PRODUCT — Ultimate Admin</title>
-
+<title>MR PRODUCT — Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-
 <style>
-:root{
-  --bg:#101010;
-  --panel:#171717;
-  --panel2:#1e1e1e;
-  --gold:#c6a34b;
-  --gold2:#e0bd63;
-  --border:#38332a;
-  --text:#f1f1f1;
-  --muted:#999;
-  --green:#36b779;
-  --red:#dc5555;
-}
+:root{--bg:#101010;--panel:#1a1a1a;--panel2:#202020;--gold:#c6a34b;--gold2:#e0bd63;--line:#37322a;--text:#eee;--muted:#999;--green:#36b779;--red:#dc5555}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:25px}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:Inter,Arial,sans-serif;
-}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
 button,input,textarea,select{font:inherit}
-button{cursor:pointer}
+button{cursor:pointer;border:0;border-radius:8px;padding:11px 15px;background:var(--gold);color:#111;font-weight:bold}
+button:hover{background:var(--gold2)}
+.secondary{background:#303030;color:#eee;border:1px solid #494949}
+.danger{background:#a83232;color:white}
 .hidden{display:none!important}
-.muted{color:var(--muted);font-size:13px}
-h1,h2,h3{margin-top:0}
 h1,h2{color:var(--gold)}
-hr{border:0;border-top:1px solid #333;margin:22px 0}
+label{display:block;color:#bbb;font-size:13px;margin:10px 0 6px}
+input,textarea,select{width:100%;padding:12px;background:#101010;border:1px solid #454545;color:#eee;border-radius:8px;margin-bottom:10px}
+textarea{min-height:85px}
+.status{display:none;padding:10px;border-radius:8px;margin:10px 0;font-size:13px}
+.success{display:block;background:#173c25;color:#9be3ad}
+.error{display:block;background:#4b2020;color:#ffaaaa}
 
 /* LOGIN */
-.login-screen{
-  min-height:100vh;display:flex;align-items:center;
-  justify-content:center;padding:20px;
-  background:radial-gradient(ellipse at top,#302719 0%,#101010 55%);
-}
-.login-card{
-  width:100%;max-width:430px;background:var(--panel);
-  border:1px solid var(--gold);border-radius:20px;
-  padding:30px;box-shadow:0 20px 70px #0009;
-}
-.login-logo{
-  width:65px;height:65px;border-radius:18px;
-  display:grid;place-items:center;margin:0 auto 18px;
-  color:#111;background:linear-gradient(135deg,var(--gold2),#92712c);
-  font-size:25px;font-weight:900;
-}
-.login-card h2{text-align:center}
-.login-card p{text-align:center}
+.login-screen{min-height:100vh;display:grid;place-items:center;padding:25px;background:radial-gradient(ellipse at top,#302719,#101010 60%)}
+.login-card{width:100%;max-width:755px;background:#1a1a1a;border:2px solid var(--gold);border-radius:35px;padding:55px;box-shadow:0 20px 70px #0009}
+.login-logo{width:112px;height:112px;border-radius:32px;margin:0 auto 35px;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold2),#8e6c2a);color:#111;font-size:43px;font-weight:900}
+.login-card h1{text-align:center;font-size:40px;margin:0 0 24px}
+.login-card .subtitle{text-align:center;color:#999;font-size:23px;margin:0 0 25px}
+.login-card label{font-size:22px;margin:22px 0 12px}
+.login-card input{height:78px;font-size:23px;border:2px solid #444;border-radius:17px;padding:18px 23px}
+.login-card button{width:100%;height:82px;font-size:24px;border-radius:17px;margin-top:10px}
+.login-card .footer{text-align:center;color:#999;font-size:21px;margin-top:30px}
 
-/* INPUTS */
-label{display:block;color:#ddd;font-size:13px;margin:10px 0 6px}
-input,textarea,select{
-  width:100%;padding:12px 13px;margin:0 0 12px;
-  color:#fff;background:#101010;border:1px solid #484848;
-  border-radius:9px;outline:none;
-}
-input:focus,textarea:focus,select:focus{
-  border-color:var(--gold);box-shadow:0 0 0 2px #c6a34b20;
-}
-textarea{min-height:90px;resize:vertical}
-input[type=color]{height:45px;padding:4px}
-input[type=file]{padding:9px}
-button{
-  border:0;border-radius:9px;padding:11px 15px;
-  background:var(--gold);color:#111;font-weight:750;
-  transition:.2s;
-}
-button:hover{background:var(--gold2);transform:translateY(-1px)}
-button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-button.secondary{background:#303030;color:#eee;border:1px solid #555}
-button.secondary:hover{background:#414141}
-button.danger{background:#a83232;color:#fff}
-button.small{padding:7px 10px;font-size:12px;margin:2px}
-.full-button{width:100%;padding:14px}
-
-/* APP LAYOUT */
+/* ADMIN LAYOUT */
 .app{min-height:100vh}
-.sidebar{
-  position:fixed;left:0;top:0;bottom:0;width:255px;
-  background:#151515;border-right:1px solid var(--border);
-  padding:22px 15px;overflow-y:auto;z-index:100;
-  display:flex;flex-direction:column;
-}
-.brand{
-  display:flex;align-items:center;gap:12px;
-  padding:5px 9px 24px;border-bottom:1px solid #333;
-  margin-bottom:20px;
-}
-.brand-mark{
-  width:43px;height:43px;border-radius:13px;
-  display:grid;place-items:center;
-  background:linear-gradient(135deg,#e0bd63,#8e6c2a);
-  color:#111;font-weight:900;font-size:18px;
-}
-.brand strong{display:block;color:var(--gold);font-size:15px}
-.brand small{color:#888;font-size:10px;letter-spacing:2px}
-.nav-label{
-  color:#777;font-size:10px;font-weight:bold;
-  letter-spacing:1.7px;padding:12px 12px 7px;
-}
-.nav-link{
-  display:flex;align-items:center;gap:12px;
-  width:100%;padding:12px;border-radius:9px;
-  color:#bbb;text-decoration:none;font-size:13px;
-  margin:2px 0;border:1px solid transparent;
-  background:transparent;text-align:left;
-}
-.nav-link:hover,.nav-link.active{
-  color:var(--gold);background:#c6a34b12;
-  border-color:#806a323d;
-}
-.nav-icon{width:20px;text-align:center;font-size:16px}
-.sidebar-bottom{margin-top:auto;padding-top:20px}
-.sidebar-bottom button{width:100%}
-.main-area{margin-left:255px;min-height:100vh}
-.topbar{
-  height:72px;padding:0 28px;display:flex;align-items:center;
-  justify-content:space-between;gap:15px;
-  background:#151515;border-bottom:1px solid #302a20;
-  position:sticky;top:0;z-index:50;
-}
-.topbar-title{font-weight:750}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.admin-badge{
-  color:var(--gold);background:#c6a34b14;
-  border:1px solid #806a3255;border-radius:30px;
-  padding:7px 12px;font-size:11px;
-}
-.menu-button{display:none;background:#292929;color:#fff}
-.content{max-width:1500px;margin:auto;padding:28px}
-
-/* DASHBOARD */
-.welcome{
-  padding:27px;border-radius:17px;
-  background:linear-gradient(115deg,#302719,#1d1b17 50%,#171717);
-  border:1px solid #806a32;
-  display:flex;justify-content:space-between;align-items:center;
-  gap:15px;margin-bottom:22px;
-}
-.welcome h1{font-size:25px;margin:0 0 8px}
-.welcome p{color:#bbb;margin:0;font-size:13px}
-.welcome-actions{display:flex;gap:8px;flex-wrap:wrap}
-.stats-grid{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:14px;margin-bottom:25px;
-}
-.stat{
-  background:linear-gradient(145deg,#202020,#171717);
-  border:1px solid #39332a;border-radius:14px;
-  padding:19px;min-width:0;
-}
-.stat-top{display:flex;justify-content:space-between;gap:8px}
-.stat-label{color:#aaa;font-size:12px}
-.stat-icon{
-  width:34px;height:34px;border-radius:10px;
-  display:grid;place-items:center;background:#c6a34b18;
-  color:var(--gold);font-size:16px;
-}
-.stat strong{
-  display:block;color:var(--gold);font-size:25px;
-  margin-top:13px;overflow-wrap:anywhere;
-}
-.stat-note{color:#777;font-size:11px;margin-top:6px}
-.quick-grid{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:12px;margin-bottom:28px;
-}
-.quick-card{
-  background:#191919;border:1px solid #39332a;
-  padding:17px;border-radius:12px;color:#ddd;
-  text-decoration:none;display:flex;align-items:center;gap:12px;
-}
-.quick-card:hover{border-color:var(--gold);color:var(--gold)}
-.quick-card span:first-child{font-size:23px}
-
-/* SECTIONS */
-.section-card{
-  background:var(--panel);border:1px solid #39332a;
-  border-radius:14px;margin-bottom:15px;overflow:hidden;
-  scroll-margin-top:90px;
-}
-.section-card[open]{border-color:#806a32;box-shadow:0 5px 25px #0003}
-.section-heading{
-  list-style:none;cursor:pointer;padding:17px 20px;
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;background:linear-gradient(100deg,#211e18,#171717);
-  color:var(--gold);font-weight:750;min-height:67px;
-}
-.section-heading::-webkit-details-marker{display:none}
-.section-heading:hover{background:#242117}
-.section-name{display:flex;align-items:center;gap:12px}
-.section-icon{
-  width:36px;height:36px;display:grid;place-items:center;
-  background:#101010;border:1px solid #806a32;
-  border-radius:10px;font-size:17px;
-}
-.section-arrow{
-  width:27px;height:27px;border:1px solid #806a32;
-  border-radius:50%;display:grid;place-items:center;
-  transition:.2s;
-}
-.section-card[open] .section-arrow{
-  transform:rotate(180deg);background:var(--gold);color:#111;
-}
-.section-content{padding:22px;border-top:1px solid #403722}
-.section-content h2{font-size:18px}
-.section-title{
-  display:flex;justify-content:space-between;
-  align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px;
-}
-.section-title h2{margin:0}
-
-/* TABLES */
-.table-wrap{overflow-x:auto;border:1px solid #333;border-radius:10px}
-table{width:100%;border-collapse:collapse;min-width:700px;background:#151515}
-th,td{padding:12px;border-bottom:1px solid #303030;text-align:left;font-size:12px}
+.sidebar{position:fixed;inset:0 auto 0 0;width:245px;background:#151515;border-right:1px solid var(--line);padding:18px 13px;overflow:auto;z-index:20;display:flex;flex-direction:column}
+.brand{display:flex;gap:11px;align-items:center;padding:5px 8px 20px;border-bottom:1px solid #333;margin-bottom:14px}
+.brand-mark{width:40px;height:40px;border-radius:12px;background:var(--gold);color:#111;display:grid;place-items:center;font-weight:900}
+.brand strong{display:block;color:var(--gold)}
+.brand small{font-size:9px;letter-spacing:1.5px;color:#888}
+.nav-label{font-size:10px;color:#777;padding:14px 10px 6px;letter-spacing:1.5px}
+.nav-link{width:100%;display:flex;gap:11px;align-items:center;text-align:left;color:#aaa;background:transparent;border:1px solid transparent;padding:12px;border-radius:8px;margin:2px 0}
+.nav-link:hover,.nav-link.active{background:#c6a34b18;border-color:#806a3244;color:var(--gold)}
+.main{margin-left:245px;min-height:100vh}
+.topbar{height:66px;position:sticky;top:0;z-index:15;background:#151515ed;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 25px}
+.topbar input{width:260px;margin:0}
+.content{max-width:1500px;padding:25px;margin:auto}
+.page{display:none}
+.page.active{display:block}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+.page-head h1{font-size:24px;margin:0}
+.welcome{padding:23px;border:1px solid #806a32;border-radius:15px;background:linear-gradient(110deg,#302719,#1c1b18 55%,#171717);margin-bottom:18px}
+.welcome h1{font-size:25px}
+.muted{color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:18px}
+.stat,.card{background:linear-gradient(145deg,#202020,#181818);border:1px solid var(--line);border-radius:12px;padding:17px;min-width:0}
+.stat small{color:#aaa}
+.stat strong{display:block;font-size:23px;color:var(--gold);margin-top:12px;overflow-wrap:anywhere}
+.two-col{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+.card h3{font-size:15px;margin:0 0 15px}
+.chart-box{height:240px}
+canvas{width:100%;height:100%}
+.section-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:13px;overflow:hidden}
+.section-card summary{list-style:none;padding:16px;cursor:pointer;color:var(--gold);font-weight:bold;background:#211e18}
+.section-body{padding:17px;border-top:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.table-wrap{overflow:auto;border:1px solid #333;border-radius:9px}
+table{width:100%;border-collapse:collapse;min-width:650px;background:#151515}
+th,td{text-align:left;padding:11px;border-bottom:1px solid #303030;font-size:12px}
 th{color:var(--gold);background:#222;white-space:nowrap}
-tr:hover td{background:#1e1e1e}
-.product-img{width:48px;height:48px;object-fit:cover;border-radius:7px}
-table select{min-width:105px;padding:8px;margin:0;font-size:12px}
-
-/* GRIDS AND STATUS */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
-.status{padding:10px 12px;border-radius:8px;margin:10px 0;display:none;font-size:13px}
-.success{background:#173c25;color:#9be3ad}
-.error{background:#4b2020;color:#ffaaaa}
-.preview{max-width:130px;max-height:100px;display:none;margin:6px 0 12px;border-radius:8px;object-fit:contain;border:1px solid #444}
-.pill{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;background:#292929;color:#ccc}
-.pill.gold{background:#c6a34b20;color:var(--gold)}
-.empty-note{color:#888;padding:18px;text-align:center}
-
-/* MOBILE */
-@media(max-width:1050px){
-  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
+.product-img{width:45px;height:45px;object-fit:cover;border-radius:7px}
+.small{padding:7px 9px;font-size:11px;margin:2px}
+.pill{display:inline-block;padding:5px 8px;border-radius:20px;background:#292929;color:#bbb;font-size:10px}
+.preview{max-width:130px;max-height:90px;object-fit:contain;display:none;border:1px solid #444;border-radius:8px;margin:5px 0 10px}
+.empty{text-align:center;padding:20px;color:#888}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
 @media(max-width:760px){
-  .sidebar{
-    transform:translateX(-100%);transition:transform .25s;
-    box-shadow:15px 0 40px #0008;
-  }
-  .sidebar.open{transform:translateX(0)}
-  .main-area{margin-left:0}
-  .menu-button{display:block}
-  .topbar{height:62px;padding:0 14px}
-  .content{padding:15px}
-  .welcome{padding:19px;align-items:flex-start;flex-direction:column}
-  .welcome h1{font-size:21px}
-  .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .section-content{padding:14px}
-  .section-heading{padding:14px;font-size:13px}
-}
-@media(max-width:420px){
-  .stats-grid{grid-template-columns:1fr 1fr;gap:8px}
-  .stat{padding:13px}
-  .stat strong{font-size:19px}
-  .quick-grid{grid-template-columns:1fr 1fr}
-  .welcome-actions button{font-size:11px;padding:9px}
-  .admin-badge{display:none}
+.sidebar{transform:translateX(-100%);transition:.25s;box-shadow:15px 0 40px #0009}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0}
+.content{padding:14px}
+.topbar{padding:0 12px}
+.topbar input{display:none}
+.stats{gap:8px}
+.stat{padding:12px}
+.stat strong{font-size:18px}
+.login-card{padding:30px 24px;border-radius:25px}
+.login-logo{width:80px;height:80px;font-size:32px;margin-bottom:25px}
+.login-card h1{font-size:28px}
+.login-card .subtitle{font-size:16px}
+.login-card label{font-size:16px}
+.login-card input{height:60px;font-size:17px}
+.login-card button{height:62px;font-size:17px}
+.login-card .footer{font-size:15px}
+.page-head{align-items:flex-start;flex-direction:column}
 }
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
 <section id="loginSection" class="login-screen">
-  <div class="login-card">
-    <div class="login-logo">MR</div>
-    <h2>MR PRODUCT</h2>
-    <p class="muted">ULTIMATE ADMIN PANEL</p>
-    <div id="loginMessage" class="status error"></div>
-
-    <label>Admin Email</label>
-    <input type="email" id="loginEmail" placeholder="Admin email">
-
-    <label>Password</label>
-    <input type="password" id="loginPassword" placeholder="Password"
-      onkeydown="if(event.key==='Enter')loginAdmin()">
-
-    <button class="full-button" onclick="loginAdmin()">LOGIN TO DASHBOARD</button>
-    <p class="muted">Authorized administrators only</p>
-  </div>
+<div class="login-card">
+<div class="login-logo">MR</div>
+<h1>MR PRODUCT</h1>
+<p class="subtitle">ULTIMATE ADMIN CONTROL</p>
+<div id="loginMessage" class="status"></div>
+<label>Admin Email</label>
+<input id="loginEmail" type="email" placeholder="Admin email" autocomplete="username">
+<label>Password</label>
+<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginAdmin()">
+<button onclick="loginAdmin()">LOGIN TO DASHBOARD</button>
+<p class="footer">Authorized administrators only</p>
+</div>
 </section>
 
-<!-- ADMIN APP -->
 <div id="dashboard" class="app hidden">
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="brand-mark">MR</div><div><strong>MR PRODUCT</strong><small>ADMIN CONTROL</small></div></div>
+<div class="nav-label">MAIN MENU</div>
+<button class="nav-link active" onclick="showPage('overview',this)">▦ &nbsp; Overview</button>
+<button class="nav-link" onclick="showPage('products',this)">📦 &nbsp; Products</button>
+<button class="nav-link" onclick="showPage('orders',this)">🛒 &nbsp; Orders</button>
+<button class="nav-link" onclick="showPage('customers',this)">👥 &nbsp; Customers</button>
+<div class="nav-label">STORE MANAGEMENT</div>
+<button class="nav-link" onclick="showPage('branding',this)">🎨 &nbsp; Store Branding</button>
+<button class="nav-link" onclick="showPage('payments',this)">💳 &nbsp; Payments</button>
+<button class="nav-link" onclick="showPage('repeat',this)">⭐ &nbsp; Repeat Discounts</button>
+<div class="nav-label">OTHER MANAGEMENT</div>
+<a class="nav-link" href="admin-affiliates.html">🤝 &nbsp; Affiliates</a>
+<a class="nav-link" href="admin-coupons.html">🎟️ &nbsp; Coupons</a>
+<a class="nav-link" href="admin-sales.html">📊 &nbsp; Sales Reports</a>
+<div style="margin-top:auto;padding-top:20px"><button class="secondary" style="width:100%" onclick="logoutAdmin()">Logout</button></div>
+</aside>
 
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-mark">MR</div>
-      <div>
-        <strong>MR PRODUCT</strong>
-        <small>ADMIN CONTROL</small>
-      </div>
-    </div>
-
-    <div class="nav-label">MAIN MENU</div>
-    <a class="nav-link active" href="#overview" onclick="navigateTo('overview')"><span class="nav-icon">▦</span> Overview</a>
-    <a class="nav-link" href="#products" onclick="navigateTo('products')"><span class="nav-icon">📦</span> Products</a>
-    <a class="nav-link" href="#add-product" onclick="navigateTo('add-product')"><span class="nav-icon">＋</span> Add Product</a>
-    <a class="nav-link" href="#orders" onclick="navigateTo('orders')"><span class="nav-icon">🛒</span> Orders</a>
-    <a class="nav-link" href="#customers" onclick="navigateTo('customers')"><span class="nav-icon">👥</span> Customers</a>
-
-    <div class="nav-label">STORE MANAGEMENT</div>
-    <a class="nav-link" href="#branding" onclick="navigateTo('branding')"><span class="nav-icon">🎨</span> Store Branding</a>
-    <a class="nav-link" href="#payments" onclick="navigateTo('payments')"><span class="nav-icon">💳</span> Payments</a>
-    <a class="nav-link" href="#payment-overview" onclick="navigateTo('payment-overview')"><span class="nav-icon">💰</span> Payment Overview</a>
-    <a class="nav-link" href="#repeat-discount" onclick="navigateTo('repeat-discount')"><span class="nav-icon">🎁</span> Repeat Discounts</a>
-
-    <div class="nav-label">BUSINESS TOOLS</div>
-    <a class="nav-link" href="admin-affiliates.html"><span class="nav-icon">🤝</span> Affiliates</a>
-    <a class="nav-link" href="admin-coupons.html"><span class="nav-icon">🎟️</span> Coupons</a>
-    <a class="nav-link" href="admin-sales.html"><span class="nav-icon">📈</span> Sales Reports</a>
-
-    <div class="sidebar-bottom">
-      <button class="secondary" onclick="logoutAdmin()">↪ Logout</button>
-    </div>
-  </aside>
-
-  <div class="main-area">
-    <header class="topbar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="menu-button" onclick="toggleSidebar()">☰</button>
-        <div class="topbar-title">Admin Dashboard</div>
-      </div>
-      <div class="topbar-right">
-        <span class="admin-badge">● ADMIN ACCESS</span>
-        <button class="secondary" onclick="refreshAll()">↻ Refresh</button>
-      </div>
-    </header>
-
-    <main class="content">
-
-      <!-- OVERVIEW -->
-      <section id="overview">
-        <div class="welcome">
-          <div>
-            <h1>Welcome to MR PRODUCT</h1>
-            <p>Premium Store Management & Business Control Center</p>
-          </div>
-          <div class="welcome-actions">
-            <button onclick="refreshAll()">↻ Refresh Dashboard</button>
-            <button class="secondary" onclick="location.href='admin-sales.html'">View Reports →</button>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat">
-            <div class="stat-top"><span class="stat-label">TOTAL PRODUCTS</span><span class="stat-icon">📦</span></div>
-            <strong id="statProducts">0</strong>
-            <div class="stat-note">Products in catalogue</div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span class="stat-label">TOTAL ORDERS</span><span class="stat-icon">🛒</span></div>
-            <strong id="statOrders">0</strong>
-            <div class="stat-note">All recorded orders</div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span class="stat-label">TOTAL CUSTOMERS</span><span class="stat-icon">👥</span></div>
-            <strong id="statCustomers">0</strong>
-            <div class="stat-note">Registered customers</div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span class="stat-label">PAID SALES</span><span class="stat-icon">💰</span></div>
-            <strong id="statSales">৳0.00</strong>
-            <div class="stat-note">Orders marked as paid</div>
-          </div>
-        </div>
-
-        <div class="quick-grid">
-          <a class="quick-card" href="#add-product" onclick="navigateTo('add-product')"><span>➕</span><span>Add New Product</span></a>
-          <a class="quick-card" href="#orders" onclick="navigateTo('orders')"><span>🛍️</span><span>Manage Orders</span></a>
-          <a class="quick-card" href="#branding" onclick="navigateTo('branding')"><span>🎨</span><span>Edit Store Profile</span></a>
-          <a class="quick-card" href="admin-affiliates.html"><span>🤝</span><span>Affiliate Management</span></a>
-          <a class="quick-card" href="admin-coupons.html"><span>🎟️</span><span>Coupon Management</span></a>
-          <a class="quick-card" href="admin-sales.html"><span>📊</span><span>Sales Reports</span></a>
-        </div>
-      </section>
-
-      <!-- BRANDING -->
-      <details class="section-card" id="branding">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">🎨</span>Store Profile & Branding</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="grid">
-            <div><label>Store Name</label><input id="storeName" placeholder="MR PRODUCT"></div>
-            <div><label>Phone</label><input id="storePhone" placeholder="Phone number"></div>
-            <div><label>WhatsApp</label><input id="storeWhatsapp" placeholder="WhatsApp number"></div>
-            <div><label>Email</label><input id="storeEmail" type="email" placeholder="Store email"></div>
-          </div>
-          <label>Store Description</label>
-          <textarea id="storeDescription" placeholder="Store description"></textarea>
-          <label>Primary Color</label>
-          <input id="primaryColor" type="color" value="#c6a34b">
-          <hr>
-          <div class="grid">
-            <div>
-              <label>Store Logo</label>
-              <input id="logoFile" type="file" accept="image/*" onchange="showImagePreview(this,'logoPreview')">
-              <img id="logoPreview" class="preview">
-            </div>
-            <div>
-              <label>Store Banner</label>
-              <input id="bannerFile" type="file" accept="image/*" onchange="showImagePreview(this,'bannerPreview')">
-              <img id="bannerPreview" class="preview">
-            </div>
-          </div>
-          <p id="storeMessage" class="status"></p>
-          <button onclick="saveStoreSettings()">Save Store Settings</button>
-          <button class="secondary" onclick="loadStoreSettings()">Reload Settings</button>
-        </div>
-      </details>
-
-      <!-- ADD PRODUCT -->
-      <details class="section-card" id="add-product">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">➕</span>Add New Product</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <label>Product Name</label>
-          <input id="productName" placeholder="Product name">
-          <label>Description</label>
-          <textarea id="productDescription" placeholder="Product description"></textarea>
-          <div class="grid">
-            <div><label>Selling Price (৳)</label><input id="productPrice" type="number" min="0" step="0.01"></div>
-            <div><label>Cost Price (৳)</label><input id="costPrice" type="number" min="0" step="0.01" value="0"></div>
-            <div><label>Discount Price (৳)</label><input id="productDiscount" type="number" min="0" step="0.01"></div>
-            <div><label>Stock</label><input id="productStock" type="number" min="0" step="1"></div>
-          </div>
-          <div class="grid">
-            <div><label>Category</label><input id="productCategory" placeholder="Category"></div>
-            <div><label>Image URL</label><input id="productImage" placeholder="https://..."></div>
-          </div>
-          <p id="productMessage" class="status"></p>
-          <button id="addProductButton" onclick="addProduct()">Add Product</button>
-          <button class="secondary" onclick="clearProductForm()">Clear Form</button>
-        </div>
-      </details>
-
-      <!-- PRODUCTS -->
-      <details class="section-card" id="products">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">📦</span>Product Management</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="section-title"><h2>Products Catalogue</h2><button onclick="loadProducts()">↻ Refresh Products</button></div>
-          <div id="productsMessage" class="status"></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Image</th><th>Name</th><th>Selling Price</th><th>Cost Price</th><th>Discount</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody id="productsTable"><tr><td colspan="8">Loading products...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <!-- ORDERS -->
-      <details class="section-card" id="orders">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">🛒</span>Order Management</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="section-title"><h2>All Orders</h2><button onclick="loadOrders()">↻ Refresh Orders</button></div>
-          <div id="ordersMessage" class="status"></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Order Number</th><th>Customer</th><th>Phone</th><th>Total</th><th>Payment</th><th>Payment Status</th><th>Order Status</th><th>Update</th></tr></thead>
-              <tbody id="ordersTable"><tr><td colspan="8">Loading orders...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <!-- CUSTOMERS -->
-      <details class="section-card" id="customers">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">👥</span>Customer Overview</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="section-title"><h2>Customer Management</h2><button onclick="loadCustomerAndPaymentViews()">↻ Refresh Customers</button></div>
-          <div class="grid">
-            <div class="stat">Total Customers<strong id="totalCustomers">0</strong></div>
-            <div class="stat">Total Customer Orders<strong id="customerOrders">0</strong></div>
-          </div>
-          <div class="table-wrap" style="margin-top:18px">
-            <table>
-              <thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Total Orders</th><th>Total Spent</th></tr></thead>
-              <tbody id="customersTable"><tr><td colspan="5">Loading customers...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <!-- PAYMENT SETTINGS -->
-      <details class="section-card" id="payments">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">💳</span>Payment Settings</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="grid">
-            <div><label>bKash Number</label><input id="bkashNumber" placeholder="bKash number"></div>
-            <div><label>Nagad Number</label><input id="nagadNumber" placeholder="Nagad number"></div>
-          </div>
-          <label>Bank Details</label><textarea id="bankDetails" placeholder="Bank details"></textarea>
-          <label>Payment Instructions</label><textarea id="paymentInstructions" placeholder="Payment instructions"></textarea>
-          <p class="muted">Cash on Delivery is currently disabled.</p>
-          <p id="paymentMessage" class="status"></p>
-          <button onclick="savePaymentSettings()">Save Payment Settings</button>
-          <button class="secondary" onclick="loadPaymentSettings()">Reload Settings</button>
-        </div>
-      </details>
-
-      <!-- PAYMENT OVERVIEW -->
-      <details class="section-card" id="payment-overview">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">💰</span>Payment Overview</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <div class="grid">
-            <div class="stat">Pending Payments<strong id="pendingPayments">৳0.00</strong></div>
-            <div class="stat">Paid Payments<strong id="paidPayments">৳0.00</strong></div>
-            <div class="stat">Total Orders<strong id="totalOrders">0</strong></div>
-          </div>
-        </div>
-      </details>
-
-      <!-- REPEAT DISCOUNT -->
-      <details class="section-card" id="repeat-discount">
-        <summary class="section-heading">
-          <span class="section-name"><span class="section-icon">🎁</span>Repeat Customer Discount</span>
-          <span class="section-arrow">⌄</span>
-        </summary>
-        <div class="section-content">
-          <h2>Repeat Customer Discount</h2>
-          <p class="muted">Delivered order-এর সংখ্যা অনুযায়ী Repeat Customer-দের discount নিয়ন্ত্রণ করুন।</p>
-          <div id="repeatDiscountMessage" class="status"></div>
-          <div class="table-wrap">
-            <table style="min-width:600px">
-              <thead><tr><th>Previous Delivered Orders</th><th>Discount (%)</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody id="repeatDiscountTable"><tr><td colspan="4">Loading discount levels...</td></tr></tbody>
-            </table>
-          </div>
-          <hr>
-          <h3>Add New Discount Level</h3>
-          <div class="grid">
-            <div><label>Minimum Delivered Orders</label><input id="newRepeatOrders" type="number" min="1" step="1" placeholder="Example: 14"></div>
-            <div><label>Discount Percentage (%)</label><input id="newRepeatPercent" type="number" min="0" max="100" step="0.01" placeholder="Example: 20"></div>
-          </div>
-          <button onclick="addRepeatDiscountTier()">Add Discount Level</button>
-          <button class="secondary" onclick="loadRepeatDiscountTiers()">Refresh Levels</button>
-        </div>
-      </details>
-
-      <p class="muted" style="text-align:center;padding:20px">MR PRODUCT · Ultimate Admin Control Center</p>
-
-    </main>
-  </div>
+<main class="main">
+<header class="topbar">
+<div style="display:flex;align-items:center;gap:12px">
+<button class="secondary" onclick="toggleSidebar()">☰</button>
+<strong style="color:var(--gold)">MR PRODUCT</strong>
 </div>
+<div style="display:flex;align-items:center;gap:12px">
+<input type="search" placeholder="Search products..." oninput="searchProducts(this.value)">
+<span class="muted" id="todayLabel"></span>
+</div>
+</header>
+
+<div class="content">
+
+<section id="page-overview" class="page active">
+<div class="welcome"><h1>Welcome to MR PRODUCT</h1><p>Store overview and business performance.</p></div>
+<div class="stats">
+<div class="stat"><small>TOTAL SALES (PAID)</small><strong id="statSales">৳0</strong></div>
+<div class="stat"><small>TOTAL ORDERS</small><strong id="statOrders">0</strong></div>
+<div class="stat"><small>TOTAL PRODUCTS</small><strong id="statProducts">0</strong></div>
+<div class="stat"><small>TOTAL CUSTOMERS</small><strong id="statCustomers">0</strong></div>
+</div>
+<div class="two-col">
+<div class="card"><h3>Sales Overview</h3><div class="chart-box"><canvas id="overviewChart"></canvas></div></div>
+<div class="card"><h3>Order Summary</h3>
+<p>Pending Orders <strong id="sumPending">0</strong></p>
+<p>Processing Orders <strong id="sumProcessing">0</strong></p>
+<p>Shipped Orders <strong id="sumShipped">0</strong></p>
+<p>Delivered Orders <strong id="sumDelivered">0</strong></p>
+<p>Cancelled Orders <strong id="sumCancelled">0</strong></p>
+</div>
+</div>
+<div class="card" style="margin-top:15px"><h3>Payment Overview</h3>
+<div class="stats">
+<div><small class="muted">Pending Payments</small><h2 id="pendingPayments">৳0</h2></div>
+<div><small class="muted">Paid Payments</small><h2 id="paidPayments">৳0</h2></div>
+<div><small class="muted">Total Orders</small><h2 id="totalOrders">0</h2></div>
+</div></div>
+</section>
+
+<section id="page-products" class="page">
+<div class="page-head"><h1>Product Management</h1><button onclick="loadProducts()">Refresh Products</button></div>
+<details class="section-card" open>
+<summary>＋ Add New Product</summary>
+<div class="section-body">
+<div id="productMessage" class="status"></div>
+<div class="grid">
+<div><label>Product Name</label><input id="productName" placeholder="Product name"></div>
+<div><label>Price (৳)</label><input id="productPrice" type="number" min="0" placeholder="Price"></div>
+<div><label>Cost Price (৳)</label><input id="costPrice" type="number" min="0" placeholder="Cost price"></div>
+<div><label>Discount Price (৳)</label><input id="productDiscount" type="number" min="0" placeholder="Discount price"></div>
+<div><label>Stock</label><input id="productStock" type="number" min="0" placeholder="Stock quantity"></div>
+<div><label>Category</label><input id="productCategory" placeholder="Category"></div>
+</div>
+<label>Description</label><textarea id="productDescription" placeholder="Product details"></textarea>
+<label>Image URL</label><input id="productImage" placeholder="https://...">
+<button onclick="addProduct()" id="addProductButton">Add Product</button>
+<button class="secondary" onclick="clearProductForm()">Clear Form</button>
+</div></details>
+<details class="section-card" open>
+<summary>📦 All Products</summary>
+<div class="section-body">
+<div id="productsMessage" class="status"></div>
+<div class="table-wrap"><table><thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Discount</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="productsTable"><tr><td colspan="7">Loading...</td></tr></tbody></table></div>
+</div></details>
+</section>
+
+<section id="page-orders" class="page">
+<div class="page-head"><h1>Order Management</h1><button onclick="loadOrders()">Refresh Orders</button></div>
+<div id="ordersMessage" class="status"></div>
+<div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Phone</th><th>Address</th><th>Total</th><th>Payment</th><th>Order Status</th><th>Payment Status</th><th>Update</th></tr></thead><tbody id="ordersTable"><tr><td colspan="9">Loading...</td></tr></tbody></table></div>
+</section>
+
+<section id="page-customers" class="page">
+<div class="page-head"><h1>Customer Overview</h1><button onclick="loadCustomerAndPaymentViews()">Refresh</button></div>
+<div class="stats">
+<div class="stat"><small>Total Customers</small><strong id="totalCustomers">0</strong></div>
+<div class="stat"><small>Customer Orders</small><strong id="customerOrders">0</strong></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Total Orders</th><th>Total Spent</th></tr></thead><tbody id="customersTable"></tbody></table></div>
+</section>
+
+<section id="page-branding" class="page">
+<div class="page-head"><h1>Store Profile & Branding</h1></div>
+<div class="card">
+<div id="storeMessage" class="status"></div>
+<div class="grid">
+<div><label>Store Name</label><input id="storeName"></div>
+<div><label>Phone</label><input id="storePhone"></div>
+<div><label>WhatsApp</label><input id="storeWhatsapp"></div>
+<div><label>Email</label><input id="storeEmail"></div>
+<div><label>Primary Color</label><input id="primaryColor" type="color" value="#c6a34b"></div>
+</div>
+<label>Store Description</label><textarea id="storeDescription"></textarea>
+<label>Logo Image</label><input id="logoFile" type="file" accept="image/*" onchange="previewFile(this,'logoPreview')"><img id="logoPreview" class="preview">
+<label>Banner Image</label><input id="bannerFile" type="file" accept="image/*" onchange="previewFile(this,'bannerPreview')"><img id="bannerPreview" class="preview">
+<button onclick="saveStoreSettings()">Save Store Settings</button>
+</div>
+</section>
+
+<section id="page-payments" class="page">
+<div class="page-head"><h1>Payment Settings</h1></div>
+<div class="card">
+<div id="paymentMessage" class="status"></div>
+<label>bKash Number</label><input id="bkashNumber" placeholder="bKash number">
+<label>Nagad Number</label><input id="nagadNumber" placeholder="Nagad number">
+<label>Bank Details</label><textarea id="bankDetails"></textarea>
+<label>Payment Instructions</label><textarea id="paymentInstructions"></textarea>
+<button onclick="savePaymentSettings()">Save Payment Settings</button>
+<p class="muted">Cash on Delivery is not enabled here.</p>
+</div>
+</section>
+
+<section id="page-repeat" class="page">
+<div class="page-head"><h1>Repeat Customer Discounts</h1></div>
+<div class="card">
+<div id="repeatDiscountMessage" class="status"></div>
+<div class="grid">
+<div><label>Minimum Delivered Orders</label><input id="newRepeatOrders" type="number" min="1"></div>
+<div><label>Discount Percent</label><input id="newRepeatPercent" type="number" min="0" max="100"></div>
+</div>
+<button onclick="addRepeatDiscountTier()">Add Discount Level</button>
+<hr>
+<div class="table-wrap"><table><thead><tr><th>Delivered Orders</th><th>Discount %</th><th>Status</th><th>Action</th></tr></thead><tbody id="repeatDiscountTable"></tbody></table></div>
+</div>
+</section>
+
+</div></main></div>
 
 <script>
-const CONFIG = window.MR_PRODUCT_CONFIG || {};
-const SUPABASE_URL = CONFIG.supabaseUrl || "";
-const SUPABASE_KEY = CONFIG.publishableKey || "";
+const CONFIG=window.MR_PRODUCT_CONFIG||{};
+const SUPABASE_URL=CONFIG.supabaseUrl||"";
+const SUPABASE_KEY=CONFIG.publishableKey||"";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const money=n=>"৳"+Number(n||0).toLocaleString("en-BD",{minimumFractionDigits:0,maximumFractionDigits:2});
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let productsCache=[],ordersCache=[],repeatDiscountCache=[],currentAdmin=null;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  alert("Supabase config.js is missing or incomplete.");
+function msg(id,text,type="success"){const el=$(id);if(!el)return;el.textContent=text;el.className="status "+type}
+function showLogin(){$("loginSection").classList.remove("hidden");$("dashboard").classList.add("hidden")}
+function showDashboard(){$("loginSection").classList.add("hidden");$("dashboard").classList.remove("hidden")}
+function toggleSidebar(){$("sidebar").classList.toggle("open")}
+function showPage(name,button){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ const page=$("page-"+name);if(page)page.classList.add("active");
+ document.querySelectorAll(".nav-link").forEach(b=>b.classList.remove("active"));
+ if(button)button.classList.add("active");
+ $("sidebar").classList.remove("open");
 }
-
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentAdmin = null;
-let productsCache = [];
-let ordersCache = [];
-let repeatDiscountCache = [];
-
-function toggleSidebar(){
-  document.getElementById("sidebar").classList.toggle("open");
+async function api(fn,method="GET",body=null){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session)throw new Error("Please login again.");
+ const options={method,headers:{Authorization:"Bearer "+session.access_token}};
+ if(body){options.body=JSON.stringify(body);options.headers["Content-Type"]="application/json"}
+ const {data,error}=await db.functions.invoke(fn,options);
+ if(error)throw error;
+ return data||{};
 }
-function navigateTo(id){
-  const target=document.getElementById(id);
-  if(target && target.tagName==="DETAILS") target.open=true;
-  document.getElementById("sidebar").classList.remove("open");
-  document.querySelectorAll(".nav-link").forEach(link=>link.classList.remove("active"));
-  const active=[...document.querySelectorAll(".nav-link")].find(link=>link.getAttribute("href")==="#"+id);
-  if(active)active.classList.add("active");
-}
-document.addEventListener("click",function(event){
-  const sidebar=document.getElementById("sidebar");
-  const menu=document.querySelector(".menu-button");
-  if(window.innerWidth<=760 && sidebar.classList.contains("open") &&
-     !sidebar.contains(event.target) && !menu.contains(event.target)){
-    sidebar.classList.remove("open");
-  }
-});
-
-function money(value){
-  return "৳"+Number(value||0).toLocaleString("en-BD",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function showMessage(id,message,type="success"){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.textContent=message;
-  el.className="status "+type;
-  el.style.display="block";
-}
-function hideMessage(id){
-  const el=document.getElementById(id);
-  if(el)el.style.display="none";
-}
-function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,char=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  })[char]);
-}
-function getArray(data,possibleKeys=[]){
-  if(Array.isArray(data))return data;
-  for(const key of possibleKeys)if(Array.isArray(data?.[key]))return data[key];
-  return [];
-}
-async function api(functionName,method="GET",body=null){
-  const options={method};
-  if(body!==null&&method!=="GET")options.body=body;
-  const {data,error}=await db.functions.invoke(functionName,options);
-  if(error){
-    let message=error.message||"Request failed";
-    if(error.context&&typeof error.context.json==="function"){
-      try{const details=await error.context.json();message=details.error||details.message||message}catch(_){}
-    }
-    throw new Error(message);
-  }
-  if(data?.error)throw new Error(data.error);
-  return data;
-}
-
-/* AUTH */
 async function checkAdmin(){
-  const {data:{session}}=await db.auth.getSession();
-  if(!session){showLogin();return false;}
-  const {data:admin,error}=await db.from("admin_users")
-    .select("user_id,role,is_active")
-    .eq("user_id",session.user.id)
-    .eq("is_active",true).maybeSingle();
-  if(error||!admin){
-    await db.auth.signOut();
-    showLogin();
-    showMessage("loginMessage","This account is not an active admin.","error");
-    return false;
-  }
-  currentAdmin=session.user;
-  document.getElementById("loginSection").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-  await refreshAll();
-  return true;
-}
-function showLogin(){
-  document.getElementById("loginSection").classList.remove("hidden");
-  document.getElementById("dashboard").classList.add("hidden");
+ try{
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){showLogin();return}
+ const {data,error}=await db.from("admin_users").select("user_id,role,is_active").eq("user_id",session.user.id).eq("is_active",true).maybeSingle();
+ if(error||!data){await db.auth.signOut();showLogin();return}
+ currentAdmin=session.user;showDashboard();await refreshAll();
+ }catch(e){showLogin();msg("loginMessage",e.message,"error")}
 }
 async function loginAdmin(){
-  hideMessage("loginMessage");
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value;
-  if(!email||!password){showMessage("loginMessage","Enter email and password.","error");return;}
-  try{
-    const {error}=await db.auth.signInWithPassword({email,password});
-    if(error)throw error;
-    await checkAdmin();
-  }catch(error){showMessage("loginMessage",error.message,"error");}
+ const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
+ if(!email||!password)return msg("loginMessage","Enter email and password.","error");
+ try{
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error)throw error;
+ const {data:admin,error:adminError}=await db.from("admin_users").select("user_id,role,is_active").eq("user_id",data.user.id).eq("is_active",true).maybeSingle();
+ if(adminError||!admin){await db.auth.signOut();throw new Error("This account is not an active admin.")}
+ currentAdmin=data.user;showDashboard();await refreshAll();
+ }catch(e){msg("loginMessage",e.message,"error")}
 }
-async function logoutAdmin(){
-  await db.auth.signOut();
-  currentAdmin=null;
-  showLogin();
-}
+async function logoutAdmin(){await db.auth.signOut();currentAdmin=null;showLogin()}
+db.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT")showLogin()});
 
-/* STORE SETTINGS */
-function showImagePreview(input,previewId){
-  const file=input.files?.[0],preview=document.getElementById(previewId);
-  if(!file||!preview)return;
-  preview.src=URL.createObjectURL(file);
-  preview.style.display="block";
-}
-async function uploadStoreImage(inputId,folder){
-  const file=document.getElementById(inputId).files?.[0];
-  if(!file)return null;
-  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-  const path=folder+"/"+Date.now()+"-"+safeName;
-  const {error}=await db.storage.from("store-assets").upload(path,file,{upsert:true,contentType:file.type});
-  if(error)throw error;
-  const {data}=db.storage.from("store-assets").getPublicUrl(path);
-  return data.publicUrl;
-}
-async function loadStoreSettings(){
-  try{
-    const result=await api("admin-settings","GET");
-    const settings=result.settings||result.data||result;
-    document.getElementById("storeName").value=settings.store_name||"";
-    document.getElementById("storeDescription").value=settings.description||"";
-    document.getElementById("storePhone").value=settings.phone||"";
-    document.getElementById("storeWhatsapp").value=settings.whatsapp||"";
-    document.getElementById("storeEmail").value=settings.email||"";
-    document.getElementById("primaryColor").value=settings.primary_color||"#c6a34b";
-    if(settings.logo_url){
-      const image=document.getElementById("logoPreview");
-      image.src=settings.logo_url;image.style.display="block";
-    }
-    if(settings.banner_url){
-      const image=document.getElementById("bannerPreview");
-      image.src=settings.banner_url;image.style.display="block";
-    }
-    showMessage("storeMessage","Store settings loaded.");
-  }catch(error){showMessage("storeMessage",error.message,"error");}
-}
-async function saveStoreSettings(){
-  try{
-    let logoUrl=null,bannerUrl=null;
-    if(document.getElementById("logoFile").files.length)logoUrl=await uploadStoreImage("logoFile","logos");
-    if(document.getElementById("bannerFile").files.length)bannerUrl=await uploadStoreImage("bannerFile","banners");
-    const body={
-      store_name:document.getElementById("storeName").value.trim(),
-      description:document.getElementById("storeDescription").value.trim(),
-      phone:document.getElementById("storePhone").value.trim(),
-      whatsapp:document.getElementById("storeWhatsapp").value.trim(),
-      email:document.getElementById("storeEmail").value.trim(),
-      primary_color:document.getElementById("primaryColor").value
-    };
-    if(logoUrl)body.logo_url=logoUrl;
-    if(bannerUrl)body.banner_url=bannerUrl;
-    await api("admin-settings","PATCH",body);
-    showMessage("storeMessage","Store settings saved successfully.");
-  }catch(error){showMessage("storeMessage",error.message,"error");}
-}
-
-/* PRODUCTS */
-function clearProductForm(){
-  ["productName","productDescription","productPrice","productDiscount","productStock","productCategory","productImage"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("costPrice").value="0";
-  hideMessage("productMessage");
-}
 async function addProduct(){
-  hideMessage("productMessage");
-  const name=document.getElementById("productName").value.trim();
-  const description=document.getElementById("productDescription").value.trim();
-  const price=Number(document.getElementById("productPrice").value);
-  const cost=Number(document.getElementById("costPrice").value);
-  const discountText=document.getElementById("productDiscount").value.trim();
-  const stock=Number(document.getElementById("productStock").value);
-  const category=document.getElementById("productCategory").value.trim();
-  const image_url=document.getElementById("productImage").value.trim();
-  if(!name||!Number.isFinite(price)||price<=0){showMessage("productMessage","Enter product name and a valid selling price.","error");return;}
-  if(!Number.isFinite(cost)||cost<0){showMessage("productMessage","Enter a valid cost price.","error");return;}
-  if(!Number.isInteger(stock)||stock<0){showMessage("productMessage","Enter a valid stock quantity.","error");return;}
-  let discount_price=null;
-  if(discountText!==""){
-    discount_price=Number(discountText);
-    if(!Number.isFinite(discount_price)||discount_price<=0||discount_price>=price){
-      showMessage("productMessage","Discount price must be greater than 0 and lower than selling price.","error");return;
-    }
-  }
-  const button=document.getElementById("addProductButton");
-  button.disabled=true;
-  try{
-    await api("admin-products","POST",{name,description,price,cost_price:cost,discount_price,stock,category,image_url,is_active:true,active:true});
-    showMessage("productMessage","Product added successfully.");
-    clearProductForm();
-    await loadProducts();
-  }catch(error){showMessage("productMessage",error.message,"error");}
-  finally{button.disabled=false;}
+ const name=$("productName").value.trim(),price=Number($("productPrice").value);
+ if(!name||!Number.isFinite(price)||price<0)return msg("productMessage","Enter a valid product name and price.","error");
+ const b=$("addProductButton");b.disabled=true;
+ try{
+ await api("admin-products","POST",{
+ name,description:$("productDescription").value.trim(),price,
+ cost_price:Number($("costPrice").value||0),
+ discount_price:$("productDiscount").value?Number($("productDiscount").value):null,
+ stock:Number($("productStock").value||0),category:$("productCategory").value.trim(),
+ image_url:$("productImage").value.trim(),is_active:true,active:true
+ });
+ msg("productMessage","Product added successfully.");
+ clearProductForm();await loadProducts();
+ }catch(e){msg("productMessage",e.message,"error")}
+ finally{b.disabled=false}
+}
+function clearProductForm(){
+ ["productName","productDescription","productPrice","costPrice","productDiscount","productStock","productCategory","productImage"].forEach(id=>$(id).value="");
 }
 async function loadProducts(){
-  const table=document.getElementById("productsTable");
-  table.innerHTML='<tr><td colspan="8">Loading...</td></tr>';
-  try{
-    const result=await api("admin-products","GET");
-    productsCache=getArray(result,["products","data","items"]);
-    document.getElementById("statProducts").textContent=productsCache.length;
-    if(!productsCache.length){table.innerHTML='<tr><td colspan="8">No products found.</td></tr>';return;}
-    table.innerHTML=productsCache.map(product=>{
-      const id=escapeHTML(product.id),name=escapeHTML(product.name),image=escapeHTML(product.image_url||"");
-      const active=product.is_active!==false&&product.active!==false;
-      return `<tr>
-        <td>${image?`<img class="product-img" src="${image}" alt="">`:"-"}</td>
-        <td>${name}</td><td>${money(product.price)}</td><td>${money(product.cost_price)}</td>
-        <td>${product.discount_price?money(product.discount_price):"-"}</td>
-        <td>${Number(product.stock||0)}</td>
-        <td><span class="pill ${active?"gold":""}">${active?"Active":"Hidden"}</span></td>
-        <td>
-          <button class="small" onclick="editProduct('${id}')">Edit</button>
-          <button class="small secondary" onclick="toggleProduct('${id}')">${active?"Hide":"Show"}</button>
-          <button class="small danger" onclick="deleteProduct('${id}')">Delete</button>
-        </td></tr>`;
-    }).join("");
-  }catch(error){table.innerHTML=`<tr><td colspan="8">${escapeHTML(error.message)}</td></tr>`;}
+ $("productsTable").innerHTML='<tr><td colspan="7">Loading...</td></tr>';
+ try{
+ const r=await api("admin-products","GET");
+ productsCache=Array.isArray(r)?r:(r.products||r.data||[]);
+ $("statProducts").textContent=productsCache.length;
+ renderProducts(productsCache);
+ }catch(e){$("productsTable").innerHTML=`<tr><td colspan="7">${esc(e.message)}</td></tr>`}
 }
+function renderProducts(list){
+ $("productsTable").innerHTML=list.map(p=>{
+ const id=esc(p.id),active=p.is_active!==false&&p.active!==false;
+ return `<tr>
+ <td>${p.image_url?`<img class="product-img" src="${esc(p.image_url)}">`:"—"}</td>
+ <td>${esc(p.name)}</td><td>${money(p.price)}</td><td>${p.discount_price?money(p.discount_price):"—"}</td>
+ <td>${Number(p.stock||0)}</td><td>${active?"Active":"Hidden"}</td>
+ <td><button class="small secondary" onclick="editProduct('${id}')">Edit</button>
+ <button class="small secondary" onclick="toggleProduct('${id}')">${active?"Hide":"Show"}</button>
+ <button class="small danger" onclick="deleteProduct('${id}')">Delete</button></td></tr>`;
+ }).join("")||'<tr><td colspan="7" class="empty">No products found.</td></tr>';
+}
+function searchProducts(q){renderProducts(productsCache.filter(p=>(p.name||"").toLowerCase().includes(q.toLowerCase())))}
 async function editProduct(id){
-  const product=productsCache.find(item=>String(item.id)===String(id));
-  if(!product)return;
-  const name=prompt("Product name:",product.name||"");if(name===null)return;
-  const priceText=prompt("Selling price:",product.price??0);if(priceText===null)return;
-  const costText=prompt("Cost price:",product.cost_price??0);if(costText===null)return;
-  const discountText=prompt("Discount price (leave empty for no discount):",product.discount_price??"");if(discountText===null)return;
-  const stockText=prompt("Stock quantity:",product.stock??0);if(stockText===null)return;
-  const category=prompt("Category:",product.category||"");if(category===null)return;
-  const image_url=prompt("Image URL:",product.image_url||"");if(image_url===null)return;
-  const description=prompt("Description:",product.description||"");if(description===null)return;
-  const price=Number(priceText),cost=Number(costText),stock=Number(stockText);
-  const discount_price=discountText.trim()===""?null:Number(discountText);
-  if(!name.trim()||!Number.isFinite(price)||price<=0){alert("Invalid product name or selling price.");return;}
-  if(!Number.isFinite(cost)||cost<0){alert("Invalid cost price.");return;}
-  if(!Number.isInteger(stock)||stock<0){alert("Invalid stock quantity.");return;}
-  if(discount_price!==null&&(!Number.isFinite(discount_price)||discount_price<=0||discount_price>=price)){alert("Discount price must be lower than selling price.");return;}
-  try{
-    await api("admin-products","PATCH",{id,name:name.trim(),description,price,cost_price:cost,discount_price,stock,category,image_url});
-    alert("Product updated successfully.");await loadProducts();
-  }catch(error){alert("Update failed: "+error.message);}
+ const p=productsCache.find(x=>String(x.id)===String(id));if(!p)return;
+ const name=prompt("Product name:",p.name);if(name===null)return;
+ const price=prompt("Price:",p.price);if(price===null)return;
+ const stock=prompt("Stock:",p.stock);if(stock===null)return;
+ const discount=prompt("Discount price (blank for none):",p.discount_price||"");if(discount===null)return;
+ try{
+ await api("admin-products","PATCH",{id,name,price:Number(price),stock:Number(stock),discount_price:discount===""?null:Number(discount)});
+ msg("productsMessage","Product updated.");await loadProducts();
+ }catch(e){msg("productsMessage",e.message,"error")}
 }
 async function toggleProduct(id){
-  const product=productsCache.find(item=>String(item.id)===String(id));if(!product)return;
-  const newStatus=!(product.is_active!==false&&product.active!==false);
-  if(!confirm(newStatus?"Show this product?":"Hide this product?"))return;
-  try{await api("admin-products","PATCH",{id,is_active:newStatus,active:newStatus});await loadProducts();}
-  catch(error){alert(error.message);}
+ const p=productsCache.find(x=>String(x.id)===String(id));if(!p)return;
+ const active=!(p.is_active!==false&&p.active!==false);
+ try{await api("admin-products","PATCH",{id,is_active:active,active});await loadProducts()}
+ catch(e){msg("productsMessage",e.message,"error")}
 }
 async function deleteProduct(id){
-  if(!confirm("Are you sure you want to delete this product?"))return;
-  try{await api("admin-products","DELETE",{id});alert("Product deleted.");await loadProducts();}
-  catch(error){alert("Delete failed: "+error.message);}
+ if(!confirm("Delete this product?"))return;
+ try{await api("admin-products","DELETE",{id});await loadProducts()}
+ catch(e){msg("productsMessage",e.message,"error")}
 }
 
-/* ORDERS */
-function orderCustomer(order){
-  const customer=order.customers||order.customer||{};
-  return {name:customer.name||order.customer_name||"-",phone:customer.phone||order.phone||"-",address:customer.address||order.address||"-"};
-}
+const statusList=["pending","confirmed","processing","shipped","delivered","cancelled"];
+const paymentList=["pending","paid","failed","refunded"];
+function options(list,value){return list.map(s=>`<option value="${s}" ${s===value?"selected":""}>${s}</option>`).join("")}
+function customerOf(o){return o.customer||o.customers||{}}
 async function loadOrders(){
-  const table=document.getElementById("ordersTable");
-  table.innerHTML='<tr><td colspan="8">Loading orders...</td></tr>';
-  try{
-    const result=await api("admin-orders","GET");
-    ordersCache=getArray(result,["orders","data","items"]);
-    document.getElementById("statOrders").textContent=ordersCache.length;
-    if(!ordersCache.length){table.innerHTML='<tr><td colspan="8">No orders found.</td></tr>';updatePaymentOverview();return;}
-    table.innerHTML=ordersCache.map(order=>{
-      const customer=orderCustomer(order);
-      const orderStatus=order.order_status||"pending";
-      const paymentStatus=order.payment_status||"pending";
-      const orderOptions=["pending","confirmed","processing","shipped","delivered","cancelled"];
-      const paymentOptions=["pending","paid","failed","refunded"];
-      const id=escapeHTML(order.id);
-      return `<tr>
-        <td>${escapeHTML(order.order_number||order.id)}</td>
-        <td>${escapeHTML(customer.name)}</td><td>${escapeHTML(customer.phone)}</td>
-        <td>${money(order.grand_total)}</td><td>${escapeHTML(order.payment_method||"-")}</td>
-        <td><select id="payment-${id}">${paymentOptions.map(s=>`<option value="${s}" ${s===paymentStatus?"selected":""}>${s}</option>`).join("")}</select></td>
-        <td><select id="status-${id}">${orderOptions.map(s=>`<option value="${s}" ${s===orderStatus?"selected":""}>${s}</option>`).join("")}</select></td>
-        <td><button class="small" onclick="updateOrder('${id}')">Save</button></td>
-      </tr>`;
-    }).join("");
-    updatePaymentOverview();
-  }catch(error){table.innerHTML=`<tr><td colspan="8">${escapeHTML(error.message)}</td></tr>`;}
+ $("ordersTable").innerHTML='<tr><td colspan="9">Loading...</td></tr>';
+ try{
+ const r=await api("admin-orders","GET");
+ ordersCache=Array.isArray(r)?r:(r.orders||r.data||[]);
+ $("statOrders").textContent=ordersCache.length;
+ renderOrders();updatePaymentOverview();drawChart();
+ }catch(e){$("ordersTable").innerHTML=`<tr><td colspan="9">${esc(e.message)}</td></tr>`}
+}
+function renderOrders(){
+ $("ordersTable").innerHTML=ordersCache.map(o=>{
+ const c=customerOf(o),id=esc(o.id);
+ return `<tr>
+ <td>${esc(o.order_number||o.id)}</td><td>${esc(c.name||o.customer_name||"-")}</td>
+ <td>${esc(c.phone||o.phone||"-")}</td><td>${esc(c.address||o.address||"-")}</td>
+ <td>${money(o.grand_total)}</td><td>${esc(o.payment_method||"-")}</td>
+ <td><select id="st-${id}">${options(statusList,o.order_status||"pending")}</select></td>
+ <td><select id="pay-${id}">${options(paymentList,o.payment_status||"pending")}</select></td>
+ <td><button class="small" onclick="updateOrder('${id}')">Save</button></td></tr>`;
+ }).join("")||'<tr><td colspan="9" class="empty">No orders found.</td></tr>';
 }
 async function updateOrder(id){
-  const orderStatus=document.getElementById("status-"+id).value;
-  const paymentStatus=document.getElementById("payment-"+id).value;
-  try{
-    await api("admin-orders","PATCH",{id,order_status:orderStatus,payment_status:paymentStatus});
-    alert("Order updated successfully.");await loadOrders();
-  }catch(error){alert("Update failed: "+error.message);}
+ try{
+ await api("admin-orders","PATCH",{id,order_status:$("st-"+id).value,payment_status:$("pay-"+id).value});
+ msg("ordersMessage","Order updated successfully.");await loadOrders();
+ }catch(e){msg("ordersMessage",e.message,"error")}
 }
 function updatePaymentOverview(){
-  let pending=0,paid=0;
-  ordersCache.forEach(order=>{
-    if(order.order_status==="cancelled")return;
-    if(order.payment_status==="paid")paid+=Number(order.grand_total||0);
-    else pending+=Number(order.grand_total||0);
-  });
-  document.getElementById("pendingPayments").textContent=money(pending);
-  document.getElementById("paidPayments").textContent=money(paid);
-  document.getElementById("totalOrders").textContent=ordersCache.length;
-  document.getElementById("statSales").textContent=money(paid);
+ let pending=0,paid=0;
+ ordersCache.forEach(o=>{
+ if(o.order_status==="cancelled")return;
+ if(o.payment_status==="paid")paid+=Number(o.grand_total||0);
+ else pending+=Number(o.grand_total||0);
+ });
+ $("pendingPayments").textContent=money(pending);
+ $("paidPayments").textContent=money(paid);
+ $("totalOrders").textContent=ordersCache.length;
+ $("statSales").textContent=money(paid);
+}
+async function loadCustomerAndPaymentViews(){
+ $("customersTable").innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
+ try{
+ const {data,error}=await db.from("customers").select("id,name,phone,address,total_orders,total_spent").order("created_at",{ascending:false});
+ if(error)throw error;
+ const cs=data||[];
+ $("totalCustomers").textContent=cs.length;
+ $("statCustomers").textContent=cs.length;
+ $("customerOrders").textContent=cs.reduce((s,c)=>s+Number(c.total_orders||0),0);
+ $("customersTable").innerHTML=cs.map(c=>`<tr><td>${esc(c.name||"-")}</td><td>${esc(c.phone||"-")}</td><td>${esc(c.address||"-")}</td><td>${Number(c.total_orders||0)}</td><td>${money(c.total_spent)}</td></tr>`).join("")||'<tr><td colspan="5">No customers found.</td></tr>';
+ }catch(e){$("customersTable").innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`}
 }
 
-/* PAYMENT SETTINGS */
+function previewFile(input,id){
+ const f=input.files&&input.files[0];if(!f)return;
+ const img=$(id);img.src=URL.createObjectURL(f);img.style.display="block";
+}
+async function uploadImage(file,path){
+ if(!file)return null;
+ const ext=file.name.split(".").pop();
+ const name=path+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+ const {data,error}=await db.storage.from("store-assets").upload(name,file,{upsert:true});
+ if(error)throw error;
+ return db.storage.from("store-assets").getPublicUrl(data.path).data.publicUrl;
+}
+async function loadStoreSettings(){
+ try{
+ const r=await api("admin-settings","GET");
+ const s=r.settings||r.data||r;
+ $("storeName").value=s.store_name||"";
+ $("storeDescription").value=s.description||"";
+ $("storePhone").value=s.phone||"";
+ $("storeWhatsapp").value=s.whatsapp||"";
+ $("storeEmail").value=s.email||"";
+ $("primaryColor").value=s.primary_color||"#c6a34b";
+ if(s.logo_url){$("logoPreview").src=s.logo_url;$("logoPreview").style.display="block"}
+ if(s.banner_url){$("bannerPreview").src=s.banner_url;$("bannerPreview").style.display="block"}
+ }catch(e){msg("storeMessage",e.message,"error")}
+}
+async function saveStoreSettings(){
+ try{
+ const logo=await uploadImage($("logoFile").files[0],"logos");
+ const banner=await uploadImage($("bannerFile").files[0],"banners");
+ const payload={
+ store_name:$("storeName").value.trim(),
+ description:$("storeDescription").value.trim(),
+ phone:$("storePhone").value.trim(),
+ whatsapp:$("storeWhatsapp").value.trim(),
+ email:$("storeEmail").value.trim(),
+ primary_color:$("primaryColor").value
+ };
+ if(logo)payload.logo_url=logo;
+ if(banner)payload.banner_url=banner;
+ await api("admin-settings","PATCH",payload);
+ msg("storeMessage","Store settings saved successfully.");
+ }catch(e){msg("storeMessage",e.message,"error")}
+}
 async function loadPaymentSettings(){
-  try{
-    const result=await api("admin-settings","GET");
-    const settings=result.settings||result.data||result;
-    document.getElementById("bkashNumber").value=settings.bkash_number||"";
-    document.getElementById("nagadNumber").value=settings.nagad_number||"";
-    document.getElementById("bankDetails").value=settings.bank_details||"";
-    document.getElementById("paymentInstructions").value=settings.payment_instructions||"";
-    showMessage("paymentMessage","Payment settings loaded.");
-  }catch(error){showMessage("paymentMessage",error.message,"error");}
+ try{
+ const r=await api("admin-settings","GET"),s=r.settings||r.data||r;
+ $("bkashNumber").value=s.bkash_number||"";
+ $("nagadNumber").value=s.nagad_number||"";
+ $("bankDetails").value=s.bank_details||"";
+ $("paymentInstructions").value=s.payment_instructions||"";
+ }catch(e){msg("paymentMessage",e.message,"error")}
 }
 async function savePaymentSettings(){
-  const body={
-    bkash_number:document.getElementById("bkashNumber").value.trim(),
-    nagad_number:document.getElementById("nagadNumber").value.trim(),
-    bank_details:document.getElementById("bankDetails").value.trim(),
-    payment_instructions:document.getElementById("paymentInstructions").value.trim()
-  };
-  try{await api("admin-settings","PATCH",body);showMessage("paymentMessage","Payment settings saved successfully.");}
-  catch(error){showMessage("paymentMessage",error.message,"error");}
+ try{
+ await api("admin-settings","PATCH",{
+ bkash_number:$("bkashNumber").value.trim(),
+ nagad_number:$("nagadNumber").value.trim(),
+ bank_details:$("bankDetails").value.trim(),
+ payment_instructions:$("paymentInstructions").value.trim()
+ });
+ msg("paymentMessage","Payment settings saved.");
+ }catch(e){msg("paymentMessage",e.message,"error")}
 }
 
-/* CUSTOMERS */
-async function loadCustomerAndPaymentViews(){
-  const table=document.getElementById("customersTable");
-  table.innerHTML='<tr><td colspan="5">Loading customers...</td></tr>';
-  try{
-    const {data,error}=await db.from("customers")
-      .select("id,name,phone,address,total_orders,total_spent")
-      .order("created_at",{ascending:false});
-    if(error)throw error;
-    const customers=data||[];
-    document.getElementById("totalCustomers").textContent=customers.length;
-    document.getElementById("statCustomers").textContent=customers.length;
-    const orderCount=customers.reduce((sum,customer)=>sum+Number(customer.total_orders||0),0);
-    document.getElementById("customerOrders").textContent=orderCount;
-    if(!customers.length){table.innerHTML='<tr><td colspan="5">No customers found.</td></tr>';return;}
-    table.innerHTML=customers.map(customer=>`<tr>
-      <td>${escapeHTML(customer.name||"-")}</td>
-      <td>${escapeHTML(customer.phone||"-")}</td>
-      <td>${escapeHTML(customer.address||"-")}</td>
-      <td>${Number(customer.total_orders||0)}</td>
-      <td>${money(customer.total_spent)}</td>
-    </tr>`).join("");
-  }catch(error){table.innerHTML=`<tr><td colspan="5">${escapeHTML(error.message)}</td></tr>`;}
-}
-
-/* REPEAT CUSTOMER DISCOUNT */
 async function loadRepeatDiscountTiers(){
-  const table=document.getElementById("repeatDiscountTable");
-  table.innerHTML='<tr><td colspan="4">Loading...</td></tr>';
-  try{
-    const {data,error}=await db.from("repeat_discount_tiers")
-      .select("*").order("min_delivered_orders",{ascending:true});
-    if(error)throw error;
-    repeatDiscountCache=data||[];
-    if(!repeatDiscountCache.length){table.innerHTML='<tr><td colspan="4">No discount levels found.</td></tr>';return;}
-    table.innerHTML=repeatDiscountCache.map(tier=>{
-      const id=escapeHTML(tier.id);
-      return `<tr>
-        <td>${Number(tier.min_delivered_orders)}</td>
-        <td><input type="number" min="0" max="100" step="0.01" id="repeat-percent-${id}" value="${Number(tier.discount_percent)}" style="width:110px;margin:0"></td>
-        <td><select id="repeat-active-${id}" style="width:120px">
-          <option value="true" ${tier.is_active?"selected":""}>Active</option>
-          <option value="false" ${!tier.is_active?"selected":""}>Inactive</option>
-        </select></td>
-        <td><button class="small" onclick="saveRepeatDiscountTier('${id}')">Save</button></td>
-      </tr>`;
-    }).join("");
-    showMessage("repeatDiscountMessage","Discount levels loaded successfully.");
-  }catch(error){
-    table.innerHTML=`<tr><td colspan="4">${escapeHTML(error.message)}</td></tr>`;
-    showMessage("repeatDiscountMessage",error.message,"error");
-  }
+ $("repeatDiscountTable").innerHTML="<tr><td colspan='4'>Loading...</td></tr>";
+ try{
+ const {data,error}=await db.from("repeat_discount_tiers").select("*").order("min_delivered_orders",{ascending:true});
+ if(error)throw error;
+ repeatDiscountCache=data||[];
+ $("repeatDiscountTable").innerHTML=repeatDiscountCache.map(t=>{
+ const id=esc(t.id);
+ return `<tr><td>${Number(t.min_delivered_orders)}</td>
+ <td><input id="rp-${id}" type="number" min="0" max="100" step=".01" value="${Number(t.discount_percent)}"></td>
+ <td><select id="ra-${id}"><option value="true" ${t.is_active?"selected":""}>Active</option><option value="false" ${!t.is_active?"selected":""}>Inactive</option></select></td>
+ <td><button class="small" onclick="saveRepeatDiscountTier('${id}')">Save</button></td></tr>`;
+ }).join("")||'<tr><td colspan="4">No discount levels found.</td></tr>';
+ }catch(e){msg("repeatDiscountMessage",e.message,"error")}
 }
 async function saveRepeatDiscountTier(id){
-  const percentInput=document.getElementById("repeat-percent-"+id);
-  const activeInput=document.getElementById("repeat-active-"+id);
-  if(!percentInput||!activeInput)return;
-  const percent=Number(percentInput.value),active=activeInput.value==="true";
-  if(!Number.isFinite(percent)||percent<0||percent>100){
-    showMessage("repeatDiscountMessage","Discount must be between 0 and 100%.","error");return;
-  }
-  try{
-    const {error}=await db.from("repeat_discount_tiers")
-      .update({discount_percent:percent,is_active:active,updated_at:new Date().toISOString()})
-      .eq("id",id);
-    if(error)throw error;
-    showMessage("repeatDiscountMessage","Discount level updated successfully.");
-    await loadRepeatDiscountTiers();
-  }catch(error){showMessage("repeatDiscountMessage",error.message,"error");}
+ const p=Number($("rp-"+id).value),a=$("ra-"+id).value==="true";
+ if(!Number.isFinite(p)||p<0||p>100)return msg("repeatDiscountMessage","Discount must be between 0 and 100%.","error");
+ try{
+ const {error}=await db.from("repeat_discount_tiers").update({discount_percent:p,is_active:a,updated_at:new Date().toISOString()}).eq("id",id);
+ if(error)throw error;
+ msg("repeatDiscountMessage","Discount updated.");await loadRepeatDiscountTiers();
+ }catch(e){msg("repeatDiscountMessage",e.message,"error")}
 }
 async function addRepeatDiscountTier(){
-  const orders=Number(document.getElementById("newRepeatOrders").value);
-  const percent=Number(document.getElementById("newRepeatPercent").value);
-  if(!Number.isInteger(orders)||orders<1){
-    showMessage("repeatDiscountMessage","Enter a valid minimum delivered order count.","error");return;
-  }
-  if(!Number.isFinite(percent)||percent<0||percent>100){
-    showMessage("repeatDiscountMessage","Discount must be between 0 and 100%.","error");return;
-  }
-  try{
-    const {error}=await db.from("repeat_discount_tiers")
-      .insert({min_delivered_orders:orders,discount_percent:percent,is_active:true});
-    if(error)throw error;
-    document.getElementById("newRepeatOrders").value="";
-    document.getElementById("newRepeatPercent").value="";
-    showMessage("repeatDiscountMessage","New discount level added successfully.");
-    await loadRepeatDiscountTiers();
-  }catch(error){showMessage("repeatDiscountMessage",error.message,"error");}
+ const n=Number($("newRepeatOrders").value),p=Number($("newRepeatPercent").value);
+ if(!Number.isInteger(n)||n<1||!Number.isFinite(p)||p<0||p>100)return msg("repeatDiscountMessage","Enter valid order count and discount.","error");
+ try{
+ const {error}=await db.from("repeat_discount_tiers").insert({min_delivered_orders:n,discount_percent:p,is_active:true});
+ if(error)throw error;
+ $("newRepeatOrders").value="";$("newRepeatPercent").value="";
+ msg("repeatDiscountMessage","Discount level added.");await loadRepeatDiscountTiers();
+ }catch(e){msg("repeatDiscountMessage",e.message,"error")}
 }
 
-/* REFRESH */
+function drawChart(){
+ const c=$("overviewChart");if(!c)return;
+ const w=c.clientWidth||500,h=240,dpr=window.devicePixelRatio||1;
+ c.width=w*dpr;c.height=h*dpr;
+ const x=c.getContext("2d");x.scale(dpr,dpr);
+ x.clearRect(0,0,w,h);
+ const days=7,values=[];
+ for(let i=days-1;i>=0;i--){
+ const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);
+ const next=new Date(d);next.setDate(next.getDate()+1);
+ values.push(ordersCache.filter(o=>o.payment_status==="paid"&&o.order_status!=="cancelled"&&new Date(o.created_at)>=d&&new Date(o.created_at)<next).reduce((s,o)=>s+Number(o.grand_total||0),0));
+ }
+ const max=Math.max(1,...values)*1.2,pad=35,cw=w-pad*2,ch=h-55;
+ x.font="10px Arial";
+ for(let i=0;i<5;i++){let y=15+ch*i/4;x.strokeStyle="#333";x.beginPath();x.moveTo(pad,y);x.lineTo(w-pad,y);x.stroke()}
+ const pts=values.map((v,i)=>({x:pad+cw*i/6,y:15+ch-(v/max)*ch}));
+ x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));
+ x.strokeStyle="#c6a34b";x.lineWidth=2;x.stroke();
+ pts.forEach(p=>{x.beginPath();x.arc(p.x,p.y,4,0,7);x.fillStyle="#e0bd63";x.fill()});
+}
+function updateSummary(){
+ const counts={pending:0,processing:0,shipped:0,delivered:0,cancelled:0};
+ ordersCache.forEach(o=>{const s=o.order_status||"pending";if(counts[s]!==undefined)counts[s]++});
+ Object.keys(counts).forEach(s=>{const el=$("sum"+s[0].toUpperCase()+s.slice(1));if(el)el.textContent=counts[s]});
+}
 async function refreshAll(){
-  await Promise.allSettled([
-    loadStoreSettings(),
-    loadPaymentSettings(),
-    loadProducts(),
-    loadOrders(),
-    loadCustomerAndPaymentViews(),
-    loadRepeatDiscountTiers()
-  ]);
+ await Promise.allSettled([
+ loadStoreSettings(),loadPaymentSettings(),loadProducts(),
+ loadOrders(),loadCustomerAndPaymentViews(),loadRepeatDiscountTiers()
+ ]);
+ updateSummary();drawChart();
 }
-
-/* START */
-db.auth.onAuthStateChange((event,session)=>{
-  if(event==="SIGNED_OUT"){
-    currentAdmin=null;
-    showLogin();
-  }
-});
+$("todayLabel").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+window.addEventListener("resize",drawChart);
 checkAdmin();
 </script>
-
 </body>
 </html>
