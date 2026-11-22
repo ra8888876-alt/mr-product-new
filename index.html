@@ -5,24 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#202225">
   <meta name="description" content="MR PRODUCT — Premium Shopping Experience. Discover beauty, skincare, fashion and lifestyle products.">
-
-  <title>MR PRODUCT — Premium Shopping</title>
+  <title>MR PRODUCT — Premium Store</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
 </head>
 
 <body>
 
-  <!-- ANNOUNCEMENT BAR -->
+  <!-- ANNOUNCEMENT -->
   <div class="announcement-bar">
-    <p>WELCOME TO MR PRODUCT — PREMIUM SHOPPING EXPERIENCE</p>
+    <p>Welcome to MR PRODUCT — Your Premium Shopping Destination</p>
   </div>
 
   <!-- HEADER -->
@@ -30,478 +26,357 @@
     <div class="header-main">
 
       <button class="mobile-menu-button" id="mobile-menu-open" aria-label="Open menu">
-        <span></span>
-        <span></span>
-        <span></span>
+        ☰
       </button>
 
-      <a href="index.html" class="brand">
+      <a href="#" class="brand">
         <span class="brand-mark">MR</span>
-        <span class="brand-text">
-          <strong id="store-name">MR PRODUCT</strong>
-          <small>PREMIUM COLLECTION</small>
-        </span>
+        <span class="brand-text" id="store-name">MR PRODUCT</span>
       </a>
 
       <div class="header-search">
-        <input
-          type="search"
-          id="product-search"
-          placeholder="Search products..."
-          autocomplete="off"
-        >
-        <button id="search-button" type="button" aria-label="Search">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="10.8" cy="10.8" r="6.8"></circle>
-            <path d="m16 16 5 5"></path>
-          </svg>
-        </button>
+        <input type="search" id="product-search" placeholder="Search products...">
+        <button id="search-button" aria-label="Search">⌕</button>
       </div>
 
       <div class="header-actions">
-
-        <a href="account.html" class="header-action" aria-label="My account">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M4 21c.5-4.3 3.5-6.5 8-6.5s7.5 2.2 8 6.5"></path>
-          </svg>
-          <span>Account</span>
-        </a>
-
-        <button class="header-action cart-header-button" id="cart-open" type="button">
-          <span class="cart-icon-wrap">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.5L22 8H6"></path>
-              <circle cx="10" cy="21" r="1"></circle>
-              <circle cx="18" cy="21" r="1"></circle>
-            </svg>
-            <span class="cart-count" id="cart-count">0</span>
-          </span>
-          <span>Cart</span>
+        <a href="#wishlist" class="header-action">♡</a>
+        <button class="header-action" id="cart-open">
+          🛍 <span id="cart-count">0</span>
         </button>
-
       </div>
+
     </div>
 
-    <!-- DESKTOP NAVIGATION -->
     <nav class="desktop-nav">
-      <a href="index.html" class="active">Home</a>
+      <a href="#">Home</a>
       <a href="#categories">Categories</a>
-      <a href="#deals">Special Offers</a>
       <a href="#shop">Shop</a>
-      <a href="#about">About Us</a>
+      <a href="#deals">Special Deals</a>
+      <a href="#about">About</a>
       <a href="#contact">Contact</a>
       <a href="track-order.html">Track Order</a>
     </nav>
-
-    <!-- MOBILE MENU -->
-    <div class="mobile-menu" id="mobile-menu">
-      <button class="mobile-menu-close" id="mobile-menu-close" type="button">×</button>
-      <a href="index.html">Home</a>
-      <a href="#categories">Categories</a>
-      <a href="#deals">Special Offers</a>
-      <a href="#shop">Shop</a>
-      <a href="#about">About Us</a>
-      <a href="#contact">Contact</a>
-      <a href="track-order.html">Track Order</a>
-      <a href="account.html">My Account</a>
-    </div>
-
   </header>
 
-  <main>
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobile-menu">
+    <button id="mobile-menu-close">✕</button>
+    <a href="#">Home</a>
+    <a href="#categories">Categories</a>
+    <a href="#shop">Shop</a>
+    <a href="#deals">Special Deals</a>
+    <a href="#wishlist">Wishlist</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="track-order.html">Track Order</a>
+  </div>
 
-    <!-- HERO SECTION -->
-    <section class="hero-section" id="home">
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-content">
 
-      <div class="hero-content">
-        <div class="hero-text">
-          <span class="hero-label">DISCOVER THE DIFFERENCE</span>
+      <div class="hero-text">
+        <span class="hero-label">WELCOME TO MR PRODUCT</span>
 
-          <h1>
-            Style That Defines
-            <span>Your Lifestyle.</span>
-          </h1>
+        <h1>Discover Your<br><span>Perfect Style</span></h1>
 
-          <p>
-            Discover premium products, beautiful collections and
-            exclusive deals — all in one place.
-          </p>
+        <p>
+          Explore premium beauty, skincare and lifestyle products
+          carefully selected for you.
+        </p>
 
-          <div class="hero-buttons">
-            <a href="#shop" class="button button-primary">SHOP NOW</a>
-            <a href="#categories" class="button button-outline">EXPLORE COLLECTION</a>
-          </div>
-
-          <div class="hero-highlights">
-            <div>
-              <strong>100%</strong>
-              <span>Quality Focus</span>
-            </div>
-            <div>
-              <strong>Premium</strong>
-              <span>Collections</span>
-            </div>
-            <div>
-              <strong>Secure</strong>
-              <span>Shopping</span>
-            </div>
-          </div>
+        <div class="hero-buttons">
+          <a href="#shop" class="btn-primary">Shop Now</a>
+          <a href="#about" class="btn-secondary">Discover More</a>
         </div>
 
-        <div class="hero-image-wrap">
-          <div class="hero-image-frame">
-            <img
-              id="hero-banner-image"
-              src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1100&q=85"
-              alt="MR PRODUCT premium collection"
-            >
-          </div>
-
-          <div class="hero-floating-card">
-            <span class="floating-card-icon">✦</span>
-            <div>
-              <strong>Premium Choice</strong>
-              <small>Made for your lifestyle</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-decoration hero-decoration-one"></div>
-      <div class="hero-decoration hero-decoration-two"></div>
-
-    </section>
-
-    <!-- BENEFITS -->
-    <section class="benefits-section">
-      <div class="benefit-item">
-        <span class="benefit-icon">✦</span>
-        <div>
-          <strong>Premium Quality</strong>
-          <small>Carefully selected products</small>
-        </div>
-      </div>
-
-      <div class="benefit-item">
-        <span class="benefit-icon">◇</span>
-        <div>
-          <strong>Secure Shopping</strong>
-          <small>Safe ordering experience</small>
-        </div>
-      </div>
-
-      <div class="benefit-item">
-        <span class="benefit-icon">↗</span>
-        <div>
-          <strong>Easy Ordering</strong>
-          <small>Simple checkout process</small>
-        </div>
-      </div>
-
-      <div class="benefit-item">
-        <span class="benefit-icon">♡</span>
-        <div>
-          <strong>Customer Care</strong>
-          <small>We value every customer</small>
-        </div>
-      </div>
-    </section>
-
-    <!-- CATEGORIES -->
-    <section class="categories-section section-container" id="categories">
-
-      <div class="section-heading">
-        <div>
-          <span class="section-eyebrow">EXPLORE OUR COLLECTION</span>
-          <h2>Shop By Category</h2>
-        </div>
-
-        <a href="#shop" class="text-link">View All Products <span>→</span></a>
-      </div>
-
-      <div class="category-list" id="categories">
-        <button class="category-chip active" type="button" data-category="all">
-          All Products
-        </button>
-      </div>
-
-    </section>
-
-    <!-- SPECIAL DEALS -->
-    <section class="deals-section" id="deals">
-      <div class="section-container">
-
-        <div class="section-heading">
+        <div class="hero-highlights">
           <div>
-            <span class="section-eyebrow">DON'T MISS OUT</span>
-            <h2>Special Deals</h2>
-            <p>Explore selected products at special prices.</p>
+            <strong>100%</strong>
+            <span>Quality Products</span>
           </div>
-
-          <a href="#shop" class="text-link">Shop Deals <span>→</span></a>
-        </div>
-
-        <div class="deals-banner">
-          <div class="deals-banner-content">
-            <span class="deals-tag">EXCLUSIVE COLLECTION</span>
-            <h3>Find Your New Favourite</h3>
-            <p>Discover something special from MR PRODUCT.</p>
-            <a href="#shop" class="button button-light">EXPLORE NOW</a>
+          <div>
+            <strong>Premium</strong>
+            <span>Shopping Experience</span>
           </div>
-
-          <div class="deals-banner-decoration">MR</div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- PRODUCT SHOP -->
-    <section class="shop-section section-container" id="shop">
-
-      <div class="section-heading shop-heading">
-        <div>
-          <span class="section-eyebrow">HANDPICKED FOR YOU</span>
-          <h2>Our Products</h2>
-          <p>Discover our latest and most popular collections.</p>
-        </div>
-
-        <div class="shop-search-mobile">
-          <input
-            type="search"
-            id="mobile-product-search"
-            placeholder="Search products..."
-          >
         </div>
       </div>
 
-      <!-- PRODUCT FILTERS -->
-      <div class="product-toolbar">
-        <div class="product-tabs">
-          <button class="product-tab active" type="button" data-filter="all">
-            All Products
-          </button>
-
-          <button class="product-tab" type="button" data-filter="new">
-            New Arrivals
-          </button>
-
-          <button class="product-tab" type="button" data-filter="discount">
-            On Sale
-          </button>
-        </div>
-
-        <div class="product-sort">
-          <label for="product-sort">Sort By</label>
-          <select id="product-sort">
-            <option value="latest">Latest</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- PRODUCT COUNT -->
-      <div class="product-results-info">
-        <span id="product-results-count">Discover our collection</span>
-      </div>
-
-      <!-- PRODUCT GRID -->
-      <div class="product-grid" id="product-grid">
-        <div class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>Loading products...</p>
-        </div>
-      </div>
-
-      <div class="empty-state" id="empty-products" hidden>
-        <span>◇</span>
-        <h3>No Products Found</h3>
-        <p>Try another search or category.</p>
-      </div>
-
-    </section>
-
-    <!-- WISHLIST -->
-    <section class="wishlist-section section-container" id="wishlist">
-
-      <div class="section-heading">
-        <div>
-          <span class="section-eyebrow">YOUR FAVOURITES</span>
-          <h2>My Wishlist <span class="wishlist-heading-count" id="wishlist-count">0</span></h2>
-          <p>Products you have saved for later.</p>
-        </div>
-      </div>
-
-      <div class="product-grid wishlist-grid" id="wishlist-grid"></div>
-
-      <div class="wishlist-empty" id="wishlist-empty">
-        <span>♡</span>
-        <p>Your wishlist is empty.</p>
-      </div>
-
-    </section>
-
-    <!-- ABOUT -->
-    <section class="about-section" id="about">
-      <div class="section-container about-layout">
-
-        <div class="about-image">
+      <div class="hero-image-wrap">
+        <div class="hero-image-frame">
           <img
-            src="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1000&q=85"
-            alt="MR PRODUCT collection"
+            id="hero-banner-image"
+            src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1000&q=85"
+            alt="Premium beauty products"
           >
-          <div class="about-image-caption">
-            <span>MR PRODUCT</span>
-            <small>PREMIUM SHOPPING EXPERIENCE</small>
+        </div>
+
+        <div class="hero-floating-card">
+          <span>✦</span>
+          <div>
+            <strong>Premium Collection</strong>
+            <small>Made for your lifestyle</small>
           </div>
         </div>
 
-        <div class="about-content">
-          <span class="section-eyebrow">OUR STORY</span>
-          <h2>Quality. Style.<br><span>Confidence.</span></h2>
-
-          <p id="store-description">
-            Welcome to MR PRODUCT. We believe shopping should be simple,
-            enjoyable and reliable. Explore our carefully selected
-            collections and find products that match your lifestyle.
-          </p>
-
-          <a href="#shop" class="button button-primary">DISCOVER MORE</a>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section class="contact-section section-container" id="contact">
-
-      <div class="section-heading">
-        <div>
-          <span class="section-eyebrow">WE ARE HERE FOR YOU</span>
-          <h2>Get In Touch</h2>
-          <p>Have a question? Contact MR PRODUCT.</p>
-        </div>
+        <div class="hero-decoration"></div>
       </div>
 
-      <div class="contact-grid">
+    </div>
+  </section>
 
-        <a href="#" class="contact-card" id="contact-phone-link">
-          <span class="contact-card-icon">☎</span>
-          <div>
-            <strong>Call Us</strong>
-            <span id="contact-phone">Contact number</span>
-          </div>
-        </a>
+  <!-- BENEFITS -->
+  <section class="benefits-section">
+    <div class="benefit-item">
+      <span class="benefit-icon">✦</span>
+      <div>
+        <strong>Premium Quality</strong>
+        <small>Carefully selected products</small>
+      </div>
+    </div>
 
-        <a href="#" class="contact-card" id="contact-whatsapp-link" target="_blank" rel="noopener">
-          <span class="contact-card-icon">◉</span>
-          <div>
-            <strong>WhatsApp</strong>
-            <span id="contact-whatsapp">Chat with us</span>
-          </div>
-        </a>
+    <div class="benefit-item">
+      <span class="benefit-icon">🚚</span>
+      <div>
+        <strong>Fast Delivery</strong>
+        <small>Across Bangladesh</small>
+      </div>
+    </div>
 
-        <a href="#" class="contact-card" id="contact-email-link">
-          <span class="contact-card-icon">✉</span>
-          <div>
-            <strong>Email</strong>
-            <span id="contact-email">Email us</span>
-          </div>
-        </a>
+    <div class="benefit-item">
+      <span class="benefit-icon">♡</span>
+      <div>
+        <strong>Customer Care</strong>
+        <small>We care about you</small>
+      </div>
+    </div>
 
+    <div class="benefit-item">
+      <span class="benefit-icon">✓</span>
+      <div>
+        <strong>Secure Shopping</strong>
+        <small>Easy order experience</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="categories-section section-container">
+    <div class="section-heading">
+      <span>EXPLORE COLLECTIONS</span>
+      <h2>Shop By Category</h2>
+      <p>Find your favourite products.</p>
+    </div>
+
+    <div class="category-list" id="categories">
+      <!-- Categories loaded by app.js -->
+    </div>
+  </section>
+
+  <!-- DEALS -->
+  <section class="deals-section" id="deals">
+    <div class="deals-banner">
+      <div class="deals-banner-content">
+        <span class="deals-tag">SPECIAL COLLECTION</span>
+        <h2>Discover Something<br>Beautiful</h2>
+        <p>Explore our latest products and special offers.</p>
+        <a href="#shop" class="btn-primary">Explore Deals</a>
+      </div>
+      <div class="deals-banner-decoration">MR</div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="shop-section section-container" id="shop">
+
+    <div class="shop-heading">
+      <div>
+        <span>OUR COLLECTION</span>
+        <h2>Explore Products</h2>
+        <p>Find something special for yourself.</p>
       </div>
 
-    </section>
+      <div class="shop-search-mobile">
+        <input type="search" id="mobile-product-search" placeholder="Search products...">
+      </div>
+    </div>
 
-  </main>
+    <div class="product-toolbar">
+      <div class="product-tabs">
+        <button class="product-tab active" data-category="all">All Products</button>
+        <button class="product-tab" data-category="new">New Arrivals</button>
+        <button class="product-tab" data-category="popular">Popular</button>
+      </div>
+
+      <div class="product-sort">
+        <select id="product-sort">
+          <option value="newest">Latest Products</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="product-results-info">
+      <span id="product-results-count">Loading products...</span>
+    </div>
+
+    <div class="product-grid" id="product-grid">
+      <!-- Products loaded by app.js -->
+    </div>
+
+    <div class="empty-state" id="empty-products" hidden>
+      <span>♡</span>
+      <h3>No Products Found</h3>
+      <p>Please try another search.</p>
+    </div>
+
+  </section>
+
+  <!-- WISHLIST -->
+  <section class="wishlist-section section-container" id="wishlist">
+    <div class="section-heading">
+      <span>YOUR FAVOURITES</span>
+      <h2>My Wishlist <span id="wishlist-count">0</span></h2>
+      <p>Your favourite products in one place.</p>
+    </div>
+
+    <div class="product-grid wishlist-grid" id="wishlist-grid"></div>
+
+    <div class="wishlist-empty" id="wishlist-empty">
+      <span>♡</span>
+      <p>Your wishlist is empty.</p>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about-section" id="about">
+    <div class="about-layout section-container">
+
+      <div class="about-image">
+        <img
+          src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=85"
+          alt="MR PRODUCT collection"
+        >
+        <div class="about-image-caption">MR PRODUCT</div>
+      </div>
+
+      <div class="about-content">
+        <span>ABOUT OUR STORE</span>
+        <h2>A Better Shopping Experience</h2>
+
+        <p id="store-description">
+          Welcome to MR PRODUCT. We bring you carefully selected
+          products with quality, style and customer satisfaction
+          at the heart of everything we do.
+        </p>
+
+        <a href="#shop" class="btn-primary">Explore Products</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact-section section-container" id="contact">
+    <div class="section-heading">
+      <span>GET IN TOUCH</span>
+      <h2>Contact Us</h2>
+      <p>We are here to help you.</p>
+    </div>
+
+    <div class="contact-grid">
+
+      <div class="contact-card">
+        <span>☎</span>
+        <h3>Phone</h3>
+        <a id="contact-phone-link" href="#">
+          <span id="contact-phone">Contact us</span>
+        </a>
+      </div>
+
+      <div class="contact-card">
+        <span>◉</span>
+        <h3>WhatsApp</h3>
+        <a id="contact-whatsapp-link" href="#" target="_blank">
+          <span id="contact-whatsapp">Message us</span>
+        </a>
+      </div>
+
+      <div class="contact-card">
+        <span>✉</span>
+        <h3>Email</h3>
+        <a id="contact-email-link" href="#">
+          <span id="contact-email">Email us</span>
+        </a>
+      </div>
+
+    </div>
+  </section>
 
   <!-- FOOTER -->
   <footer class="site-footer">
-
-    <div class="footer-main section-container">
+    <div class="footer-main">
 
       <div class="footer-brand">
-        <a href="index.html" class="brand footer-logo">
-          <span class="brand-mark">MR</span>
-          <span class="brand-text">
-            <strong id="footer-store-name">MR PRODUCT</strong>
-            <small>PREMIUM COLLECTION</small>
-          </span>
-        </a>
-
-        <p>
-          Discover premium products and enjoy a better shopping experience
-          with MR PRODUCT.
-        </p>
+        <a href="#" class="footer-logo" id="footer-store-name">MR PRODUCT</a>
+        <p>Your premium shopping destination.</p>
       </div>
 
       <div class="footer-column">
         <h3>Quick Links</h3>
-        <a href="index.html">Home</a>
         <a href="#shop">Shop</a>
-        <a href="#categories">Categories</a>
-        <a href="#deals">Special Offers</a>
+        <a href="#about">About Us</a>
+        <a href="#contact">Contact</a>
+        <a href="track-order.html">Track Order</a>
       </div>
 
       <div class="footer-column">
         <h3>Customer Service</h3>
-        <a href="account.html">My Account</a>
-        <a href="track-order.html">Track Order</a>
+        <a href="track-order.html">Order Tracking</a>
+        <a href="#contact">Help & Support</a>
         <a href="#contact">Contact Us</a>
-        <a href="#about">About Us</a>
       </div>
 
       <div class="footer-column">
-        <h3>Contact Information</h3>
-        <span id="footer-phone">Phone: Not available</span>
-        <span id="footer-email">Email: Not available</span>
-        <span id="footer-whatsapp">WhatsApp: Not available</span>
+        <h3>Contact</h3>
+        <p id="footer-phone"></p>
+        <p id="footer-email"></p>
+        <p id="footer-whatsapp"></p>
       </div>
 
     </div>
 
     <div class="footer-bottom">
       <p>© <span id="year"></span> MR PRODUCT. All Rights Reserved.</p>
-      <p>PREMIUM SHOPPING EXPERIENCE</p>
     </div>
-
   </footer>
 
-  <!-- MOBILE BOTTOM NAVIGATION -->
+  <!-- MOBILE BOTTOM NAV -->
   <nav class="mobile-bottom-nav">
-
-    <a href="index.html" class="mobile-nav-item active">
+    <a href="#" class="mobile-nav-item">
       <span>⌂</span>
       <small>Home</small>
     </a>
 
-    <a href="#categories" class="mobile-nav-item">
+    <a href="#shop" class="mobile-nav-item">
       <span>▦</span>
-      <small>Categories</small>
+      <small>Shop</small>
     </a>
-
-    <button class="mobile-nav-item" id="mobile-cart-open" type="button">
-      <span class="mobile-cart-icon">
-        ♧
-        <b id="mobile-cart-count">0</b>
-      </span>
-      <small>Cart</small>
-    </button>
 
     <a href="#wishlist" class="mobile-nav-item">
       <span>♡</span>
       <small>Wishlist</small>
     </a>
 
-    <a href="account.html" class="mobile-nav-item">
-      <span>♙</span>
-      <small>Account</small>
-    </a>
-
+    <button class="mobile-nav-item" id="mobile-cart-open">
+      <span>🛍 <i id="mobile-cart-count">0</i></span>
+      <small>Cart</small>
+    </button>
   </nav>
 
-  <!-- CART OVERLAY -->
+  <!-- OVERLAY -->
   <div class="overlay" id="overlay"></div>
 
   <!-- CART DRAWER -->
@@ -509,219 +384,142 @@
 
     <div class="cart-header">
       <div>
-        <span class="section-eyebrow">YOUR SELECTION</span>
+        <span>YOUR SHOPPING</span>
         <h2>Shopping Cart</h2>
       </div>
-
-      <button class="icon-button" id="cart-close" type="button" aria-label="Close cart">
-        ×
-      </button>
+      <button id="cart-close" aria-label="Close cart">✕</button>
     </div>
 
-    <div class="cart-items" id="cart-items">
+    <div id="cart-items">
       <div class="cart-empty">
-        <span>♧</span>
-        <h3>Your cart is empty</h3>
-        <p>Add something you love.</p>
+        <span>🛍</span>
+        <p>Your cart is empty.</p>
       </div>
     </div>
 
     <div class="cart-footer">
-
-      <div class="cart-subtotal-row">
+      <div class="cart-total-row">
         <span>Subtotal</span>
         <strong id="cart-total">৳0</strong>
       </div>
 
-      <p class="cart-shipping-note">Delivery charge will be calculated separately.</p>
-
-      <button class="button button-primary cart-checkout-button" id="checkout-open" type="button">
-        PROCEED TO CHECKOUT
+      <button class="btn-primary" id="checkout-open">
+        Proceed to Checkout
       </button>
 
-      <a href="#shop" class="continue-shopping" id="continue-shopping">
+      <button class="btn-secondary" id="continue-shopping">
         Continue Shopping
-      </a>
-
+      </button>
     </div>
 
   </aside>
 
   <!-- CHECKOUT DIALOG -->
-  <dialog class="checkout-dialog" id="order-dialog">
+  <dialog id="order-dialog" class="checkout-dialog">
 
     <div class="checkout-header">
       <div>
-        <span class="section-eyebrow">ALMOST THERE</span>
+        <span>MR PRODUCT</span>
         <h2>Complete Your Order</h2>
       </div>
-
-      <button class="icon-button" id="order-close" type="button" aria-label="Close checkout">
-        ×
-      </button>
+      <button id="order-close" aria-label="Close checkout">✕</button>
     </div>
 
     <form id="order-form">
 
       <div class="checkout-content">
 
-        <!-- CUSTOMER INFORMATION -->
+        <!-- CUSTOMER DETAILS -->
         <section class="checkout-section">
-          <h3>Customer Information</h3>
+          <h3>01. Customer Information</h3>
 
           <div class="form-grid">
 
-            <div class="form-field full-width">
+            <div class="form-field">
               <label for="customer-name">Full Name *</label>
-              <input
-                type="text"
-                id="customer-name"
-                name="name"
-                placeholder="Enter your full name"
-                required
-              >
+              <input type="text" id="customer-name" name="name" required placeholder="Your name">
             </div>
 
             <div class="form-field">
               <label for="customer-phone">Phone Number *</label>
-              <input
-                type="tel"
-                id="customer-phone"
-                name="phone"
-                placeholder="01XXXXXXXXX"
-                required
-              >
+              <input type="tel" id="customer-phone" name="phone" required placeholder="01XXXXXXXXX">
             </div>
 
             <div class="form-field">
               <label for="customer-whatsapp">WhatsApp Number</label>
-              <input
-                type="tel"
-                id="customer-whatsapp"
-                name="whatsapp"
-                placeholder="WhatsApp number"
-              >
+              <input type="tel" id="customer-whatsapp" name="whatsapp" placeholder="WhatsApp number">
             </div>
 
             <div class="form-field">
               <label for="customer-district">District *</label>
-              <input
-                type="text"
-                id="customer-district"
-                name="district"
-                placeholder="Your district"
-                required
-              >
+              <input type="text" id="customer-district" name="district" required placeholder="Your district">
             </div>
 
             <div class="form-field">
-              <label for="customer-area">Area / Thana *</label>
-              <input
-                type="text"
-                id="customer-area"
-                name="area"
-                placeholder="Your area"
-                required
-              >
+              <label for="customer-area">Area</label>
+              <input type="text" id="customer-area" name="area" placeholder="Your area">
             </div>
 
             <div class="form-field full-width">
               <label for="customer-address">Full Delivery Address *</label>
-              <textarea
-                id="customer-address"
-                name="address"
-                rows="3"
-                placeholder="House, road, area and full address"
-                required
-              ></textarea>
-            </div>
-
-            <div class="form-field full-width">
-              <label for="order-note">Order Note (Optional)</label>
-              <textarea
-                id="order-note"
-                name="note"
-                rows="2"
-                placeholder="Any special instructions?"
-              ></textarea>
+              <textarea id="customer-address" name="address" required rows="3" placeholder="House, road, area and district"></textarea>
             </div>
 
           </div>
         </section>
 
-        <!-- PAYMENT METHOD -->
+        <!-- PAYMENT -->
         <section class="checkout-section">
-          <h3>Payment Method</h3>
+          <h3>02. Payment Method</h3>
 
           <div class="payment-methods">
 
             <label class="payment-option">
-              <input type="radio" name="payment" value="bkash" required>
-              <span class="payment-option-content">
-                <strong>bKash</strong>
-                <small>Pay using bKash</small>
-              </span>
+              <input type="radio" name="payment_method" value="bkash" required>
+              <span>bKash</span>
             </label>
 
             <label class="payment-option">
-              <input type="radio" name="payment" value="nagad">
-              <span class="payment-option-content">
-                <strong>Nagad</strong>
-                <small>Pay using Nagad</small>
-              </span>
+              <input type="radio" name="payment_method" value="nagad">
+              <span>Nagad</span>
             </label>
 
             <label class="payment-option">
-              <input type="radio" name="payment" value="bank">
-              <span class="payment-option-content">
-                <strong>Bank Transfer</strong>
-                <small>Pay directly to bank</small>
-              </span>
+              <input type="radio" name="payment_method" value="bank">
+              <span>Bank Transfer</span>
             </label>
 
           </div>
 
-          <div class="payment-details" id="payment-details" hidden>
-            <h4>Payment Information</h4>
-            <p id="payment-info-text"></p>
+          <div id="payment-details">
+            <p id="payment-info-text">Select a payment method to view payment instructions.</p>
           </div>
-
         </section>
 
         <!-- COUPON -->
         <section class="checkout-section">
-          <h3>Discount Coupon</h3>
+          <h3>03. Discount Coupon</h3>
 
-          <div class="coupon-input-row">
-            <input
-              type="text"
-              id="coupon-code"
-              placeholder="Enter coupon code"
-              autocomplete="off"
-            >
-            <button type="button" id="apply-coupon">APPLY</button>
+          <div class="coupon-row">
+            <input type="text" id="coupon-code" placeholder="Enter coupon code">
+            <button type="button" id="apply-coupon">Apply</button>
           </div>
 
-          <p class="coupon-message" id="coupon-message"></p>
-
-        </section>
-
-        <!-- REPEAT CUSTOMER DISCOUNT -->
-        <section class="checkout-section repeat-discount-section" id="repeat-discount-message" hidden>
-          <div>
-            <strong>Repeat Customer Discount</strong>
-            <p>
-              Previous orders:
-              <span id="repeat-order-count">0</span>
-            </p>
-          </div>
-
-          <strong id="repeat-discount-percent">0%</strong>
+          <p id="coupon-message"></p>
+          <p id="repeat-discount-message"></p>
+          <p>
+            Previous Orders:
+            <strong id="repeat-order-count">0</strong>
+          </p>
+          <p>
+            Repeat Customer Discount:
+            <strong id="repeat-discount-percent">0%</strong>
+          </p>
         </section>
 
         <!-- ORDER SUMMARY -->
-        <section class="checkout-section order-summary">
-          <h3>Order Summary</h3>
+        <section class="checkout-section">
+          <h3>04. Order Summary</h3>
 
           <div class="summary-row">
             <span>Subtotal</span>
@@ -743,21 +541,23 @@
             <strong id="dialog-total-discount">৳0</strong>
           </div>
 
-          <div class="summary-grand-total">
+          <div class="summary-row grand-total">
             <span>Grand Total</span>
             <strong id="dialog-grand-total">৳0</strong>
           </div>
 
-          <p class="delivery-summary-note">
-            Delivery charge, if applicable, will be confirmed separately.
-          </p>
-
         </section>
 
-        <div class="form-message" id="form-message" role="status"></div>
+        <!-- NOTE -->
+        <section class="checkout-section">
+          <h3>05. Order Note</h3>
+          <textarea id="order-note" name="note" rows="3" placeholder="Any special instructions? (Optional)"></textarea>
+        </section>
 
-        <button class="button button-primary place-order-button" id="place-order-button" type="submit">
-          PLACE ORDER
+        <p id="form-message" role="alert"></p>
+
+        <button type="submit" class="btn-primary" id="place-order-button">
+          Place Order
         </button>
 
         <p class="checkout-security-note">
@@ -767,10 +567,11 @@
       </div>
 
     </form>
-
   </dialog>
 
-  <!-- JAVASCRIPT -->
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 
 </body>
