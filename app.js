@@ -1,811 +1,1636 @@
-// =============================================
-// MR PRODUCT — GRAPHITE LUXE ENHANCEMENTS
-// Paste this code at the VERY END of app.js
-// =============================================
+const CONFIG = window.MR_PRODUCT_CONFIG || {};
 
-(() => {
-  "use strict";
+const SUPABASE_URL = CONFIG.supabaseUrl || "";
+const SUPABASE_KEY = CONFIG.publishableKey || "";
 
-  // ---------------------------------------------
-  // STATE
-  // ---------------------------------------------
+const $ = (selector) => document.querySelector(selector);
 
-  let selectedCategory = "All";
+const money = (amount) =>
+  "৳" + Number(amount || 0).toLocaleString("en-BD", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
 
-  // ---------------------------------------------
-  // PREMIUM ENHANCEMENT STYLES
-  // ---------------------------------------------
+const escapeHTML = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
 
-  const enhancementStyles = document.createElement("style");
+let products = [];
+let cart = [];
+let paymentSettings = null;
+let storeSettings = null;
+let searchTerm = "";
 
-  enhancementStyles.textContent = `
-    .product-card {
-      position: relative;
-      overflow: hidden;
-      transition:
-        transform .28s ease,
-        box-shadow .28s ease,
-        border-color .28s ease;
-      animation: mrProductEnter .45s ease both;
+let appliedCoupon = null;
+
+let repeatDiscount = {
+  previous_delivered_orders: 0,
+  repeat_percent: 0,
+  repeat_discount: 0
+};
+
+let repeatPreviewTimer = null;
+let repeatPreviewRequest = 0;
+
+// =====================================
+// API HELPER
+// =====================================
+
+async function postOrderAction(payload) {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/place-order`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     }
+  );
 
-    .product-card:hover {
-      transform: translateY(-7px);
-      box-shadow: 0 16px 35px rgba(0,0,0,.28);
-    }
+  const result = await response.json();
 
-    .product-card:active {
-      transform: scale(.975);
-    }
-
-    .product-card .product-image {
-      overflow: hidden;
-      position: relative;
-    }
-
-    .product-card .product-image img {
-      transition: transform .45s ease;
-    }
-
-    .product-card:hover .product-image img {
-      transform: scale(1.07);
-    }
-
-    .mr-product-badges {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 3;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      pointer-events: none;
-    }
-
-    .mr-badge {
-      display: inline-flex;
-      width: fit-content;
-      padding: 5px 9px;
-      border-radius: 7px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      backdrop-filter: blur(10px);
-    }
-
-    .mr-discount-badge {
-      background: #b9a58b;
-      color: #202225;
-    }
-
-    .mr-stock-badge {
-      background: rgba(141,154,150,.94);
-      color: #151719;
-    }
-
-    .mr-low-stock {
-      background: #d99b55;
-      color: #202225;
-    }
-
-    .mr-out-stock {
-      background: #a94d4d;
-      color: white;
-    }
-
-    .mr-quick-view {
-      width: 100%;
-      margin-top: 8px;
-      padding: 11px 14px;
-      border: 1px solid #b9a58b;
-      border-radius: 10px;
-      background: transparent;
-      color: #d7d9d8;
-      font-weight: 700;
-      cursor: pointer;
-      transition: .25s ease;
-    }
-
-    .mr-quick-view:hover {
-      background: #b9a58b;
-      color: #202225;
-    }
-
-    .mr-category-filter {
-      display: flex;
-      gap: 9px;
-      overflow-x: auto;
-      padding: 12px 2px 18px;
-      scrollbar-width: none;
-    }
-
-    .mr-category-filter::-webkit-scrollbar {
-      display: none;
-    }
-
-    .mr-category-button {
-      flex: 0 0 auto;
-      border: 1px solid #45484c;
-      background: #303338;
-      color: #d7d9d8;
-      border-radius: 30px;
-      padding: 9px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: .25s ease;
-    }
-
-    .mr-category-button.active,
-    .mr-category-button:hover {
-      background: #b9a58b;
-      color: #202225;
-      border-color: #b9a58b;
-    }
-
-    .mr-quick-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(0,0,0,.82);
-      backdrop-filter: blur(9px);
-    }
-
-    .mr-quick-modal.open {
-      display: flex;
-      animation: mrFadeIn .2s ease;
-    }
-
-    .mr-quick-box {
-      position: relative;
-      width: min(760px, 100%);
-      max-height: 90vh;
-      overflow-y: auto;
-      background: #202225;
-      border: 1px solid #45484c;
-      border-radius: 20px;
-      padding: 22px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-      box-shadow: 0 25px 80px rgba(0,0,0,.5);
-    }
-
-    .mr-quick-image {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      object-fit: cover;
-      border-radius: 14px;
-      background: #303338;
-      cursor: zoom-in;
-    }
-
-    .mr-quick-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 13px;
-    }
-
-    .mr-quick-info h2 {
-      color: #e9e8e4;
-      font-size: 23px;
-      line-height: 1.3;
-      margin: 0;
-    }
-
-    .mr-quick-description {
-      color: #a8aaa9;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    .mr-quick-price {
-      color: #b9a58b;
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .mr-quick-old-price {
-      color: #8d9a96;
-      font-size: 14px;
-      text-decoration: line-through;
-      margin-right: 8px;
-    }
-
-    .mr-quick-close {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
-      border: 1px solid #45484c;
-      border-radius: 50%;
-      background: #303338;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 2;
-    }
-
-    .mr-quick-add {
-      border: none;
-      border-radius: 10px;
-      background: #b9a58b;
-      color: #202225;
-      padding: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: .25s ease;
-    }
-
-    .mr-quick-add:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.08);
-    }
-
-    .mr-quick-add:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .mr-image-zoom {
-      position: fixed;
-      inset: 0;
-      z-index: 100001;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 15px;
-      background: rgba(0,0,0,.95);
-    }
-
-    .mr-image-zoom.open {
-      display: flex;
-    }
-
-    .mr-image-zoom img {
-      max-width: 95%;
-      max-height: 90vh;
-      object-fit: contain;
-      border-radius: 12px;
-    }
-
-    @keyframes mrProductEnter {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes mrFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @media (max-width: 600px) {
-      .mr-quick-box {
-        grid-template-columns: 1fr;
-        gap: 15px;
-        padding: 16px;
-        max-width: 430px;
-      }
-
-      .mr-quick-image {
-        max-height: 260px;
-      }
-
-      .mr-quick-info h2 {
-        font-size: 19px;
-      }
-
-      .mr-quick-info {
-        gap: 9px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .product-card,
-      .product-card *,
-      .mr-quick-modal {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-  `;
-
-  document.head.appendChild(enhancementStyles);
-
-  // ---------------------------------------------
-  // QUICK VIEW MODAL
-  // ---------------------------------------------
-
-  const quickModal = document.createElement("div");
-
-  quickModal.className = "mr-quick-modal";
-
-  quickModal.innerHTML = `
-    <div class="mr-quick-box" role="dialog" aria-modal="true">
-      <button
-        class="mr-quick-close"
-        type="button"
-        aria-label="Close"
-      >×</button>
-
-      <img
-        class="mr-quick-image"
-        src=""
-        alt=""
-      >
-
-      <div class="mr-quick-info">
-        <h2></h2>
-        <div class="mr-quick-price"></div>
-        <div class="mr-quick-description"></div>
-        <div class="mr-quick-stock"></div>
-
-        <button
-          class="mr-quick-add"
-          type="button"
-        >
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(quickModal);
-
-  const zoomBox = document.createElement("div");
-
-  zoomBox.className = "mr-image-zoom";
-
-  zoomBox.innerHTML = `
-    <img src="" alt="Product preview">
-  `;
-
-  document.body.appendChild(zoomBox);
-
-  let activeQuickProduct = null;
-
-  function closeQuickView() {
-    quickModal.classList.remove("open");
-    activeQuickProduct = null;
+  if (!response.ok) {
+    throw new Error(
+      result.error || "Request could not be completed."
+    );
   }
 
-  function openQuickView(product) {
-    if (!product) return;
+  return result;
+}
 
-    activeQuickProduct = product;
+// =====================================
+// WISHLIST
+// =====================================
 
-    const oldPrice = Number(product.price || 0);
-    const currentPrice = getProductPrice(product);
-    const stock = Number(product.stock || 0);
+const WISHLIST_KEY = "mr_product_wishlist";
 
-    const image = quickModal.querySelector(
-      ".mr-quick-image"
+function loadWishlist() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(WISHLIST_KEY) || "[]"
     );
 
-    image.src = product.image_url || "";
-    image.alt = product.name || "Product";
+    return Array.isArray(saved)
+      ? saved.map(String)
+      : [];
 
-    quickModal.querySelector("h2").textContent =
-      product.name || "";
+  } catch {
+    return [];
+  }
+}
 
-    quickModal.querySelector(
-      ".mr-quick-description"
-    ).textContent =
-      product.description || "No description available.";
+let wishlist = loadWishlist();
 
-    quickModal.querySelector(
-      ".mr-quick-price"
-    ).innerHTML =
-      currentPrice < oldPrice
-        ? `
-          <span class="mr-quick-old-price">
-            ${money(oldPrice)}
-          </span>
-          ${money(currentPrice)}
-        `
-        : money(currentPrice);
+function saveWishlist() {
+  localStorage.setItem(
+    WISHLIST_KEY,
+    JSON.stringify(wishlist)
+  );
 
-    quickModal.querySelector(
-      ".mr-quick-stock"
-    ).textContent =
-      stock <= 0
-        ? "Out of Stock"
-        : stock <= 5
-          ? `Only ${stock} left in stock`
-          : "In Stock";
+  renderProducts();
+  renderWishlist();
+}
 
-    const addButton = quickModal.querySelector(
-      ".mr-quick-add"
-    );
+// =====================================
+// YEAR
+// =====================================
 
-    addButton.disabled = stock <= 0;
+if ($("#year")) {
+  $("#year").textContent = new Date().getFullYear();
+}
 
-    addButton.textContent =
-      stock <= 0 ? "Out of Stock" : "Add to Cart";
+// =====================================
+// PRODUCT PRICE
+// =====================================
 
-    quickModal.classList.add("open");
+function getProductPrice(product) {
+  const price = Number(product.price || 0);
+  const discount = Number(product.discount_price || 0);
+
+  return discount > 0 && discount < price
+    ? discount
+    : price;
+}
+
+// =====================================
+// CART SUBTOTAL
+// =====================================
+
+function getCartSubtotal() {
+  return cart.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0
+  );
+}
+
+// =====================================
+// DISCOUNT TOTALS
+// =====================================
+
+function getCouponDiscount() {
+  return Math.min(
+    getCartSubtotal(),
+    Math.max(0, Number(appliedCoupon?.discount || 0))
+  );
+}
+
+function getRepeatDiscount() {
+  return Math.min(
+    Math.max(0, getCartSubtotal() - getCouponDiscount()),
+    Math.max(0, Number(repeatDiscount.repeat_discount || 0))
+  );
+}
+
+function updateCouponTotals() {
+  const subtotal = getCartSubtotal();
+  const couponDiscount = getCouponDiscount();
+  const repeat = getRepeatDiscount();
+
+  const totalDiscount = Math.min(
+    subtotal,
+    couponDiscount + repeat
+  );
+
+  const total = Math.max(
+    0,
+    subtotal - totalDiscount
+  );
+
+  if ($("#dialog-total")) {
+    $("#dialog-total").textContent = money(subtotal);
   }
 
-  quickModal.querySelector(
-    ".mr-quick-close"
-  ).addEventListener("click", closeQuickView);
+  if ($("#dialog-discount")) {
+    $("#dialog-discount").textContent =
+      money(couponDiscount);
+  }
 
-  quickModal.addEventListener("click", (event) => {
-    if (event.target === quickModal) {
-      closeQuickView();
-    }
-  });
+  if ($("#dialog-repeat-discount")) {
+    $("#dialog-repeat-discount").textContent =
+      money(repeat);
+  }
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeQuickView();
-      zoomBox.classList.remove("open");
-    }
-  });
+  if ($("#dialog-total-discount")) {
+    $("#dialog-total-discount").textContent =
+      money(totalDiscount);
+  }
 
-  // ---------------------------------------------
-  // IMAGE ZOOM
-  // ---------------------------------------------
+  if ($("#dialog-grand-total")) {
+    $("#dialog-grand-total").textContent =
+      money(total);
+  }
 
-  quickModal.querySelector(
-    ".mr-quick-image"
-  ).addEventListener("click", () => {
-    const source = quickModal.querySelector(
-      ".mr-quick-image"
-    ).src;
+  if ($("#repeat-order-count")) {
+    $("#repeat-order-count").textContent =
+      Number(
+        repeatDiscount.previous_delivered_orders || 0
+      );
+  }
 
-    if (!source) return;
+  if ($("#repeat-discount-percent")) {
+    $("#repeat-discount-percent").textContent =
+      Number(repeatDiscount.repeat_percent || 0);
+  }
+}
 
-    zoomBox.querySelector("img").src = source;
-    zoomBox.classList.add("open");
-  });
+// =====================================
+// RESET REPEAT DISCOUNT
+// =====================================
 
-  zoomBox.addEventListener("click", () => {
-    zoomBox.classList.remove("open");
-  });
+function resetRepeatDiscount(message = "") {
+  repeatPreviewRequest++;
 
-  // ---------------------------------------------
-  // QUICK VIEW ADD TO CART
-  // ---------------------------------------------
-
-  quickModal.querySelector(
-    ".mr-quick-add"
-  ).addEventListener("click", () => {
-    if (!activeQuickProduct) return;
-
-    addToCart(activeQuickProduct.id);
-
-    closeQuickView();
-  });
-
-  // ---------------------------------------------
-  // ADD PRODUCT ID TO PRODUCT CARDS
-  // ---------------------------------------------
-
-  const originalCreateProductCard = createProductCard;
-
-  createProductCard = function(product, isWishlist = false) {
-    let html = originalCreateProductCard(
-      product,
-      isWishlist
-    );
-
-    html = html.replace(
-      '<article class="product-card">',
-      `<article
-        class="product-card"
-        data-mr-product-id="${escapeHTML(product.id)}"
-      >`
-    );
-
-    return html;
+  repeatDiscount = {
+    previous_delivered_orders: 0,
+    repeat_percent: 0,
+    repeat_discount: 0
   };
 
-  // ---------------------------------------------
-  // DECORATE PRODUCT CARDS
-  // ---------------------------------------------
-
-  function decorateProductCards(container) {
-    if (!container) return;
-
-    container.querySelectorAll(
-      ".product-card[data-mr-product-id]"
-    ).forEach((card) => {
-      if (card.dataset.mrEnhanced === "true") {
-        return;
-      }
-
-      const product = products.find(
-        (item) =>
-          String(item.id) ===
-          String(card.dataset.mrProductId)
-      );
-
-      if (!product) return;
-
-      card.dataset.mrEnhanced = "true";
-
-      const oldPrice = Number(product.price || 0);
-      const currentPrice = getProductPrice(product);
-      const stock = Number(product.stock || 0);
-
-      const badges = document.createElement("div");
-
-      badges.className = "mr-product-badges";
-
-      if (currentPrice < oldPrice && oldPrice > 0) {
-        const percentage = Math.round(
-          ((oldPrice - currentPrice) / oldPrice) * 100
-        );
-
-        const discount = document.createElement("span");
-
-        discount.className =
-          "mr-badge mr-discount-badge";
-
-        discount.textContent =
-          `${percentage}% OFF`;
-
-        badges.appendChild(discount);
-      }
-
-      const stockBadge = document.createElement("span");
-
-      stockBadge.className = "mr-badge";
-
-      if (stock <= 0) {
-        stockBadge.classList.add("mr-out-stock");
-        stockBadge.textContent = "Out of Stock";
-      } else if (stock <= 5) {
-        stockBadge.classList.add("mr-low-stock");
-        stockBadge.textContent = `Only ${stock} Left`;
-      } else {
-        stockBadge.classList.add("mr-stock-badge");
-        stockBadge.textContent = "In Stock";
-      }
-
-      badges.appendChild(stockBadge);
-
-      const imageBox = card.querySelector(
-        ".product-image"
-      );
-
-      if (imageBox) {
-        imageBox.appendChild(badges);
-      }
-
-      const quickButton = document.createElement("button");
-
-      quickButton.type = "button";
-      quickButton.className = "mr-quick-view";
-      quickButton.textContent = "Quick View";
-
-      quickButton.dataset.quickView =
-        String(product.id);
-
-      const addButton = card.querySelector(
-        "[data-add]"
-      );
-
-      if (addButton) {
-        addButton.insertAdjacentElement(
-          "afterend",
-          quickButton
-        );
-      } else {
-        card.appendChild(quickButton);
-      }
-    });
+  if ($("#repeat-discount-message")) {
+    $("#repeat-discount-message").textContent =
+      message ||
+      "Enter your delivery details to check your reward.";
   }
 
-  // ---------------------------------------------
-  // UPDATE CATEGORY FILTER
-  // ---------------------------------------------
+  updateCouponTotals();
+}
 
-  function createCategoryFilter() {
-    const grid = $("#product-grid");
+// =====================================
+// GET CHECKOUT CUSTOMER
+// =====================================
 
-    if (!grid) return;
+function getCheckoutCustomer() {
+  const form = $("#order-form");
 
-    if ($("#mr-category-filter")) return;
+  if (!form) return null;
 
-    const categories = [
-      "All",
-      ...new Set(
-        products
-          .map((product) =>
-            String(product.category || "").trim()
-          )
-          .filter(Boolean)
-      )
-    ];
+  const formData = new FormData(form);
 
-    if (categories.length <= 1) return;
+  return {
+    name: String(formData.get("name") || "").trim(),
+    phone: String(formData.get("phone") || "").trim(),
+    whatsapp: String(formData.get("whatsapp") || "").trim(),
+    district: String(formData.get("district") || "").trim(),
+    area: String(formData.get("area") || "").trim(),
+    address: String(formData.get("address") || "").trim()
+  };
+}
 
-    const filter = document.createElement("div");
+// =====================================
+// REPEAT CUSTOMER DISCOUNT PREVIEW
+// =====================================
 
-    filter.id = "mr-category-filter";
-    filter.className = "mr-category-filter";
-
-    categories.forEach((category) => {
-      const button = document.createElement("button");
-
-      button.type = "button";
-      button.className =
-        "mr-category-button" +
-        (category === "All" ? " active" : "");
-
-      button.textContent = category;
-      button.dataset.category = category;
-
-      filter.appendChild(button);
-    });
-
-    grid.parentNode.insertBefore(filter, grid);
-
-    filter.addEventListener("click", (event) => {
-      const button = event.target.closest(
-        "[data-category]"
-      );
-
-      if (!button) return;
-
-      selectedCategory = button.dataset.category;
-
-      filter.querySelectorAll(
-        ".mr-category-button"
-      ).forEach((item) => {
-        item.classList.toggle(
-          "active",
-          item === button
-        );
-      });
-
-      renderProducts();
-    });
+async function previewRepeatDiscount() {
+  if (!cart.length) {
+    resetRepeatDiscount();
+    return;
   }
 
-  // ---------------------------------------------
-  // CATEGORY FILTER + EXISTING SEARCH
-  // ---------------------------------------------
+  const customer = getCheckoutCustomer();
 
-  const originalRenderProducts = renderProducts;
+  if (
+    !customer ||
+    !customer.phone ||
+    !customer.district ||
+    !customer.area ||
+    !customer.address
+  ) {
+    resetRepeatDiscount(
+      "Complete your phone number and delivery address to check your reward."
+    );
 
-  renderProducts = function() {
-    const previousSearch = searchTerm;
+    return;
+  }
 
-    if (selectedCategory !== "All") {
-      const category = selectedCategory.toLowerCase();
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    resetRepeatDiscount(
+      "Discount service is currently unavailable."
+    );
 
-      const search = previousSearch.toLowerCase();
+    return;
+  }
 
-      const filtered = products.filter((product) => {
-        const matchesCategory =
-          String(product.category || "").toLowerCase() ===
-          category;
+  const requestNumber = ++repeatPreviewRequest;
 
-        const searchText = [
-          product.name,
-          product.description,
-          product.category
-        ].join(" ").toLowerCase();
+  if ($("#repeat-discount-message")) {
+    $("#repeat-discount-message").textContent =
+      "Checking your previous delivered orders...";
+  }
 
-        return (
-          matchesCategory &&
-          searchText.includes(search)
-        );
-      });
+  try {
+    const result = await postOrderAction({
+      action: "preview_repeat_discount",
+      customer,
+      subtotal: getCartSubtotal(),
+      coupon_discount: getCouponDiscount()
+    });
 
-      const grid = $("#product-grid");
-
-      if (!grid) return;
-
-      if (!filtered.length) {
-        grid.innerHTML = `
-          <div class="wishlist-empty">
-            No products found in this category.
-          </div>
-        `;
-      } else {
-        grid.innerHTML = filtered
-          .map((product) => createProductCard(product))
-          .join("");
-      }
-
-      decorateProductCards(grid);
-
+    if (requestNumber !== repeatPreviewRequest) {
       return;
     }
 
-    originalRenderProducts();
+    if (result.ok !== true) {
+      throw new Error(
+        result.error || "Could not check repeat discount."
+      );
+    }
 
-    decorateProductCards($("#product-grid"));
-  };
+    repeatDiscount = {
+      previous_delivered_orders: Number(
+        result.previous_delivered_orders || 0
+      ),
+      repeat_percent: Number(
+        result.repeat_percent || 0
+      ),
+      repeat_discount: Number(
+        result.repeat_discount || 0
+      )
+    };
 
-  // ---------------------------------------------
-  // WISHLIST DECORATION
-  // ---------------------------------------------
+    if ($("#repeat-discount-message")) {
+      if (repeatDiscount.repeat_percent > 0) {
+        $("#repeat-discount-message").textContent =
+          `Congratulations! You have ${repeatDiscount.repeat_percent}% repeat customer discount.`;
+      } else {
+        $("#repeat-discount-message").textContent =
+          "Your next repeat customer reward is waiting. Keep shopping with MR PRODUCT!";
+      }
+    }
 
-  const originalRenderWishlist = renderWishlist;
+    updateCouponTotals();
 
-  renderWishlist = function() {
-    originalRenderWishlist();
+  } catch (error) {
+    console.error("Repeat discount preview error:", error);
 
-    decorateProductCards($("#wishlist-grid"));
-  };
+    if (requestNumber !== repeatPreviewRequest) {
+      return;
+    }
 
-  // ---------------------------------------------
-  // QUICK VIEW BUTTON ACTION
-  // ---------------------------------------------
+    resetRepeatDiscount(
+      "Unable to check your reward right now. Your order can still be submitted."
+    );
+  }
+}
 
-  document.addEventListener("click", (event) => {
+function scheduleRepeatPreview() {
+  clearTimeout(repeatPreviewTimer);
+
+  repeatPreviewTimer = setTimeout(() => {
+    previewRepeatDiscount();
+  }, 650);
+}
+
+// =====================================
+// CLEAR COUPON
+// =====================================
+
+function clearAppliedCoupon(showMessage = false) {
+  appliedCoupon = null;
+
+  const input = $("#coupon-code");
+
+  if (input) {
+    input.value = "";
+  }
+
+  if ($("#coupon-message")) {
+    $("#coupon-message").textContent = showMessage
+      ? "Cart changed. Please apply your coupon again."
+      : "";
+  }
+
+  updateCouponTotals();
+  scheduleRepeatPreview();
+}
+
+// =====================================
+// APPLY COUPON
+// =====================================
+
+async function applyCoupon() {
+  const input = $("#coupon-code");
+  const button = $("#apply-coupon");
+  const message = $("#coupon-message");
+
+  if (!input || !button || !message) return;
+
+  const code = input.value.trim().toUpperCase();
+
+  if (!code) {
+    message.textContent = "Please enter a coupon code.";
+    return;
+  }
+
+  if (!cart.length) {
+    message.textContent = "Your cart is empty.";
+    return;
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    message.textContent =
+      "Store database is not configured.";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Checking coupon...";
+
+  try {
+    const result = await postOrderAction({
+      action: "validate_coupon",
+      coupon_code: code,
+      subtotal: getCartSubtotal()
+    });
+
+    if (result.ok !== true) {
+      throw new Error(
+        result.error || "Coupon could not be applied."
+      );
+    }
+
+    appliedCoupon = {
+      code: result.coupon_code,
+      discount: Number(result.discount || 0)
+    };
+
+    message.textContent =
+      `Coupon ${result.coupon_code} applied successfully! You saved ${money(result.discount)}.`;
+
+    updateCouponTotals();
+    scheduleRepeatPreview();
+
+  } catch (error) {
+    appliedCoupon = null;
+    updateCouponTotals();
+
+    message.textContent =
+      error.message || "Invalid coupon code.";
+
+  } finally {
+    button.disabled = false;
+  }
+}
+
+if ($("#apply-coupon")) {
+  $("#apply-coupon").addEventListener(
+    "click",
+    applyCoupon
+  );
+}
+
+if ($("#coupon-code")) {
+  $("#coupon-code").addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyCoupon();
+      }
+    }
+  );
+}
+
+// =====================================
+// LOAD STORE SETTINGS
+// =====================================
+
+async function loadStoreSettings() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/admin-settings`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Could not load store settings."
+      );
+    }
+
+    const result = await response.json();
+
+    storeSettings = result.settings || null;
+
+    if (storeSettings) {
+      applyStoreBranding(storeSettings);
+    }
+
+  } catch (error) {
+    console.error("Store settings error:", error);
+  }
+}
+
+// =====================================
+// APPLY STORE BRANDING
+// =====================================
+
+function applyStoreBranding(settings) {
+  if (settings.store_name) {
+    const storeName = settings.store_name.trim();
+
+    document.title = `${storeName} — Premium Store`;
+
+    document.querySelectorAll(".brand b").forEach(
+      (element) => {
+        element.textContent = storeName;
+      }
+    );
+
+    const footerText = document.querySelector(
+      "footer > span"
+    );
+
+    if (footerText) {
+      footerText.innerHTML =
+        `©️ <span id="year">${new Date().getFullYear()}</span> ${escapeHTML(storeName)}`;
+    }
+  }
+
+  if (settings.logo_url) {
+    document.querySelectorAll(".brand-mark").forEach(
+      (element) => {
+        element.innerHTML = "";
+
+        const image = document.createElement("img");
+
+        image.src = settings.logo_url;
+        image.alt = settings.store_name || "Store Logo";
+
+        image.style.width = "100%";
+        image.style.height = "100%";
+        image.style.objectFit = "contain";
+        image.style.display = "block";
+
+        element.appendChild(image);
+      }
+    );
+  }
+
+  if (settings.primary_color) {
+    const color = settings.primary_color.trim();
+
+    if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+      document.documentElement.style.setProperty(
+        "--gold",
+        color
+      );
+
+      document.documentElement.style.setProperty(
+        "--primary-color",
+        color
+      );
+
+      const themeColor = $(
+        'meta[name="theme-color"]'
+      );
+
+      if (themeColor) {
+        themeColor.content = color;
+      }
+    }
+  }
+
+  if (settings.banner_url) {
+    const saleBanner = $(".sale-banner");
+
+    if (saleBanner) {
+      saleBanner.style.backgroundImage = `
+        linear-gradient(
+          90deg,
+          rgba(13,13,13,.94),
+          rgba(13,13,13,.55)
+        ),
+        url("${settings.banner_url}")
+      `;
+
+      saleBanner.style.backgroundSize = "cover";
+      saleBanner.style.backgroundPosition = "center";
+      saleBanner.style.backgroundRepeat = "no-repeat";
+    }
+
+    const hero = $(".hero");
+
+    if (hero) {
+      hero.style.backgroundImage = `
+        linear-gradient(
+          90deg,
+          rgba(13,13,13,.94),
+          rgba(13,13,13,.48)
+        ),
+        url("${settings.banner_url}")
+      `;
+
+      hero.style.backgroundSize = "cover";
+      hero.style.backgroundPosition = "center";
+    }
+  }
+
+  if (settings.description) {
+    const description = settings.description.trim();
+
+    const saleDescription = $(
+      ".sale-content p:not(.eyebrow)"
+    );
+
+    if (saleDescription) {
+      saleDescription.textContent = description;
+    }
+
+    const heroDescription = $(
+      ".hero-copy > p:not(.eyebrow)"
+    );
+
+    if (heroDescription) {
+      heroDescription.textContent = description;
+    }
+
+    const aboutDescription = $(
+      "#about > p:not(.eyebrow)"
+    );
+
+    if (aboutDescription) {
+      aboutDescription.textContent = description;
+    }
+  }
+
+  const contactSection = $("#contact");
+
+  if (contactSection) {
+    const contactParagraph =
+      contactSection.querySelector("div + p");
+
+    if (contactParagraph) {
+      const contactItems = [];
+
+      if (settings.phone) {
+        contactItems.push({
+          label: "Phone",
+          value: settings.phone,
+          href:
+            "tel:" +
+            settings.phone.replace(/[^\d+]/g, "")
+        });
+      }
+
+      if (settings.whatsapp) {
+        const number =
+          settings.whatsapp.replace(/\D/g, "");
+
+        contactItems.push({
+          label: "WhatsApp",
+          value: settings.whatsapp,
+          href: "https://wa.me/" + number
+        });
+      }
+
+      if (settings.email) {
+        contactItems.push({
+          label: "Email",
+          value: settings.email,
+          href: "mailto:" + settings.email
+        });
+      }
+
+      if (contactItems.length) {
+        contactParagraph.innerHTML =
+          contactItems.map((item) => `
+            <div style="margin:10px 0">
+              <strong style="color:var(--gold)">
+                ${escapeHTML(item.label)}:
+              </strong>
+
+              <a
+                href="${escapeHTML(item.href)}"
+                style="color:var(--cream);text-decoration:underline"
+              >
+                ${escapeHTML(item.value)}
+              </a>
+            </div>
+          `).join("");
+      }
+    }
+  }
+}
+
+// =====================================
+// LOAD PRODUCTS
+// =====================================
+
+async function loadProducts() {
+  const grid = $("#product-grid");
+
+  if (!grid) return;
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    grid.textContent =
+      "Store database is not configured.";
+
+    return;
+  }
+
+  grid.textContent = "Loading products...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,discount_price,image_url,category,stock,active&active=eq.true&order=created_at.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    products = await response.json();
+
+    renderProducts();
+    renderWishlist();
+
+  } catch (error) {
+    console.error(
+      "Product loading error:",
+      error
+    );
+
+    grid.textContent =
+      "Products could not be loaded. Please try again later.";
+  }
+}
+
+// =====================================
+// PRODUCT CARD
+// =====================================
+
+function createProductCard(product, isWishlist = false) {
+  const oldPrice = Number(product.price || 0);
+  const currentPrice = getProductPrice(product);
+
+  const id = String(product.id);
+  const saved = wishlist.includes(id);
+  const stock = Number(product.stock || 0);
+
+  const image = product.image_url
+    ? `
+      <div class="product-image">
+        <img
+          src="${escapeHTML(product.image_url)}"
+          alt="${escapeHTML(product.name)}"
+          loading="lazy"
+        >
+      </div>
+    `
+    : `
+      <div class="product-image">
+        MR
+      </div>
+    `;
+
+  return `
+    <article class="product-card">
+
+      ${image}
+
+      ${
+        !isWishlist
+          ? `
+            <button
+              class="wishlist-toggle ${saved ? "active" : ""}"
+              data-wishlist-toggle="${escapeHTML(id)}"
+              type="button"
+              aria-label="${saved ? "Remove from wishlist" : "Add to wishlist"}"
+              aria-pressed="${saved}"
+            >
+              ${saved ? "♥️" : "♡"}
+            </button>
+          `
+          : ""
+      }
+
+      <h3>${escapeHTML(product.name)}</h3>
+
+      <p class="muted small">
+        ${escapeHTML(product.description || "")}
+      </p>
+
+      <div class="price">
+        ${
+          currentPrice < oldPrice
+            ? `
+              <del class="old-price">${money(oldPrice)}</del>
+              <strong>${money(currentPrice)}</strong>
+            `
+            : money(currentPrice)
+        }
+      </div>
+
+      ${
+        isWishlist
+          ? `
+            <div class="wishlist-actions">
+
+              <button
+                class="button gold-button"
+                data-add="${escapeHTML(id)}"
+                type="button"
+                ${stock <= 0 ? "disabled" : ""}
+              >
+                ${stock <= 0 ? "Out of stock" : "Add to cart"}
+              </button>
+
+              <button
+                class="remove-wishlist"
+                data-wishlist-remove="${escapeHTML(id)}"
+                type="button"
+              >
+                Remove
+              </button>
+
+            </div>
+          `
+          : `
+            <button
+              class="button gold-button"
+              data-add="${escapeHTML(id)}"
+              type="button"
+              ${stock <= 0 ? "disabled" : ""}
+            >
+              ${stock <= 0 ? "Out of stock" : "Add to cart"}
+            </button>
+          `
+      }
+
+    </article>
+  `;
+}
+
+// =====================================
+// SEARCH PRODUCTS
+// =====================================
+
+function renderProducts() {
+  const grid = $("#product-grid");
+
+  if (!grid) return;
+
+  const filteredProducts = products.filter(
+    (product) => {
+      const searchText = [
+        product.name,
+        product.description,
+        product.category
+      ].join(" ").toLowerCase();
+
+      return searchText.includes(
+        searchTerm.toLowerCase()
+      );
+    }
+  );
+
+  if (!filteredProducts.length) {
+    grid.innerHTML = `
+      <div class="wishlist-empty">
+        No products found.
+        <p>Try another search.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+  grid.innerHTML = filteredProducts
+    .map((product) => createProductCard(product))
+    .join("");
+}
+
+const searchInput = $("#product-search");
+const searchButton = $("#search-button");
+
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    searchTerm = searchInput.value.trim();
+    renderProducts();
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      searchTerm = searchInput.value.trim();
+      renderProducts();
+
+      $("#shop")?.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+  });
+}
+
+if (searchButton) {
+  searchButton.addEventListener("click", () => {
+    searchTerm = searchInput?.value.trim() || "";
+    renderProducts();
+
+    $("#shop")?.scrollIntoView({
+      behavior: "smooth"
+    });
+  });
+}
+
+// =====================================
+// WISHLIST DISPLAY
+// =====================================
+
+function renderWishlist() {
+  const grid = $("#wishlist-grid");
+  const count = $("#wishlist-count");
+
+  if (!grid || !count) return;
+
+  const savedProducts = products.filter(
+    (product) =>
+      wishlist.includes(String(product.id))
+  );
+
+  count.textContent =
+    `${savedProducts.length} Saved`;
+
+  if (!savedProducts.length) {
+    grid.innerHTML = `
+      <div class="wishlist-empty">
+        <span>♡</span>
+        Your wishlist is empty.
+        <p>Explore products and save your favorites.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+  grid.innerHTML = savedProducts
+    .map((product) =>
+      createProductCard(product, true)
+    )
+    .join("");
+}
+
+// =====================================
+// WISHLIST ACTIONS
+// =====================================
+
+function toggleWishlist(id) {
+  id = String(id);
+
+  if (wishlist.includes(id)) {
+    wishlist = wishlist.filter(
+      (item) => item !== id
+    );
+  } else {
+    wishlist.push(id);
+  }
+
+  saveWishlist();
+}
+
+const productGrid = $("#product-grid");
+const wishlistGrid = $("#wishlist-grid");
+
+if (productGrid) {
+  productGrid.addEventListener("click", (event) => {
     const button = event.target.closest(
-      "[data-quick-view]"
+      "[data-wishlist-toggle]"
     );
 
     if (!button) return;
 
-    const product = products.find(
-      (item) =>
-        String(item.id) ===
-        String(button.dataset.quickView)
+    toggleWishlist(
+      button.dataset.wishlistToggle
+    );
+  });
+}
+
+if (wishlistGrid) {
+  wishlistGrid.addEventListener("click", (event) => {
+    const button = event.target.closest(
+      "[data-wishlist-remove]"
     );
 
-    if (product) {
-      openQuickView(product);
-    }
+    if (!button) return;
+
+    toggleWishlist(
+      button.dataset.wishlistRemove
+    );
   });
+}
 
-  // ---------------------------------------------
-  // SEARCH RESET CATEGORY
-  // ---------------------------------------------
+// =====================================
+// PAYMENT SETTINGS
+// =====================================
 
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      if (selectedCategory !== "All") {
-        selectedCategory = "All";
+async function loadPaymentSettings() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
 
-        $("#mr-category-filter")
-          ?.querySelectorAll(".mr-category-button")
-          .forEach((button) => {
-            button.classList.toggle(
-              "active",
-              button.dataset.category === "All"
-            );
-          });
-
-        originalRenderProducts();
-        decorateProductCards($("#product-grid"));
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/admin-settings`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
       }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Could not load payment information."
+      );
+    }
+
+    const result = await response.json();
+
+    paymentSettings = result.settings || null;
+
+  } catch (error) {
+    console.error(
+      "Payment settings error:",
+      error
+    );
+
+    paymentSettings = null;
+  }
+}
+
+// =====================================
+// SHOW PAYMENT DETAILS
+// =====================================
+
+function showPaymentDetails() {
+  const detailsBox = $("#payment-details");
+  const infoText = $("#payment-info-text");
+  const paymentSelect = $('select[name="payment"]');
+
+  if (!detailsBox || !infoText || !paymentSelect) {
+    return;
+  }
+
+  const method = paymentSelect.value;
+
+  if (!method) {
+    detailsBox.hidden = true;
+    infoText.textContent = "";
+    return;
+  }
+
+  if (!paymentSettings) {
+    detailsBox.hidden = false;
+
+    infoText.textContent =
+      "Payment information is currently unavailable. Please contact the store.";
+
+    return;
+  }
+
+  let details = "";
+
+  if (method === "bkash") {
+    details = paymentSettings.bkash_number || "";
+  }
+
+  if (method === "nagad") {
+    details = paymentSettings.nagad_number || "";
+  }
+
+  if (method === "bank") {
+    details = paymentSettings.bank_details || "";
+  }
+
+  const instructions =
+    paymentSettings.payment_instructions || "";
+
+  if (!details && !instructions) {
+    detailsBox.hidden = false;
+
+    infoText.textContent =
+      "Payment details have not been added yet.";
+
+    return;
+  }
+
+  const lines = [];
+
+  if (method === "bkash") {
+    lines.push("bKash Payment Details");
+  }
+
+  if (method === "nagad") {
+    lines.push("Nagad Payment Details");
+  }
+
+  if (method === "bank") {
+    lines.push("Bank Transfer Details");
+  }
+
+  if (details) {
+    lines.push(details);
+  }
+
+  if (instructions) {
+    lines.push("");
+    lines.push("Payment Instructions:");
+    lines.push(instructions);
+  }
+
+  detailsBox.hidden = false;
+  infoText.textContent = lines.join("\n");
+}
+
+// =====================================
+// CART
+// =====================================
+
+function renderCart() {
+  const cartCount = $("#cart-count");
+  const mobileCartCount = $("#mobile-cart-count");
+  const cartItems = $("#cart-items");
+  const cartTotal = $("#cart-total");
+
+  const totalQuantity = cart.reduce(
+    (total, item) => total + item.qty,
+    0
+  );
+
+  if (cartCount) {
+    cartCount.textContent = totalQuantity;
+  }
+
+  if (mobileCartCount) {
+    mobileCartCount.textContent = totalQuantity;
+  }
+
+  if (cartItems) {
+    cartItems.innerHTML = cart.length
+      ? cart.map((item) => `
+          <div class="cart-line">
+            <div>
+              <b>${escapeHTML(item.name)}</b>
+
+              <div class="muted small">
+                ${money(item.price)} × ${item.qty}
+              </div>
+            </div>
+
+            <div class="qty">
+
+              <button
+                type="button"
+                data-dec="${escapeHTML(item.id)}"
+              >−</button>
+
+              ${item.qty}
+
+              <button
+                type="button"
+                data-inc="${escapeHTML(item.id)}"
+              >+</button>
+
+            </div>
+          </div>
+        `).join("")
+      : '<p class="muted">Your cart is empty.</p>';
+  }
+
+  const total = getCartSubtotal();
+
+  if (cartTotal) {
+    cartTotal.textContent = money(total);
+  }
+
+  updateCouponTotals();
+}
+
+// =====================================
+// ADD TO CART
+// =====================================
+
+function addToCart(id) {
+  const product = products.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  if (!product) return;
+
+  const item = cart.find(
+    (entry) => String(entry.id) === String(id)
+  );
+
+  const stock = Number(product.stock || 0);
+
+  if (stock <= 0) {
+    alert("This product is out of stock.");
+    return;
+  }
+
+  if (item) {
+    if (item.qty >= stock) {
+      alert("Maximum available stock reached.");
+      return;
+    }
+
+    item.qty++;
+
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: getProductPrice(product),
+      qty: 1,
+      stock
     });
   }
 
-  // ---------------------------------------------
-  // INITIAL SETUP
-  // ---------------------------------------------
+  clearAppliedCoupon(true);
+  renderCart();
 
-  const originalLoadProducts = loadProducts;
+  alert("Product added to cart!");
+}
 
-  loadProducts = async function() {
-    await originalLoadProducts();
+// =====================================
+// PRODUCT CART BUTTONS
+// =====================================
 
-    createCategoryFilter();
+if (productGrid) {
+  productGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-add]");
 
-    decorateProductCards($("#product-grid"));
-    decorateProductCards($("#wishlist-grid"));
-  };
+    if (!button) return;
 
-})();
+    addToCart(button.dataset.add);
+  });
+}
+
+if (wishlistGrid) {
+  wishlistGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-add]");
+
+    if (!button) return;
+
+    addToCart(button.dataset.add);
+  });
+}
+
+// =====================================
+// CART QUANTITY
+// =====================================
+
+if ($("#cart-items")) {
+  $("#cart-items").addEventListener(
+    "click",
+    (event) => {
+      const button = event.target.closest(
+        "[data-inc], [data-dec]"
+      );
+
+      if (!button) return;
+
+      const id =
+        button.dataset.inc || button.dataset.dec;
+
+      const item = cart.find(
+        (entry) => String(entry.id) === String(id)
+      );
+
+      if (!item) return;
+
+      if (button.dataset.inc) {
+        if (item.qty >= item.stock) {
+          alert("Maximum available stock reached.");
+          return;
+        }
+
+        item.qty++;
+
+      } else {
+        item.qty--;
+      }
+
+      if (item.qty <= 0) {
+        cart = cart.filter(
+          (entry) => String(entry.id) !== String(id)
+        );
+      }
+
+      clearAppliedCoupon(true);
+      renderCart();
+    }
+  );
+}
+
+// =====================================
+// CART OPEN / CLOSE
+// =====================================
+
+function openCart() {
+  if (!$("#overlay") || !$("#cart-drawer")) {
+    return;
+  }
+
+  $("#overlay").hidden = false;
+
+  $("#cart-drawer").classList.add("open");
+
+  $("#cart-drawer").setAttribute(
+    "aria-hidden",
+    "false"
+  );
+}
+
+function closeCart() {
+  if (!$("#overlay") || !$("#cart-drawer")) {
+    return;
+  }
+
+  $("#overlay").hidden = true;
+
+  $("#cart-drawer").classList.remove("open");
+
+  $("#cart-drawer").setAttribute(
+    "aria-hidden",
+    "true"
+  );
+}
+
+if ($("#cart-open")) {
+  $("#cart-open").addEventListener(
+    "click",
+    openCart
+  );
+}
+
+if ($("#mobile-cart-open")) {
+  $("#mobile-cart-open").addEventListener(
+    "click",
+    openCart
+  );
+}
+
+if ($("#cart-close")) {
+  $("#cart-close").addEventListener(
+    "click",
+    closeCart
+  );
+}
+
+if ($("#overlay")) {
+  $("#overlay").addEventListener(
+    "click",
+    closeCart
+  );
+}
+
+// =====================================
+// CHECKOUT
+// =====================================
+
+if ($("#checkout-open")) {
+  $("#checkout-open").addEventListener(
+    "click",
+    () => {
+      if (!cart.length) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      closeCart();
+
+      $("#order-dialog").showModal();
+
+      renderCart();
+      showPaymentDetails();
+      scheduleRepeatPreview();
+    }
+  );
+}
+
+if ($("#order-close")) {
+  $("#order-close").addEventListener(
+    "click",
+    () => {
+      $("#order-dialog").close();
+    }
+  );
+}
+
+// =====================================
+// CUSTOMER INPUT - REPEAT PREVIEW
+// =====================================
+
+if ($("#order-form")) {
+  $("#order-form").addEventListener(
+    "input",
+    (event) => {
+      const name = event.target.name;
+
+      if (
+        ["phone", "district", "area", "address"].includes(name)
+      ) {
+        scheduleRepeatPreview();
+      }
+    }
+  );
+
+  $("#order-form").addEventListener(
+    "change",
+    (event) => {
+      const name = event.target.name;
+
+      if (
+        ["phone", "district", "area", "address"].includes(name)
+      ) {
+        scheduleRepeatPreview();
+      }
+    }
+  );
+}
+
+// =====================================
+// PAYMENT METHOD CHANGE
+// =====================================
+
+const paymentSelect = $('select[name="payment"]');
+
+if (paymentSelect) {
+  paymentSelect.addEventListener(
+    "change",
+    showPaymentDetails
+  );
+}
+
+// =====================================
+// PLACE ORDER
+// =====================================
+
+if ($("#order-form")) {
+  $("#order-form").addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+
+      const form = event.currentTarget;
+      const message = $("#form-message");
+
+      const submitButton = form.querySelector(
+        '[type="submit"]'
+      );
+
+      if (!cart.length) {
+        message.textContent = "Your cart is empty.";
+        return;
+      }
+
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        message.textContent =
+          "Store database is not configured.";
+
+        return;
+      }
+
+      const formData = new FormData(form);
+
+      const customer = {
+        name: String(
+          formData.get("name") || ""
+        ).trim(),
+
+        phone: String(
+          formData.get("phone") || ""
+        ).trim(),
+
+        whatsapp: String(
+          formData.get("whatsapp") || ""
+        ).trim(),
+
+        district: String(
+          formData.get("district") || ""
+        ).trim(),
+
+        area: String(
+          formData.get("area") || ""
+        ).trim(),
+
+        address: String(
+          formData.get("address") || ""
+        ).trim()
+      };
+
+      const paymentMethod = String(
+        formData.get("payment") || ""
+      );
+
+      const note = String(
+        formData.get("note") || ""
+      ).trim();
+
+      if (
+        !customer.name ||
+        !customer.phone ||
+        !customer.district ||
+        !customer.area ||
+        !customer.address
+      ) {
+        message.textContent =
+          "Please complete all required fields.";
+
+        return;
+      }
+
+      if (
+        !["bkash", "nagad", "bank"].includes(
+          paymentMethod
+        )
+      ) {
+        message.textContent =
+          "Please select a valid payment method.";
+
+        return;
+      }
+
+      submitButton.disabled = true;
+
+      message.textContent =
+        "Submitting your order...";
+
+      try {
+        const result = await postOrderAction({
+          customer,
+
+          payment_method: paymentMethod,
+
+          items: cart.map((item) => ({
+            product_id: item.id,
+            quantity: item.qty
+          })),
+
+          note,
+
+          coupon_code: appliedCoupon
+            ? appliedCoupon.code
+            : null
+        });
+
+        if (result.ok !== true) {
+          throw new Error(
+            result.error || "Order could not be completed."
+          );
+        }
+
+        const orderSubtotal = Number(
+          result.subtotal ?? getCartSubtotal()
+        );
+
+        const couponAmount = Number(
+          result.discount || 0
+        );
+
+        const repeatAmount = Number(
+          result.repeat_discount || 0
+        );
+
+        const finalTotal = Number(
+          result.total ??
+          Math.max(
+            0,
+            orderSubtotal - couponAmount - repeatAmount
+          )
+        );
+
+        cart = [];
+        appliedCoupon = null;
+
+        resetRepeatDiscount();
+
+        renderCart();
+
+        form.reset();
+
+        if ($("#coupon-message")) {
+          $("#coupon-message").textContent = "";
+        }
+
+        if ($("#coupon-code")) {
+          $("#coupon-code").value = "";
+        }
+
+        showPaymentDetails();
+
+        message.textContent =
+          `Order successful! Order number: ${result.order_number}. Subtotal: ${money(orderSubtotal)}. Coupon Discount: ${money(couponAmount)}. Repeat Discount: ${money(repeatAmount)}. Final Total: ${money(finalTotal)}.`;
+
+      } catch (error) {
+        console.error(
+          "Order submission error:",
+          error
+        );
+
+        message.textContent =
+          error.message ||
+          "Something went wrong. Please try again.";
+
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+  );
+}
+
+// =====================================
+// START STORE
+// =====================================
+
+renderCart();
+
+renderWishlist();
+
+loadProducts();
+
+loadPaymentSettings();
+
+loadStoreSettings();
