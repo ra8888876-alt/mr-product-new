@@ -3,282 +3,461 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f8f8f3">
-  <meta name="description" content="MR PRODUCT — Premium beauty and skincare essentials.">
-  <title>MR PRODUCT — Premium Store</title>
+  <meta name="theme-color" content="#f7f5ef">
+
+  <title>MR PRODUCT | Beauty & Skincare</title>
+  <meta name="description" content="Discover your everyday beauty essentials at MR PRODUCT.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 
 <body>
 
+  <!-- ANNOUNCEMENT -->
   <div class="announcement">
-    <span>DISCOVER YOUR EVERYDAY BEAUTY ESSENTIALS</span>
+    DISCOVER YOUR EVERYDAY BEAUTY ESSENTIALS
   </div>
 
-  <header class="topbar">
-    <a class="brand" href="#">
-      <span class="brand-mark">MR</span>
-      <span class="brand-text">
-        <b id="store-name">MR PRODUCT</b>
-        <small>BEAUTY & SKINCARE</small>
-      </span>
-    </a>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
 
-    <nav class="desktop-nav">
-      <a href="#shop">Shop all</a>
-      <a href="#collections">Collections</a>
-      <a href="#about">Our story</a>
-      <a href="#contact">Contact</a>
-    </nav>
-
-    <div class="header-actions">
-      <a class="search-link" href="#shop" aria-label="Search products">⌕</a>
-      <button class="cart-pill" id="cart-open" type="button">
-        Bag <span id="cart-count">0</span>
+      <button id="mobile-menu-toggle" class="icon-button" type="button" aria-label="Open menu">
+        ☰
       </button>
-      <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="Open menu">☰</button>
+
+      <a href="index.html" class="brand">
+        <span class="brand-mark">MR</span>
+        <span class="brand-text">
+          <strong id="store-name">MR PRODUCT</strong>
+          <small>BEAUTY & SKINCARE</small>
+        </span>
+      </a>
+
+      <nav class="desktop-nav">
+        <a href="#home">Home</a>
+        <a href="#collections">Collections</a>
+        <a href="#shop">Shop all</a>
+        <a href="#about">Our story</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="track-order.html" class="track-link">Track Order</a>
+
+        <button id="cart-open" class="cart-button" type="button">
+          Bag <span id="cart-count">0</span>
+        </button>
+      </div>
+
     </div>
   </header>
 
-  <div class="mobile-menu" id="mobile-menu">
-    <button id="mobile-menu-close" type="button" aria-label="Close menu">×</button>
-    <a href="#shop">Shop all</a>
+  <!-- MOBILE MENU -->
+  <div id="mobile-menu" class="mobile-menu">
+
+    <button id="mobile-menu-close" type="button" aria-label="Close menu">
+      ✕
+    </button>
+
+    <a href="#home">Home</a>
     <a href="#collections">Collections</a>
+    <a href="#shop">Shop all</a>
     <a href="#about">Our story</a>
     <a href="#contact">Contact</a>
-    <a href="track-order.html">Track order</a>
+    <a href="track-order.html">Track Order</a>
+
   </div>
 
+  <!-- HERO -->
   <main>
 
-    <section class="hero">
-      <div class="hero-copy">
-        <div class="hero-tag">
-          <span class="tag-dot"></span>
-          YOUR BEAUTY, YOUR RITUAL
-        </div>
+    <section class="hero" id="home">
+
+      <div class="hero-content">
+
+        <span class="eyebrow">THE BEAUTY EDIT</span>
 
         <h1>
           Everyday beauty<br>
-          for <em>your kind</em><br>
-          of glow.
+          for your kind of <em>glow.</em>
         </h1>
 
-        <p class="hero-description">
-          Discover thoughtfully selected beauty and skincare essentials.
-          Little details that make every day feel special.
+        <p id="store-description">
+          Discover thoughtfully selected beauty essentials
+          made to bring out your natural glow.
         </p>
 
-        <div class="hero-buttons">
-          <a class="button button-dark" href="#shop">Shop the collection <span>↗</span></a>
-          <a class="text-link" href="#about">Discover our story</a>
+        <a href="#shop" class="button button-dark">
+          Explore Collection
+        </a>
+
+        <div class="hero-note">
+          BEAUTY IS PERSONAL. MAKE IT YOURS.
         </div>
 
-        <div class="hero-proof">
-          <div class="proof-avatars">
-            <span>✦</span><span>✿</span><span>✧</span>
-          </div>
-          <div>
-            <strong>Made for your everyday</strong>
-            <small>Beauty essentials, carefully selected</small>
-          </div>
+      </div>
+
+      <div class="hero-image-wrap">
+        <img
+          id="hero-banner-image"
+          src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1200&q=85"
+          alt="Premium skincare collection"
+        >
+        <div class="image-caption">
+          <span>YOUR DAILY RITUAL</span>
+          <strong>Glow naturally.</strong>
         </div>
       </div>
 
-      <div class="hero-visual">
-        <div class="hero-image">
-          <img id="hero-banner-image"
-            src="https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=1200&q=85"
-            alt="Premium beauty and skincare products">
-        </div>
-
-        <div class="hero-image-label">
-          <span>THE BEAUTY EDIT</span>
-          <strong>Feel good in your skin.</strong>
-        </div>
-
-        <div class="hero-stamp">
-          <span>MR</span>
-          <small>BEAUTY<br>ESSENTIALS</small>
-        </div>
-      </div>
     </section>
 
+    <!-- BENEFITS -->
     <section class="benefits">
-      <div class="benefit-item">
-        <span class="benefit-icon">✧</span>
-        <div><strong>Carefully selected</strong><small>Quality beauty essentials</small></div>
+
+      <div class="benefit">
+        <span>✧</span>
+        <p>Thoughtfully Selected</p>
       </div>
-      <div class="benefit-item">
-        <span class="benefit-icon">♡</span>
-        <div><strong>Made for everyday</strong><small>Simple beauty routines</small></div>
+
+      <div class="benefit">
+        <span>♡</span>
+        <p>Made for Your Routine</p>
       </div>
-      <div class="benefit-item">
-        <span class="benefit-icon">⌁</span>
-        <div><strong>Easy ordering</strong><small>Convenient online shopping</small></div>
+
+      <div class="benefit">
+        <span>◇</span>
+        <p>Beauty Made Simple</p>
       </div>
-      <div class="benefit-item">
-        <span class="benefit-icon">✳</span>
-        <div><strong>Here to help</strong><small>Customer support</small></div>
+
+      <div class="benefit">
+        <span>✦</span>
+        <p>Everyday Essentials</p>
       </div>
+
     </section>
 
-    <section class="collections-section" id="collections">
+    <!-- COLLECTIONS -->
+    <section class="collections section-padding" id="collections">
+
       <div class="section-heading">
         <div>
-          <p class="eyebrow">A LITTLE SOMETHING FOR YOU</p>
-          <h2>Explore the collections</h2>
+          <span class="eyebrow">EXPLORE OUR WORLD</span>
+          <h2>Find your beauty ritual.</h2>
         </div>
+
         <a href="#shop" class="text-link">View all products ↗</a>
       </div>
 
       <div class="collection-grid">
-        <a class="collection-card collection-large" href="#shop">
-          <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=85" alt="Skincare collection">
-          <div class="collection-overlay">
-            <small>01 / DAILY RITUAL</small>
-            <h3>Skincare<br>essentials</h3>
-            <span>Explore collection ↗</span>
+
+        <a href="#shop" class="collection-card">
+          <img
+            src="https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=85"
+            alt="Skincare products"
+            loading="lazy"
+          >
+          <div class="collection-info">
+            <span>01 / CARE</span>
+            <h3>Skincare essentials</h3>
+            <span class="collection-arrow">↗</span>
           </div>
         </a>
 
-        <a class="collection-card" href="#shop">
-          <img src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=85" alt="Makeup collection">
-          <div class="collection-overlay">
-            <small>02 / YOUR LOOK</small>
-            <h3>Makeup<br>moments</h3>
-            <span>Explore collection ↗</span>
+        <a href="#shop" class="collection-card">
+          <img
+            src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=85"
+            alt="Makeup collection"
+            loading="lazy"
+          >
+          <div class="collection-info">
+            <span>02 / BEAUTY</span>
+            <h3>Makeup moments</h3>
+            <span class="collection-arrow">↗</span>
           </div>
         </a>
 
-        <a class="collection-card" href="#shop">
-          <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=85" alt="Beauty essentials">
-          <div class="collection-overlay">
-            <small>03 / LITTLE LUXURIES</small>
-            <h3>Beauty<br>finds</h3>
-            <span>Explore collection ↗</span>
+        <a href="#shop" class="collection-card">
+          <img
+            src="https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=900&q=85"
+            alt="Beauty essentials"
+            loading="lazy"
+          >
+          <div class="collection-info">
+            <span>03 / DISCOVER</span>
+            <h3>Beauty finds</h3>
+            <span class="collection-arrow">↗</span>
           </div>
         </a>
+
       </div>
+
     </section>
 
-    <section class="shop-section" id="shop">
-      <div class="section-heading shop-heading">
+    <!-- SHOP -->
+    <section class="shop-section section-padding" id="shop">
+
+      <div class="section-heading">
         <div>
-          <p class="eyebrow">CURATED WITH CARE</p>
-          <h2>Find your favourites.</h2>
-          <p class="section-subtitle">A thoughtful edit of beauty and skincare essentials.</p>
-        </div>
-        <div class="shop-tools">
-          <input id="product-search" type="search" placeholder="Search products..." aria-label="Search products">
-          <select id="product-sort" aria-label="Sort products">
-            <option value="newest">Newest</option>
-            <option value="price-low">Price: low to high</option>
-            <option value="price-high">Price: high to low</option>
-          </select>
+          <span class="eyebrow">THE COLLECTION</span>
+          <h2>Beauty, picked for you.</h2>
+          <p>Explore our latest beauty and skincare essentials.</p>
         </div>
       </div>
 
-      <div class="product-grid" id="product-grid">
-        <div class="loading-products">Discovering your favourites...</div>
+      <div class="shop-toolbar">
+
+        <input
+          type="search"
+          id="product-search"
+          placeholder="Search products..."
+          aria-label="Search products"
+        >
+
+        <select id="product-sort" aria-label="Sort products">
+          <option value="newest">Newest first</option>
+          <option value="price-low">Price: Low to high</option>
+          <option value="price-high">Price: High to low</option>
+        </select>
+
       </div>
+
+      <div id="product-grid" class="product-grid">
+        <p class="loading-products">Discovering your favourites...</p>
+      </div>
+
     </section>
 
+    <!-- EDITORIAL -->
     <section class="editorial">
+
       <div class="editorial-image">
-        <img src="https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?auto=format&fit=crop&w=1200&q=85" alt="Skincare products">
+        <img
+          src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=85"
+          alt="Skincare self care"
+          loading="lazy"
+        >
       </div>
-      <div class="editorial-copy">
-        <p class="eyebrow">A MOMENT FOR YOURSELF</p>
-        <h2>Beauty is in the<br><em>little things.</em></h2>
-        <p>From your morning skincare routine to the finishing touch before heading out, find the little things that make you feel like you.</p>
-        <a href="#shop" class="button button-dark">Explore products ↗</a>
+
+      <div class="editorial-content">
+        <span class="eyebrow">A LITTLE TIME FOR YOU</span>
+
+        <h2>
+          Your skin deserves<br>
+          a little <em>extra love.</em>
+        </h2>
+
+        <p>
+          Create a routine that feels good, looks beautiful
+          and makes every day a little more special.
+        </p>
+
+        <a href="#shop" class="button button-dark">
+          Shop the collection
+        </a>
       </div>
+
     </section>
 
-    <section class="promise" id="about">
-      <p class="eyebrow">THE MR PRODUCT STORY</p>
-      <h2>Good things, thoughtfully chosen.</h2>
-      <p id="store-description">We believe everyday beauty should feel simple, special and accessible. Discover products selected with care for your everyday routine.</p>
+    <!-- ABOUT -->
+    <section class="promise section-padding" id="about">
+
+      <span class="eyebrow">THE MR PRODUCT PROMISE</span>
+
+      <h2>
+        Beauty should feel<br>
+        <em>like you.</em>
+      </h2>
+
+      <p>
+        We believe beauty is not about changing who you are.
+        It is about celebrating yourself, one little ritual at a time.
+      </p>
+
     </section>
 
-    <section class="contact" id="contact">
+    <!-- CONTACT -->
+    <section class="contact-section section-padding" id="contact">
+
       <div>
-        <p class="eyebrow">WE WOULD LOVE TO HEAR FROM YOU</p>
-        <h2>A little help goes<br>a long way.</h2>
+        <span class="eyebrow">WE ARE HERE FOR YOU</span>
+        <h2>Let's stay connected.</h2>
+        <p>Have a question about an order or product? Get in touch.</p>
       </div>
+
       <div class="contact-details">
-        <p id="store-phone"></p>
-        <p id="store-whatsapp"></p>
-        <p id="store-email"></p>
-        <a href="track-order.html">Track your order ↗</a>
+        <p><strong>Phone:</strong> <span id="store-phone">Contact us</span></p>
+        <p><strong>WhatsApp:</strong> <span id="store-whatsapp">Contact us</span></p>
+        <p><strong>Email:</strong> <span id="store-email">Contact us</span></p>
+        <a href="track-order.html" class="text-link">Track your order ↗</a>
       </div>
+
     </section>
 
   </main>
 
-  <footer>
-    <a class="brand" href="#">
-      <span class="brand-mark">MR</span>
-      <span class="brand-text"><b>MR PRODUCT</b><small>BEAUTY & SKINCARE</small></span>
-    </a>
-    <span>© <span id="year"></span> MR PRODUCT. All rights reserved.</span>
-    <a href="track-order.html">Track order ↗</a>
+  <!-- FOOTER -->
+  <footer class="site-footer">
+
+    <a href="index.html" class="footer-brand">MR PRODUCT</a>
+
+    <p>BEAUTY & SKINCARE</p>
+
+    <div class="footer-links">
+      <a href="#home">Home</a>
+      <a href="#shop">Shop</a>
+      <a href="track-order.html">Track Order</a>
+      <a href="#contact">Contact</a>
+    </div>
+
+    <p class="copyright">
+      © <span id="year"></span> MR PRODUCT. All rights reserved.
+    </p>
+
   </footer>
 
-  <div class="overlay" id="overlay" hidden></div>
+  <!-- CART OVERLAY -->
+  <div id="overlay" class="overlay" hidden></div>
 
-  <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
-    <div class="drawer-head">
-      <div><p class="eyebrow">YOUR SELECTION</p><h2>Your bag</h2></div>
-      <button class="icon-button" id="cart-close" type="button" aria-label="Close cart">×</button>
-    </div>
-    <div id="cart-items" class="cart-items"></div>
-    <div class="cart-bottom">
-      <div class="total-row"><span>Subtotal</span><b id="cart-total">৳0</b></div>
-      <button class="button button-dark full" id="checkout-open" type="button">Continue to checkout ↗</button>
-    </div>
-  </aside>
+  <!-- CART DRAWER -->
+  <aside
+    id="cart-drawer"
+    class="cart-drawer"
+    aria-hidden="true"
+  >
 
-  <dialog id="order-dialog" class="order-dialog">
-    <form id="order-form">
-      <div class="drawer-head">
-        <div><p class="eyebrow">ALMOST THERE</p><h2>Delivery details</h2></div>
-        <button class="icon-button" type="button" id="order-close" aria-label="Close">×</button>
+    <div class="cart-header">
+      <h2>Your Bag (<span id="cart-count">0</span>)</h2>
+
+      <button id="cart-close" type="button" aria-label="Close cart">
+        ✕
+      </button>
+    </div>
+
+    <div id="cart-items" class="cart-items">
+      <p class="muted">Your bag is empty.</p>
+    </div>
+
+    <div class="cart-footer">
+
+      <div class="cart-total-row">
+        <strong>Subtotal</strong>
+        <strong id="cart-total">৳0</strong>
       </div>
 
-      <p class="muted small">Please enter your details to place your order.</p>
+      <button id="checkout-open" class="button button-dark" type="button">
+        Continue to Checkout
+      </button>
 
-      <label>Full name<input name="name" required autocomplete="name"></label>
-      <label>Mobile number<input name="phone" required inputmode="tel" autocomplete="tel"></label>
-      <label>WhatsApp number (optional)<input name="whatsapp" inputmode="tel"></label>
-      <label>District<input name="district" required></label>
-      <label>Area / Thana<input name="area" required></label>
-      <label>Full delivery address<textarea name="address" rows="3" required></textarea></label>
+      <p>Shipping and discounts calculated at checkout.</p>
 
-      <label>Payment method
-        <select name="payment" required>
-          <option value="">Choose payment method</option>
-          <option value="bkash">bKash</option>
-          <option value="nagad">Nagad</option>
-          <option value="bank">Bank transfer</option>
-        </select>
-      </label>
+    </div>
 
-      <label>Order note (optional)<textarea name="note" rows="2"></textarea></label>
+  </aside>
 
-      <div class="total-row"><span>Order subtotal</span><b id="dialog-total">৳0</b></div>
-      <button class="button button-dark full" type="submit">Place order</button>
-      <p id="form-message" class="form-message" role="status"></p>
+  <!-- CHECKOUT DIALOG -->
+  <dialog id="order-dialog" class="checkout-dialog">
+
+    <div class="dialog-header">
+      <h2>Complete your order</h2>
+
+      <button id="order-close" type="button" aria-label="Close checkout">
+        ✕
+      </button>
+    </div>
+
+    <form id="order-form">
+
+      <label for="customer-name">Full Name *</label>
+      <input
+        id="customer-name"
+        name="name"
+        type="text"
+        placeholder="Your full name"
+        required
+      >
+
+      <label for="customer-phone">Phone Number *</label>
+      <input
+        id="customer-phone"
+        name="phone"
+        type="tel"
+        placeholder="Your phone number"
+        required
+      >
+
+      <label for="customer-whatsapp">WhatsApp Number</label>
+      <input
+        id="customer-whatsapp"
+        name="whatsapp"
+        type="tel"
+        placeholder="WhatsApp number"
+      >
+
+      <label for="customer-district">District *</label>
+      <input
+        id="customer-district"
+        name="district"
+        type="text"
+        placeholder="Your district"
+        required
+      >
+
+      <label for="customer-area">Area / City *</label>
+      <input
+        id="customer-area"
+        name="area"
+        type="text"
+        placeholder="Your area or city"
+        required
+      >
+
+      <label for="customer-address">Full Delivery Address *</label>
+      <textarea
+        id="customer-address"
+        name="address"
+        placeholder="House, road, area and other details"
+        required
+      ></textarea>
+
+      <label for="payment-method">Payment Method *</label>
+      <select id="payment-method" name="payment" required>
+        <option value="">Choose payment method</option>
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+        <option value="bank">Bank Transfer</option>
+      </select>
+
+      <label for="order-note">Order Note</label>
+      <textarea
+        id="order-note"
+        name="note"
+        placeholder="Any special instructions? (Optional)"
+      ></textarea>
+
+      <div class="dialog-total">
+        <span>Order subtotal</span>
+        <strong id="dialog-total">৳0</strong>
+      </div>
+
+      <button class="button button-dark" type="submit">
+        Place Order
+      </button>
+
+      <p id="form-message" role="status" aria-live="polite"></p>
+
     </form>
+
   </dialog>
 
-  <script src="config.js"></script>
   <script src="app.js"></script>
+
 </body>
 </html>
