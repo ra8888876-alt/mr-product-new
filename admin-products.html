@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR PRODUCT — Product Manager</title>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10131b;color:#f4f6fa;font-family:Arial,sans-serif}
+header{background:#171d29;padding:18px 22px;border-bottom:1px solid #30394a}
+header h2{margin:0;color:#55aaff}
+main{max-width:1100px;margin:25px auto;padding:0 15px}
+.card{background:#191f2c;border:1px solid #30394a;border-radius:13px;padding:20px;margin-bottom:20px}
+h3{margin-top:0;color:#64b5ff}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;background:#101722;color:white;border:1px solid #39465b;border-radius:7px}
+button{padding:11px 17px;border:0;border-radius:7px;background:#1685e8;color:white;font-weight:bold;cursor:pointer;margin:4px}
+button:hover{opacity:.85}
+button.danger{background:#d94b4b}
+button.secondary{background:#424e61}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+#previewGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:12px;margin-top:15px}
+.image-card{position:relative;background:#101722;border:2px solid #39465b;border-radius:9px;padding:7px;overflow:hidden}
+.image-card.main{border-color:#16c784}
+.image-card img{width:100%;height:115px;object-fit:cover;border-radius:5px}
+.image-card button{width:100%;margin:5px 0 0;padding:7px;font-size:12px}
+.badge{position:absolute;top:12px;left:12px;background:#16a36b;padding:5px 8px;border-radius:5px;font-size:11px}
+.product-row{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #30394a}
+.product-row img{width:65px;height:65px;object-fit:cover;border-radius:7px}
+.product-info{flex:1;min-width:0}
+.product-info strong{display:block}
+.product-info small{color:#aab4c4}
+#message{padding:12px;border-radius:7px;margin:12px 0;display:none}
+.success{background:#164c38}
+.error{background:#652c35}
+.hidden{display:none!important}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.card{padding:14px}.product-row{gap:8px}}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>MR PRODUCT — Product Manager</h2>
+</header>
+
+<main>
+
+<section class="card" id="loginBox">
+<h3>Admin Login</h3>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</section>
+
+<div id="app" class="hidden">
+
+<div id="message"></div>
+
+<section class="card">
+<h3 id="formTitle">Add New Product</h3>
+
+<input id="productName" placeholder="Product Name">
+<textarea id="description" placeholder="Product Description" rows="3"></textarea>
+
+<div class="grid">
+<div>
+<label>Price (৳)</label>
+<input id="price" type="number" min="0">
+</div>
+<div>
+<label>Cost Price (৳)</label>
+<input id="costPrice" type="number" min="0">
+</div>
+<div>
+<label>Discount Price (৳)</label>
+<input id="discountPrice" type="number" min="0">
+</div>
+<div>
+<label>Stock</label>
+<input id="stock" type="number" min="0">
+</div>
+</div>
+
+<label>Category</label>
+<input id="category" placeholder="Category">
+
+<h3>Product Images — Maximum 10</h3>
+
+<input id="imageFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+
+<p style="color:#aab4c4;font-size:13px">
+একসঙ্গে একাধিক ছবি নির্বাচন করতে পারবে। প্রতিটি ছবি সর্বোচ্চ ৫ MB।
+</p>
+
+<div id="previewGrid"></div>
+
+<br>
+<button onclick="saveProduct()" id="saveButton">Save Product</button>
+<button class="secondary" onclick="resetForm()">Clear Form</button>
+</section>
+
+<section class="card">
+<h3>All Products</h3>
+<button onclick="loadProducts()" class="secondary">Refresh Products</button>
+<div id="productList"></div>
+</section>
+
+</div>
+</main>
+
+<script>
+const CONFIG = window.MR_PRODUCT_CONFIG || {};
+
+const SUPABASE_URL = CONFIG.supabaseUrl || "";
+const SUPABASE_KEY = CONFIG.publishableKey || "";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-products";
+const BUCKET = "store-assets";
+
+let currentSession = null;
+let editingProduct = null;
+let existingImages = [];
+let newImages = [];
+let mainImageIndex = 0;
+
+const $ = id => document.getElementById(id);
+
+function showMessage(message, type="success"){
+  $("message").textContent = message;
+  $("message").className = type;
+  $("message").style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function getAdminSession(){
+  const {data,error} = await supabase.auth.getSession();
+
+  if(error || !data.session) return false;
+
+  currentSession = data.session;
+
+  const {data:admin,error:adminError} = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id",currentSession.user.id)
+    .eq("is_active",true)
+    .maybeSingle();
+
+  if(adminError || !admin) return false;
+
+  return true;
+}
+
+async function login(){
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if(!email || !password){
+    alert("Email এবং Password দাও");
+    return;
+  }
+
+  const {data,error} = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  currentSession = data.session;
+
+  const valid = await getAdminSession();
+
+  if(!valid){
+    await supabase.auth.signOut();
+    alert("এই Account-এর Admin Access নেই");
+    return;
+  }
+
+  openApp();
+}
+
+async function openApp(){
+  $("loginBox").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  await loadProducts();
+}
+
+async function authHeaders(){
+  const {data} = await supabase.auth.getSession();
+  currentSession = data.session;
+
+  return {
+    "Authorization":"Bearer " + currentSession.access_token,
+    "apikey":SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+async function apiRequest(method,body=null){
+  const headers = await authHeaders();
+
+  const response = await fetch(FUNCTION_URL,{
+    method,
+    headers,
+    body:body ? JSON.stringify(body) : undefined
+  });
+
+  const result = await response.json().catch(()=>({}));
+
+  if(!response.ok){
+    throw new Error(result.error || result.message || "Request failed");
+  }
+
+  return result;
+}
+
+function normalizeImages(product){
+  let images = product.image_urls || [];
+
+  if(typeof images === "string"){
+    try{images = JSON.parse(images)}catch(e){images=[]}
+  }
+
+  if(!Array.isArray(images)) images = [];
+
+  if(product.image_url && !images.includes(product.image_url)){
+    images.unshift(product.image_url);
+  }
+
+  return [...new Set(images.filter(Boolean))].slice(0,10);
+}
+
+function renderImages(){
+  const grid = $("previewGrid");
+  grid.innerHTML = "";
+
+  const total = existingImages.length + newImages.length;
+
+  if(total === 0){
+    grid.innerHTML = "<p style='color:#aab4c4'>কোনো ছবি নির্বাচন করা হয়নি।</p>";
+    return;
+  }
+
+  let index = 0;
+
+  existingImages.forEach((url,i)=>{
+    const card = document.createElement("div");
+    card.className = "image-card" + (index===mainImageIndex?" main":"");
+
+    card.innerHTML = `
+      ${index===mainImageIndex?'<span class="badge">MAIN IMAGE</span>':''}
+      <img src="${url}" alt="Product image">
+      <button class="secondary" onclick="setMain(${index})">Set Main</button>
+      <button class="danger" onclick="removeExisting(${i})">Delete</button>
+    `;
+
+    grid.appendChild(card);
+    index++;
+  });
+
+  newImages.forEach((file,i)=>{
+    const card = document.createElement("div");
+    card.className = "image-card" + (index===mainImageIndex?" main":"");
+
+    const imageUrl = URL.createObjectURL(file);
+
+    card.innerHTML = `
+      ${index===mainImageIndex?'<span class="badge">MAIN IMAGE</span>':''}
+      <img src="${imageUrl}" alt="New image">
+      <button class="secondary" onclick="setMain(${index})">Set Main</button>
+      <button class="danger" onclick="removeNew(${i})">Delete</button>
+    `;
+
+    grid.appendChild(card);
+    index++;
+  });
+}
+
+function setMain(index){
+  mainImageIndex = index;
+  renderImages();
+}
+
+function removeExisting(index){
+  existingImages.splice(index,1);
+  if(mainImageIndex >= existingImages.length + newImages.length){
+    mainImageIndex = 0;
+  }
+  renderImages();
+}
+
+function removeNew(index){
+  newImages.splice(index,1);
+  if(mainImageIndex >= existingImages.length + newImages.length){
+    mainImageIndex = 0;
+  }
+  renderImages();
+}
+
+$("imageFiles").addEventListener("change",event=>{
+  const files = Array.from(event.target.files || []);
+
+  if(existingImages.length + newImages.length + files.length > 10){
+    alert("সর্বোচ্চ ১০টি ছবি রাখা যাবে।");
+    event.target.value = "";
+    return;
+  }
+
+  for(const file of files){
+    if(!file.type.startsWith("image/")){
+      alert("শুধু Image File নির্বাচন করো।");
+      continue;
+    }
+
+    if(file.size > 5 * 1024 * 1024){
+      alert(file.name + " ৫ MB-এর বেশি।");
+      continue;
+    }
+
+    newImages.push(file);
+  }
+
+  event.target.value = "";
+  renderImages();
+});
+
+function resetForm(){
+  editingProduct = null;
+  existingImages = [];
+  newImages = [];
+  mainImageIndex = 0;
+
+  $("productName").value = "";
+  $("description").value = "";
+  $("price").value = "";
+  $("costPrice").value = "";
+  $("discountPrice").value = "";
+  $("stock").value = "";
+  $("category").value = "";
+  $("imageFiles").value = "";
+
+  $("formTitle").textContent = "Add New Product";
+  $("saveButton").textContent = "Save Product";
+
+  renderImages();
+}
+
+async function uploadImage(file){
+  const extension = file.name.split(".").pop().toLowerCase();
+  const filePath = "product-images/" +
+    Date.now() + "-" +
+    Math.random().toString(36).slice(2) +
+    "." + extension;
+
+  const {data,error} = await supabase.storage
+    .from(BUCKET)
+    .upload(filePath,file,{
+      cacheControl:"3600",
+      upsert:false,
+      contentType:file.type
+    });
+
+  if(error) throw error;
+
+  const {data:publicData} = supabase.storage
+    .from(BUCKET)
+    .getPublicUrl(data.path);
+
+  return publicData.publicUrl;
+}
+
+function getStoragePath(url){
+  const marker = "/storage/v1/object/public/" + BUCKET + "/";
+  const position = url.indexOf(marker);
+
+  if(position === -1) return null;
+
+  return decodeURIComponent(url.substring(position + marker.length));
+}
+
+async function deleteStorageImages(urls){
+  const paths = urls.map(getStoragePath).filter(Boolean);
+
+  if(!paths.length) return;
+
+  const {error} = await supabase.storage
+    .from(BUCKET)
+    .remove(paths);
+
+  if(error) console.warn("Storage cleanup:",error.message);
+}
+
+async function saveProduct(){
+  try{
+    const name = $("productName").value.trim();
+    const price = Number($("price").value);
+
+    if(!name || !Number.isFinite(price) || price < 0){
+      alert("Product Name এবং সঠিক Price দাও।");
+      return;
+    }
+
+    if(existingImages.length + newImages.length > 10){
+      alert("সর্বোচ্চ ১০টি ছবি রাখা যাবে।");
+      return;
+    }
+
+    $("saveButton").disabled = true;
+    $("saveButton").textContent = "Saving...";
+
+    const uploadedUrls = [];
+
+    for(const file of newImages){
+      const url = await uploadImage(file);
+      uploadedUrls.push(url);
+    }
+
+    let allImages = [...existingImages,...uploadedUrls];
+
+    if(allImages.length){
+      const selectedMain = mainImageIndex;
+
+      if(selectedMain >= 0 && selectedMain < allImages.length){
+        const main = allImages.splice(selectedMain,1)[0];
+        allImages.unshift(main);
+      }
+    }
+
+    const payload = {
+      name,
+      description:$("description").value.trim(),
+      price,
+      cost_price:Number($("costPrice").value || 0),
+      discount_price:Number($("discountPrice").value || 0),
+      category:$("category").value.trim(),
+      stock:Number($("stock").value || 0),
+      image_url:allImages[0] || null,
+      image_urls:allImages
+    };
+
+    if(editingProduct){
+      payload.id = editingProduct.id;
+      await apiRequest("PATCH",payload);
+    }else{
+      await apiRequest("POST",payload);
+    }
+
+    const oldImages = editingProduct
+      ? normalizeImages(editingProduct)
+      : [];
+
+    const removedImages = oldImages.filter(
+      url => !allImages.includes(url)
+    );
+
+    await deleteStorageImages(removedImages);
+
+    showMessage("Product সফলভাবে Save হয়েছে।");
+    resetForm();
+    await loadProducts();
+
+  }catch(error){
+    console.error(error);
+    showMessage(error.message || "Product Save করা যায়নি।","error");
+  }finally{
+    $("saveButton").disabled = false;
+    $("saveButton").textContent = editingProduct
+      ? "Update Product"
+      : "Save Product";
+  }
+}
+
+async function loadProducts(){
+  try{
+    $("productList").innerHTML = "Loading...";
+
+    const result = await apiRequest("GET");
+
+    const products = Array.isArray(result)
+      ? result
+      : result.products || result.data || [];
+
+    $("productList").innerHTML = "";
+
+    if(!products.length){
+      $("productList").innerHTML = "<p>কোনো Product পাওয়া যায়নি।</p>";
+      return;
+    }
+
+    products.forEach(product=>{
+      const images = normalizeImages(product);
+
+      const row = document.createElement("div");
+      row.className = "product-row";
+
+      const img = document.createElement("img");
+      img.src = images[0] || "https://placehold.co/100x100?text=No+Image";
+
+      const info = document.createElement("div");
+      info.className = "product-info";
+
+      const title = document.createElement("strong");
+      title.textContent = product.name;
+
+      const details = document.createElement("small");
+      details.textContent =
+        "৳" + Number(product.price || 0) +
+        " | Stock: " + Number(product.stock || 0) +
+        " | Images: " + images.length;
+
+      info.append(title,details);
+
+      const edit = document.createElement("button");
+      edit.textContent = "Edit";
+      edit.onclick = ()=>editProduct(product);
+
+      row.append(img,info,edit);
+      $("productList").appendChild(row);
+    });
+
+  }catch(error){
+    console.error(error);
+    $("productList").textContent = error.message;
+  }
+}
+
+function editProduct(product){
+  editingProduct = product;
+  existingImages = normalizeImages(product);
+  newImages = [];
+  mainImageIndex = 0;
+
+  $("productName").value = product.name || "";
+  $("description").value = product.description || "";
+  $("price").value = product.price ?? "";
+  $("costPrice").value = product.cost_price ?? "";
+  $("discountPrice").value = product.discount_price ?? "";
+  $("stock").value = product.stock ?? "";
+  $("category").value = product.category || "";
+
+  $("formTitle").textContent = "Edit Product";
+  $("saveButton").textContent = "Update Product";
+
+  renderImages();
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function initialize(){
+  if(!SUPABASE_URL || !SUPABASE_KEY){
+    alert("config.js-এর Supabase configuration পাওয়া যায়নি।");
+    return;
+  }
+
+  const valid = await getAdminSession();
+
+  if(valid){
+    await openApp();
+  }
+}
+
+renderImages();
+initialize();
+</script>
+
+</body>
+</html>
