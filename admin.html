@@ -1420,10 +1420,10 @@ const safe=["jpg","jpeg","png","webp","gif"].includes(ext)
 const name=
 path+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+safe;
 
-/* Bucket ID matches your Supabase screenshot: Store-assets */
+/* Correct Supabase bucket ID: store-assets */
 
 const {data,error}=await db.storage
-.from("Store-assets")
+.from("store-assets")
 .upload(name,file,{
 upsert:false,
 contentType:file.type
@@ -1432,7 +1432,7 @@ contentType:file.type
 if(error)throw error;
 
 return db.storage
-.from("Store-assets")
+.from("store-assets")
 .getPublicUrl(data.path).data.publicUrl;
 
 }
