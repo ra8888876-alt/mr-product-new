@@ -3,276 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101010">
-<title>MR PRODUCT — Admin Panel</title>
+<meta name="theme-color" content="#171512">
+<title>MR PRODUCT — CRM Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 
 <style>
 :root{
---bg:#101010;
---panel:#1a1a1a;
---panel2:#202020;
---gold:#c6a34b;
---gold2:#e0bd63;
---line:#37322a;
---text:#eee;
---muted:#999;
---green:#36b779;
---red:#dc5555
+--bg:#11110f;
+--panel:#1b1a17;
+--panel2:#22211d;
+--line:#37342d;
+--text:#f3f0e9;
+--muted:#9c988e;
+--gold:#c6a56a;
+--gold2:#e0c28a;
+--green:#79c69a;
+--red:#df7770;
+--blue:#91b8df
 }
 
 *{box-sizing:border-box}
 
 body{
 margin:0;
-background:var(--bg);
+background:radial-gradient(ellipse at 65% -15%,#393124 0,transparent 42%),var(--bg);
 color:var(--text);
-font-family:Arial,sans-serif
+font:14px Inter,Arial,sans-serif
 }
 
-button,input,textarea,select{font:inherit}
+button,input,select,textarea{font:inherit}
 
 button{
 cursor:pointer;
-border:0;
-border-radius:8px;
-padding:11px 15px;
-background:var(--gold);
-color:#111;
-font-weight:bold
+border:1px solid #665638;
+background:linear-gradient(135deg,#d3b77f,#a98950);
+color:#17140e;
+border-radius:11px;
+padding:10px 14px;
+font-weight:700
 }
 
-button:hover{background:var(--gold2)}
-button:disabled{opacity:.5;cursor:not-allowed}
+button:hover{filter:brightness(1.1)}
+button:disabled{opacity:.5;cursor:wait}
 
 .secondary{
-background:#303030;
-color:#eee;
-border:1px solid #494949
+background:#292822;
+color:#e9e4d9;
+border:1px solid #454239
 }
 
-.danger{background:#a83232;color:white}
+.danger{
+background:#542b28;
+color:#fff;
+border-color:#75413b
+}
+
 .hidden{display:none!important}
 
-h1,h2{color:var(--gold)}
+.login{
+min-height:100vh;
+display:grid;
+place-items:center;
+padding:20px
+}
+
+.login-card{
+width:min(440px,100%);
+background:#1d1b17;
+border:1px solid #75613e;
+border-radius:25px;
+padding:32px;
+box-shadow:0 25px 90px #0009
+}
+
+.logo{
+width:58px;
+height:58px;
+border-radius:18px;
+background:linear-gradient(135deg,#e2c78f,#9a7943);
+display:grid;
+place-items:center;
+color:#18140d;
+font-size:23px;
+font-weight:900;
+margin-bottom:20px
+}
+
+.login h1{
+margin:0;
+color:var(--gold2);
+font-size:25px
+}
+
+.muted{color:var(--muted)}
 
 label{
 display:block;
-color:#bbb;
-font-size:13px;
-margin:10px 0 6px
+color:#b9b3a6;
+font-size:12px;
+margin:12px 0 6px
 }
 
-input,textarea,select{
+input,select,textarea{
 width:100%;
-padding:12px;
-background:#101010;
-border:1px solid #454545;
-color:#eee;
-border-radius:8px;
-margin-bottom:10px
+background:#11110f;
+color:var(--text);
+border:1px solid #48443a;
+border-radius:10px;
+padding:11px;
+margin-bottom:8px
 }
 
 textarea{min-height:85px}
 
+.login button{
+width:100%;
+margin-top:12px
+}
+
 .status{
 display:none;
-padding:10px;
-border-radius:8px;
+padding:10px 12px;
+border-radius:10px;
 margin:10px 0;
 font-size:13px
 }
 
-.success{
-display:block;
-background:#173c25;
-color:#9be3ad
-}
+.success,.error{display:block}
+.success{background:#183b29;color:#a5e2b9}
+.error{background:#482321;color:#ffb4ad}
 
-.error{
-display:block;
-background:#4b2020;
-color:#ffaaaa
-}
-
-/* LOGIN */
-
-.login-screen{
-min-height:100vh;
-display:grid;
-place-items:center;
-padding:25px;
-background:radial-gradient(ellipse at top,#302719,#101010 60%)
-}
-
-.login-card{
-width:100%;
-max-width:755px;
-background:#1a1a1a;
-border:2px solid var(--gold);
-border-radius:35px;
-padding:55px;
-box-shadow:0 20px 70px #0009
-}
-
-.login-logo{
-width:112px;
-height:112px;
-border-radius:32px;
-margin:0 auto 35px;
-display:grid;
-place-items:center;
-background:linear-gradient(135deg,var(--gold2),#8e6c2a);
-color:#111;
-font-size:43px;
-font-weight:900
-}
-
-.login-card h1{
-text-align:center;
-font-size:40px;
-margin:0 0 24px
-}
-
-.login-card .subtitle{
-text-align:center;
-color:#999;
-font-size:23px;
-margin:0 0 25px
-}
-
-.login-card label{
-font-size:22px;
-margin:22px 0 12px
-}
-
-.login-card input{
-height:78px;
-font-size:23px;
-border:2px solid #444;
-border-radius:17px;
-padding:18px 23px
-}
-
-.login-card button{
-width:100%;
-height:82px;
-font-size:24px;
-border-radius:17px;
-margin-top:10px
-}
-
-.login-card .footer{
-text-align:center;
-color:#999;
-font-size:21px;
-margin-top:30px
-}
-
-/* ADMIN LAYOUT */
-
-.app{min-height:100vh}
+.shell{min-height:100vh}
 
 .sidebar{
 position:fixed;
 inset:0 auto 0 0;
-width:245px;
-background:#151515;
+width:248px;
+padding:20px 15px;
+background:#171613ed;
 border-right:1px solid var(--line);
-padding:18px 13px;
-overflow:auto;
+backdrop-filter:blur(20px);
 z-index:20;
 display:flex;
-flex-direction:column
+flex-direction:column;
+transition:.25s
 }
 
 .brand{
 display:flex;
-gap:11px;
+gap:12px;
 align-items:center;
-padding:5px 8px 20px;
-border-bottom:1px solid #333;
-margin-bottom:14px
+padding:3px 8px 22px;
+border-bottom:1px solid var(--line);
+margin-bottom:17px
 }
 
-.brand-mark{
-width:40px;
-height:40px;
-border-radius:12px;
-background:var(--gold);
-color:#111;
-display:grid;
-place-items:center;
-font-weight:900
+.brand .logo{
+width:42px;
+height:42px;
+margin:0;
+border-radius:13px;
+font-size:17px
 }
 
-.brand strong{
+.brand b{
 display:block;
-color:var(--gold)
+color:var(--gold2);
+letter-spacing:.5px
 }
 
 .brand small{
 font-size:9px;
-letter-spacing:1.5px;
-color:#888
+letter-spacing:2px;
+color:var(--muted)
 }
 
 .nav-label{
 font-size:10px;
-color:#777;
-padding:14px 10px 6px;
-letter-spacing:1.5px
+letter-spacing:1.8px;
+color:#77736a;
+padding:16px 10px 7px
 }
 
-.nav-link{
-width:100%;
+.nav{
 display:flex;
-gap:11px;
 align-items:center;
-text-align:left;
-color:#aaa;
+gap:12px;
+width:100%;
 background:transparent;
 border:1px solid transparent;
-padding:12px;
-border-radius:8px;
+color:#aaa69c;
+text-align:left;
+padding:11px 12px;
 margin:2px 0;
+border-radius:11px;
+font-weight:500;
 text-decoration:none
 }
 
-.nav-link:hover,.nav-link.active{
-background:#c6a34b18;
-border-color:#806a3244;
-color:var(--gold)
+.nav:hover,.nav.active{
+background:linear-gradient(100deg,#c6a56a22,#c6a56a08);
+border-color:#806b444d;
+color:var(--gold2)
 }
 
+.nav span:first-child{
+width:20px;
+text-align:center;
+font-size:16px
+}
+
+.side-bottom{margin-top:auto}
+
 .main{
-margin-left:245px;
+margin-left:248px;
 min-height:100vh
 }
 
 .topbar{
-height:66px;
+height:72px;
 position:sticky;
 top:0;
-z-index:15;
-background:#151515ed;
-border-bottom:1px solid var(--line);
+z-index:10;
 display:flex;
 align-items:center;
 justify-content:space-between;
-padding:0 25px
+padding:0 28px;
+background:#151410d9;
+backdrop-filter:blur(18px);
+border-bottom:1px solid var(--line)
 }
 
-.topbar input{
-width:260px;
+.top-left,.top-right{
+display:flex;
+align-items:center;
+gap:12px
+}
+
+.topbar .search{
+width:245px;
 margin:0
 }
 
+.icon-btn{
+background:#24231f;
+color:#ddd;
+border:1px solid #48443b;
+padding:9px 12px
+}
+
 .content{
-max-width:1500px;
-padding:25px;
-margin:auto
+max-width:1550px;
+margin:auto;
+padding:27px
 }
 
 .page{display:none}
@@ -282,53 +266,99 @@ margin:auto
 display:flex;
 justify-content:space-between;
 align-items:center;
-gap:12px;
+gap:15px;
 margin-bottom:20px
 }
 
 .page-head h1{
-font-size:24px;
+font-size:25px;
 margin:0
 }
 
-.welcome{
-padding:23px;
-border:1px solid #806a32;
-border-radius:15px;
-background:linear-gradient(110deg,#302719,#1c1b18 55%,#171717);
-margin-bottom:18px
+.eyebrow{
+font-size:10px;
+letter-spacing:2px;
+color:var(--gold);
+text-transform:uppercase;
+margin-bottom:7px
 }
 
-.welcome h1{font-size:25px}
+.hero{
+border:1px solid #655337;
+border-radius:19px;
+padding:23px;
+background:linear-gradient(110deg,#393021,#211f1a 62%,#191815);
+margin-bottom:18px;
+display:flex;
+justify-content:space-between;
+gap:20px;
+align-items:center
+}
 
-.muted{
-color:var(--muted);
-font-size:12px
+.hero h2{
+font-size:24px;
+margin:0 0 8px
+}
+
+.hero p{
+margin:0;
+color:#aaa397
+}
+
+.hero-badge{
+border:1px solid #8a744c;
+border-radius:30px;
+padding:10px 14px;
+color:var(--gold2);
+white-space:nowrap;
+background:#17150f66
 }
 
 .stats{
 display:grid;
 grid-template-columns:repeat(4,minmax(0,1fr));
 gap:13px;
-margin-bottom:18px
+margin-bottom:16px
 }
 
-.stat,.card{
-background:linear-gradient(145deg,#202020,#181818);
+.stat,.card,.section-card{
+background:linear-gradient(145deg,#22211d,#191815);
 border:1px solid var(--line);
-border-radius:12px;
-padding:17px;
+border-radius:15px;
 min-width:0
 }
 
-.stat small{color:#aaa}
+.stat{
+padding:17px;
+position:relative;
+overflow:hidden
+}
+
+.stat:after{
+content:"";
+position:absolute;
+width:75px;
+height:75px;
+border-radius:50%;
+right:-28px;
+top:-30px;
+background:#c6a56a13
+}
+
+.stat small{color:#aaa397}
 
 .stat strong{
 display:block;
-font-size:23px;
-color:var(--gold);
+font-size:25px;
+color:var(--gold2);
 margin-top:12px;
 overflow-wrap:anywhere
+}
+
+.stat .trend{
+font-size:11px;
+color:var(--green);
+margin-top:8px
 }
 
 .two-col{
@@ -337,33 +367,44 @@ grid-template-columns:1.5fr 1fr;
 gap:14px
 }
 
+.card{padding:18px}
+
 .card h3{
 font-size:15px;
-margin:0 0 15px
+margin:0 0 16px
 }
 
-.chart-box{height:240px}
-canvas{width:100%;height:100%}
+.chart{height:250px}
+.chart canvas{width:100%;height:100%}
+
+.summary-row{
+display:flex;
+justify-content:space-between;
+padding:11px 0;
+border-bottom:1px solid #343129;
+color:#bcb6aa
+}
+
+.summary-row:last-child{border:0}
 
 .section-card{
-background:var(--panel);
-border:1px solid var(--line);
-border-radius:12px;
-margin-bottom:13px;
+margin-bottom:14px;
 overflow:hidden
 }
 
 .section-card summary{
 list-style:none;
-padding:16px;
 cursor:pointer;
-color:var(--gold);
-font-weight:bold;
-background:#211e18
+padding:16px 18px;
+color:var(--gold2);
+font-weight:700;
+background:#25231e
 }
 
+.section-card summary::-webkit-details-marker{display:none}
+
 .section-body{
-padding:17px;
+padding:18px;
 border-top:1px solid var(--line)
 }
 
@@ -375,221 +416,263 @@ gap:10px
 
 .table-wrap{
 overflow:auto;
-border:1px solid #333;
-border-radius:9px
+border:1px solid #39362f;
+border-radius:11px
 }
 
 table{
 width:100%;
 border-collapse:collapse;
 min-width:650px;
-background:#151515
+background:#171613
 }
 
 th,td{
 text-align:left;
-padding:11px;
-border-bottom:1px solid #303030;
+padding:12px;
+border-bottom:1px solid #302e28;
 font-size:12px
 }
 
 th{
-color:var(--gold);
-background:#222;
+background:#24221d;
+color:var(--gold2);
 white-space:nowrap
 }
 
+td select{
+min-width:110px;
+margin:0;
+padding:7px
+}
+
 .product-img{
-width:45px;
-height:45px;
+width:42px;
+height:42px;
 object-fit:cover;
-border-radius:7px
+border-radius:8px
 }
 
 .small{
-padding:7px 9px;
+padding:7px 10px;
 font-size:11px;
 margin:2px
 }
 
 .pill{
 display:inline-block;
-padding:5px 8px;
-border-radius:20px;
-background:#292929;
-color:#bbb;
+padding:5px 9px;
+border-radius:30px;
+background:#302e27;
+color:#d1c8b6;
 font-size:10px
 }
 
 .preview{
-max-width:180px;
-max-height:140px;
+max-width:170px;
+max-height:120px;
 object-fit:contain;
 display:none;
-border:1px solid #444;
-border-radius:8px;
-margin:8px 0 12px;
-background:#111;
-padding:5px
+border:1px solid #454137;
+border-radius:9px;
+padding:4px
+}
+
+.upload-box{
+border:1px dashed #806b44;
+background:#171613;
+padding:15px;
+border-radius:12px;
+margin:12px 0
+}
+
+.upload-box input{margin:8px 0}
+
+.kanban{
+display:grid;
+grid-template-columns:repeat(4,minmax(220px,1fr));
+gap:12px;
+overflow:auto;
+padding-bottom:8px
+}
+
+.kanban-col{
+background:#171613;
+border:1px solid #39362f;
+border-radius:13px;
+padding:12px;
+min-height:180px
+}
+
+.kanban-head{
+display:flex;
+justify-content:space-between;
+color:var(--gold2);
+font-weight:700;
+margin-bottom:12px
+}
+
+.order-card{
+background:#24221d;
+border:1px solid #403c32;
+border-radius:11px;
+padding:12px;
+margin-bottom:9px
+}
+
+.order-card b{
+display:block;
+margin-bottom:7px
+}
+
+.order-card small{
+display:block;
+color:var(--muted);
+margin:4px 0
 }
 
 .empty{
 text-align:center;
-padding:20px;
-color:#888
+color:#888;
+padding:25px
 }
 
-.actions{
+.toolbar{
 display:flex;
-gap:8px;
-flex-wrap:wrap
+gap:9px;
+flex-wrap:wrap;
+margin-bottom:12px
 }
 
-/* PRODUCT IMAGE UPLOAD */
-
-.upload-box{
-border:1px dashed #806a32;
-background:#171717;
-padding:16px;
-border-radius:12px;
-margin-bottom:15px
+.toolbar input{
+max-width:260px;
+margin:0
 }
 
-.upload-box input[type=file]{
-padding:12px;
-border:1px solid #454545;
-background:#101010;
-cursor:pointer
-}
-
-.upload-hint{
-font-size:12px;
-color:#999;
-margin:5px 0 10px
-}
-
-.upload-title{
-color:var(--gold);
-font-weight:bold;
-margin-bottom:8px
-}
+.mobile-menu{display:none}
 
 @media(max-width:1050px){
-.stats{grid-template-columns:repeat(2,1fr)}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 .two-col{grid-template-columns:1fr}
+.kanban{grid-template-columns:repeat(4,250px)}
 }
 
 @media(max-width:760px){
-
 .sidebar{
-transform:translateX(-100%);
-transition:.25s;
-box-shadow:15px 0 40px #0009
+transform:translateX(-105%);
+box-shadow:20px 0 50px #000a
 }
-
 .sidebar.open{transform:translateX(0)}
 .main{margin-left:0}
+.mobile-menu{display:inline-block}
+.topbar{height:62px;padding:0 12px}
+.topbar .search{display:none}
 .content{padding:14px}
-.topbar{padding:0 12px}
-.topbar input{display:none}
 .stats{gap:8px}
 .stat{padding:12px}
-.stat strong{font-size:18px}
-
-.login-card{
-padding:30px 24px;
-border-radius:25px
+.stat strong{font-size:19px}
+.hero{
+padding:17px;
+align-items:flex-start;
+flex-direction:column
 }
-
-.login-logo{
-width:80px;
-height:80px;
-font-size:32px;
-margin-bottom:25px
-}
-
-.login-card h1{font-size:28px}
-.login-card .subtitle{font-size:16px}
-.login-card label{font-size:16px}
-
-.login-card input{
-height:60px;
-font-size:17px
-}
-
-.login-card button{
-height:62px;
-font-size:17px
-}
-
-.login-card .footer{font-size:15px}
-
+.hero h2{font-size:20px}
 .page-head{
 align-items:flex-start;
 flex-direction:column
 }
+.page-head h1{font-size:21px}
+.card{padding:13px}
 }
 </style>
 </head>
 
 <body>
 
-<section id="loginSection" class="login-screen">
+<section id="loginSection" class="login">
 <div class="login-card">
-
-<div class="login-logo">MR</div>
+<div class="logo">MR</div>
 <h1>MR PRODUCT</h1>
-<p class="subtitle">ULTIMATE ADMIN CONTROL</p>
+<p class="muted">CRM · ADMIN CONTROL CENTER</p>
 
 <div id="loginMessage" class="status"></div>
 
 <label>Admin Email</label>
-<input id="loginEmail" type="email" placeholder="Admin email" autocomplete="username">
+<input id="loginEmail" type="email" autocomplete="username" placeholder="Admin email">
 
 <label>Password</label>
-<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginAdmin()">
+<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')loginAdmin()">
 
-<button onclick="loginAdmin()">LOGIN TO DASHBOARD</button>
-
-<p class="footer">Authorized administrators only</p>
-
+<button onclick="loginAdmin()">Sign in to dashboard</button>
+<p class="muted" style="text-align:center;margin:18px 0 0">Authorized administrators only</p>
 </div>
 </section>
 
 
-<div id="dashboard" class="app hidden">
+<div id="dashboard" class="shell hidden">
 
 <aside class="sidebar" id="sidebar">
 
 <div class="brand">
-<div class="brand-mark">MR</div>
+<div class="logo">MR</div>
 <div>
-<strong>MR PRODUCT</strong>
-<small>ADMIN CONTROL</small>
+<b>MR PRODUCT</b>
+<small>CRM CONTROL CENTER</small>
 </div>
 </div>
 
-<div class="nav-label">MAIN MENU</div>
+<div class="nav-label">WORKSPACE</div>
 
-<button class="nav-link active" onclick="showPage('overview',this)">▦ &nbsp; Overview</button>
-<button class="nav-link" onclick="showPage('products',this)">📦 &nbsp; Products</button>
-<button class="nav-link" onclick="showPage('orders',this)">🛒 &nbsp; Orders</button>
-<button class="nav-link" onclick="showPage('customers',this)">👥 &nbsp; Customers</button>
+<button class="nav active" onclick="showPage('overview',this)">
+<span>◫</span>Overview
+</button>
 
-<div class="nav-label">STORE MANAGEMENT</div>
+<button class="nav" onclick="showPage('products',this)">
+<span>▣</span>Products
+</button>
 
-<button class="nav-link" onclick="showPage('branding',this)">🎨 &nbsp; Store Branding</button>
-<button class="nav-link" onclick="showPage('payments',this)">💳 &nbsp; Payments</button>
-<button class="nav-link" onclick="showPage('repeat',this)">⭐ &nbsp; Repeat Discounts</button>
+<button class="nav" onclick="showPage('orders',this)">
+<span>⇄</span>Order Pipeline
+</button>
 
-<div class="nav-label">OTHER MANAGEMENT</div>
+<button class="nav" onclick="showPage('customers',this)">
+<span>♙</span>Customers
+</button>
 
-<a class="nav-link" href="admin-affiliates.html">🤝 &nbsp; Affiliates</a>
-<a class="nav-link" href="admin-coupons.html">🎟️ &nbsp; Coupons</a>
-<a class="nav-link" href="admin-sales.html">📊 &nbsp; Sales Reports</a>
+<div class="nav-label">BUSINESS</div>
 
-<div style="margin-top:auto;padding-top:20px">
-<button class="secondary" style="width:100%" onclick="logoutAdmin()">Logout</button>
+<button class="nav" onclick="showPage('schedule',this)">
+<span>▦</span>Schedule
+</button>
+
+<button class="nav" onclick="showPage('growth',this)">
+<span>↗</span>Growth & Reports
+</button>
+
+<button class="nav" onclick="showPage('payments',this)">
+<span>◈</span>Payments
+</button>
+
+<button class="nav" onclick="showPage('branding',this)">
+<span>✧</span>Store Branding
+</button>
+
+<div class="nav-label">MANAGEMENT</div>
+
+<a class="nav" href="admin-affiliates.html">
+<span>♧</span>Affiliates
+</a>
+
+<a class="nav" href="admin-coupons.html">
+<span>◇</span>Coupons
+</a>
+
+<button class="nav" onclick="showPage('repeat',this)">
+<span>☆</span>Repeat Discounts
+</button>
+
+<div class="side-bottom">
+<button class="secondary" style="width:100%" onclick="logoutAdmin()">↪ Logout</button>
 </div>
 
 </aside>
@@ -598,51 +681,56 @@ flex-direction:column
 <main class="main">
 
 <header class="topbar">
-
-<div style="display:flex;align-items:center;gap:12px">
-<button class="secondary" onclick="toggleSidebar()">☰</button>
-<strong style="color:var(--gold)">MR PRODUCT</strong>
+<div class="top-left">
+<button class="icon-btn mobile-menu" onclick="toggleSidebar()">☰</button>
+<b style="color:var(--gold2)">MR PRODUCT</b>
+<span class="pill">LIVE STORE</span>
 </div>
 
-<div style="display:flex;align-items:center;gap:12px">
-<input type="search" placeholder="Search products..." oninput="searchProducts(this.value)">
+<div class="top-right">
+<input class="search" type="search" placeholder="Search products..." oninput="searchProducts(this.value)">
 <span class="muted" id="todayLabel"></span>
 </div>
-
 </header>
 
 
 <div class="content">
 
-<!-- OVERVIEW -->
-
 <section id="page-overview" class="page active">
 
-<div class="welcome">
-<h1>Welcome to MR PRODUCT</h1>
-<p>Store overview and business performance.</p>
+<div class="hero">
+<div>
+<div class="eyebrow">YOUR BUSINESS AT A GLANCE</div>
+<h2>Welcome back to MR PRODUCT</h2>
+<p>Manage orders, customers and store performance from one workspace.</p>
+</div>
+<div class="hero-badge">✦ Premium Commerce CRM</div>
 </div>
 
 <div class="stats">
 
 <div class="stat">
-<small>TOTAL SALES (PAID)</small>
+<small>PAID REVENUE</small>
 <strong id="statSales">৳0</strong>
+<div class="trend">● Payment received</div>
 </div>
 
 <div class="stat">
 <small>TOTAL ORDERS</small>
 <strong id="statOrders">0</strong>
+<div class="trend">● All order records</div>
 </div>
 
 <div class="stat">
-<small>TOTAL PRODUCTS</small>
+<small>ACTIVE PRODUCTS</small>
 <strong id="statProducts">0</strong>
+<div class="trend">● Product catalogue</div>
 </div>
 
 <div class="stat">
-<small>TOTAL CUSTOMERS</small>
+<small>CUSTOMERS</small>
 <strong id="statCustomers">0</strong>
+<div class="trend">● Customer records</div>
 </div>
 
 </div>
@@ -650,61 +738,58 @@ flex-direction:column
 <div class="two-col">
 
 <div class="card">
-<h3>Sales Overview</h3>
-<div class="chart-box">
+<h3>Revenue Overview · Last 7 Days</h3>
+<div class="chart">
 <canvas id="overviewChart"></canvas>
 </div>
 </div>
 
 <div class="card">
+<h3>Order Pipeline</h3>
 
-<h3>Order Summary</h3>
+<div class="summary-row"><span>Pending</span><b id="sumPending">0</b></div>
+<div class="summary-row"><span>Processing</span><b id="sumProcessing">0</b></div>
+<div class="summary-row"><span>Shipped</span><b id="sumShipped">0</b></div>
+<div class="summary-row"><span>Delivered</span><b id="sumDelivered">0</b></div>
+<div class="summary-row"><span>Cancelled</span><b id="sumCancelled">0</b></div>
 
-<p>Pending Orders <strong id="sumPending">0</strong></p>
-<p>Processing Orders <strong id="sumProcessing">0</strong></p>
-<p>Shipped Orders <strong id="sumShipped">0</strong></p>
-<p>Delivered Orders <strong id="sumDelivered">0</strong></p>
-<p>Cancelled Orders <strong id="sumCancelled">0</strong></p>
+</div>
+</div>
 
+<div class="stats" style="margin-top:15px">
+
+<div class="stat">
+<small>PENDING PAYMENTS</small>
+<strong id="pendingPayments">৳0</strong>
+</div>
+
+<div class="stat">
+<small>PAID PAYMENTS</small>
+<strong id="paidPayments">৳0</strong>
+</div>
+
+<div class="stat">
+<small>ORDER COUNT</small>
+<strong id="totalOrders">0</strong>
+</div>
+
+<div class="stat">
+<small>DELIVERED ORDERS</small>
+<strong id="deliveredCount">0</strong>
 </div>
 
 </div>
-
-<div class="card" style="margin-top:15px">
-
-<h3>Payment Overview</h3>
-
-<div class="stats">
-
-<div>
-<small class="muted">Pending Payments</small>
-<h2 id="pendingPayments">৳0</h2>
-</div>
-
-<div>
-<small class="muted">Paid Payments</small>
-<h2 id="paidPayments">৳0</h2>
-</div>
-
-<div>
-<small class="muted">Total Orders</small>
-<h2 id="totalOrders">0</h2>
-</div>
-
-</div>
-
-</div>
-
 </section>
 
-
-<!-- PRODUCTS -->
 
 <section id="page-products" class="page">
 
 <div class="page-head">
+<div>
+<div class="eyebrow">CATALOGUE</div>
 <h1>Product Management</h1>
-<button onclick="loadProducts()">Refresh Products</button>
+</div>
+<button onclick="loadProducts()">↻ Refresh</button>
 </div>
 
 <details class="section-card" open>
@@ -724,84 +809,57 @@ flex-direction:column
 
 <div>
 <label>Price (৳)</label>
-<input id="productPrice" type="number" min="0" placeholder="Price">
+<input id="productPrice" type="number" min="0">
 </div>
 
 <div>
 <label>Cost Price (৳)</label>
-<input id="costPrice" type="number" min="0" placeholder="Cost price">
+<input id="costPrice" type="number" min="0">
 </div>
 
 <div>
 <label>Discount Price (৳)</label>
-<input id="productDiscount" type="number" min="0" placeholder="Discount price">
+<input id="productDiscount" type="number" min="0">
 </div>
 
 <div>
 <label>Stock</label>
-<input id="productStock" type="number" min="0" placeholder="Stock quantity">
+<input id="productStock" type="number" min="0">
 </div>
 
 <div>
 <label>Category</label>
-<input id="productCategory" placeholder="Category">
+<input id="productCategory">
 </div>
 
 </div>
 
 <label>Description</label>
-<textarea id="productDescription" placeholder="Product details"></textarea>
-
-
-<!-- DIRECT GALLERY IMAGE UPLOAD -->
+<textarea id="productDescription"></textarea>
 
 <div class="upload-box">
-
-<div class="upload-title">📸 Product Image Upload</div>
-
-<label>Select Image From Phone Gallery</label>
-
-<input
-id="productImageFile"
-type="file"
-accept="image/*"
-onchange="previewProductImage(this)"
->
-
-<p class="upload-hint">
-Choose a product photo directly from your iPhone or Android Gallery.
-Maximum image size: 5 MB.
-</p>
-
-<img
-id="productImagePreview"
-class="preview"
-alt="Product Image Preview"
->
-
+<b style="color:var(--gold2)">Product image</b>
+<label>Select from phone gallery</label>
+<input id="productImageFile" type="file" accept="image/*" onchange="previewProductImage(this)">
+<p class="muted">JPG, PNG, WEBP or GIF · Maximum 5 MB</p>
+<img id="productImagePreview" class="preview" alt="Preview">
 </div>
 
-
-<button onclick="addProduct()" id="addProductButton">Add Product</button>
-
-<button class="secondary" onclick="clearProductForm()">Clear Form</button>
+<button id="addProductButton" onclick="addProduct()">Add Product</button>
+<button class="secondary" onclick="clearProductForm()">Clear</button>
 
 </div>
 </details>
 
 
 <details class="section-card" open>
-
-<summary>📦 All Products</summary>
+<summary>All Products</summary>
 
 <div class="section-body">
-
 <div id="productsMessage" class="status"></div>
 
 <div class="table-wrap">
-
 <table>
-
 <thead>
 <tr>
 <th>Image</th>
@@ -813,36 +871,37 @@ alt="Product Image Preview"
 <th>Actions</th>
 </tr>
 </thead>
-
 <tbody id="productsTable">
 <tr><td colspan="7">Loading...</td></tr>
 </tbody>
-
 </table>
-
 </div>
-
 </div>
 </details>
 
 </section>
 
 
-<!-- ORDERS -->
-
 <section id="page-orders" class="page">
 
 <div class="page-head">
-<h1>Order Management</h1>
-<button onclick="loadOrders()">Refresh Orders</button>
+<div>
+<div class="eyebrow">FULFILMENT WORKSPACE</div>
+<h1>Order Pipeline</h1>
+</div>
+<button onclick="loadOrders()">↻ Refresh Orders</button>
 </div>
 
 <div id="ordersMessage" class="status"></div>
 
+<div class="kanban" id="orderKanban"></div>
+
+<details class="section-card" open>
+<summary>All Orders · Update status</summary>
+
+<div class="section-body">
 <div class="table-wrap">
-
 <table>
-
 <thead>
 <tr>
 <th>Order</th>
@@ -853,48 +912,44 @@ alt="Product Image Preview"
 <th>Payment</th>
 <th>Order Status</th>
 <th>Payment Status</th>
-<th>Update</th>
+<th>Save</th>
 </tr>
 </thead>
-
-<tbody id="ordersTable">
-<tr><td colspan="9">Loading...</td></tr>
-</tbody>
-
+<tbody id="ordersTable"></tbody>
 </table>
-
 </div>
+</div>
+</details>
 
 </section>
 
 
-<!-- CUSTOMERS -->
-
 <section id="page-customers" class="page">
 
 <div class="page-head">
-<h1>Customer Overview</h1>
-<button onclick="loadCustomerAndPaymentViews()">Refresh</button>
+<div>
+<div class="eyebrow">RELATIONSHIP MANAGEMENT</div>
+<h1>Customer Directory</h1>
+</div>
+<button onclick="loadCustomerAndPaymentViews()">↻ Refresh</button>
 </div>
 
 <div class="stats">
 
 <div class="stat">
-<small>Total Customers</small>
+<small>TOTAL CUSTOMERS</small>
 <strong id="totalCustomers">0</strong>
 </div>
 
 <div class="stat">
-<small>Customer Orders</small>
+<small>CUSTOMER ORDERS</small>
 <strong id="customerOrders">0</strong>
 </div>
 
 </div>
 
 <div class="table-wrap">
-
 <table>
-
 <thead>
 <tr>
 <th>Name</th>
@@ -904,26 +959,87 @@ alt="Product Image Preview"
 <th>Total Spent</th>
 </tr>
 </thead>
-
 <tbody id="customersTable"></tbody>
-
 </table>
-
 </div>
 
 </section>
 
 
-<!-- BRANDING -->
+<section id="page-schedule" class="page">
+
+<div class="page-head">
+<div>
+<div class="eyebrow">FULFILMENT PLANNER</div>
+<h1>Order Schedule</h1>
+</div>
+<button onclick="loadOrders()">↻ Refresh</button>
+</div>
+
+<div class="card">
+<h3>Upcoming order activity</h3>
+<p class="muted">Schedule view is based on the order creation dates currently available in your database.</p>
+<div id="scheduleList"></div>
+</div>
+
+</section>
+
+
+<section id="page-growth" class="page">
+
+<div class="page-head">
+<div>
+<div class="eyebrow">BUSINESS PERFORMANCE</div>
+<h1>Growth & Reports</h1>
+</div>
+<button onclick="loadOrders()">↻ Refresh Data</button>
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<small>PAID REVENUE</small>
+<strong id="growthRevenue">৳0</strong>
+</div>
+
+<div class="stat">
+<small>AVERAGE ORDER VALUE</small>
+<strong id="averageOrder">৳0</strong>
+</div>
+
+<div class="stat">
+<small>DELIVERED ORDERS</small>
+<strong id="growthDelivered">0</strong>
+</div>
+
+<div class="stat">
+<small>UNPAID VALUE</small>
+<strong id="growthPending">৳0</strong>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Revenue chart</h3>
+<div class="chart">
+<canvas id="growthChart"></canvas>
+</div>
+<p class="muted">Revenue counts paid, non-cancelled orders only. Profit reporting requires verified product cost data and is not estimated here.</p>
+</div>
+
+</section>
+
 
 <section id="page-branding" class="page">
 
 <div class="page-head">
+<div>
+<div class="eyebrow">STORE IDENTITY</div>
 <h1>Store Profile & Branding</h1>
+</div>
 </div>
 
 <div class="card">
-
 <div id="storeMessage" class="status"></div>
 
 <div class="grid">
@@ -955,41 +1071,40 @@ alt="Product Image Preview"
 
 </div>
 
-<label>Store Description</label>
+<label>Description</label>
 <textarea id="storeDescription"></textarea>
 
-<label>Logo Image</label>
+<label>Logo</label>
 <input id="logoFile" type="file" accept="image/*" onchange="previewFile(this,'logoPreview')">
 <img id="logoPreview" class="preview">
 
-<label>Banner Image</label>
+<label>Banner</label>
 <input id="bannerFile" type="file" accept="image/*" onchange="previewFile(this,'bannerPreview')">
 <img id="bannerPreview" class="preview">
 
 <button onclick="saveStoreSettings()">Save Store Settings</button>
-
 </div>
 
 </section>
 
 
-<!-- PAYMENTS -->
-
 <section id="page-payments" class="page">
 
 <div class="page-head">
+<div>
+<div class="eyebrow">CHECKOUT CONFIGURATION</div>
 <h1>Payment Settings</h1>
+</div>
 </div>
 
 <div class="card">
-
 <div id="paymentMessage" class="status"></div>
 
 <label>bKash Number</label>
-<input id="bkashNumber" placeholder="bKash number">
+<input id="bkashNumber">
 
 <label>Nagad Number</label>
-<input id="nagadNumber" placeholder="Nagad number">
+<input id="nagadNumber">
 
 <label>Bank Details</label>
 <textarea id="bankDetails"></textarea>
@@ -998,24 +1113,22 @@ alt="Product Image Preview"
 <textarea id="paymentInstructions"></textarea>
 
 <button onclick="savePaymentSettings()">Save Payment Settings</button>
-
-<p class="muted">Cash on Delivery is not enabled here.</p>
-
+<p class="muted">Cash on Delivery remains disabled.</p>
 </div>
 
 </section>
 
 
-<!-- REPEAT DISCOUNTS -->
-
 <section id="page-repeat" class="page">
 
 <div class="page-head">
+<div>
+<div class="eyebrow">LOYALTY PROGRAM</div>
 <h1>Repeat Customer Discounts</h1>
+</div>
 </div>
 
 <div class="card">
-
 <div id="repeatDiscountMessage" class="status"></div>
 
 <div class="grid">
@@ -1034,12 +1147,8 @@ alt="Product Image Preview"
 
 <button onclick="addRepeatDiscountTier()">Add Discount Level</button>
 
-<hr>
-
-<div class="table-wrap">
-
+<div class="table-wrap" style="margin-top:15px">
 <table>
-
 <thead>
 <tr>
 <th>Delivered Orders</th>
@@ -1048,15 +1157,11 @@ alt="Product Image Preview"
 <th>Action</th>
 </tr>
 </thead>
-
 <tbody id="repeatDiscountTable"></tbody>
-
 </table>
-
 </div>
 
 </div>
-
 </section>
 
 </div>
@@ -1070,11 +1175,9 @@ const SUPABASE_URL=CONFIG.supabaseUrl||"";
 const SUPABASE_KEY=CONFIG.publishableKey||"";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
 const $=id=>document.getElementById(id);
 
 const money=n=>"৳"+Number(n||0).toLocaleString("en-BD",{
-minimumFractionDigits:0,
 maximumFractionDigits:2
 });
 
@@ -1092,13 +1195,12 @@ let repeatDiscountCache=[];
 let currentAdmin=null;
 
 
-/* GENERAL */
-
 function msg(id,text,type="success"){
 const el=$(id);
-if(!el)return;
+if(el){
 el.textContent=text;
 el.className="status "+type;
+}
 }
 
 function showLogin(){
@@ -1119,24 +1221,26 @@ function showPage(name,button){
 
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 
-const page=$("page-"+name);
-if(page)page.classList.add("active");
+$("page-"+name)?.classList.add("active");
 
-document.querySelectorAll(".nav-link").forEach(b=>b.classList.remove("active"));
+document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
 
-if(button)button.classList.add("active");
+button?.classList.add("active");
 
 $("sidebar").classList.remove("open");
+
+if(name==="orders")renderKanban();
+if(name==="schedule")renderSchedule();
+if(name==="growth")renderGrowth();
+
 }
 
-
-/* API */
 
 async function api(fn,method="GET",body=null){
 
 const {data:{session}}=await db.auth.getSession();
 
-if(!session)throw new Error("Please login again.");
+if(!session)throw Error("Please login again.");
 
 const options={
 method,
@@ -1155,10 +1259,9 @@ const {data,error}=await db.functions.invoke(fn,options);
 if(error)throw error;
 
 return data||{};
+
 }
 
-
-/* ADMIN LOGIN */
 
 async function checkAdmin(){
 
@@ -1218,16 +1321,16 @@ password
 
 if(error)throw error;
 
-const {data:admin,error:adminError}=await db
+const {data:admin,error:ae}=await db
 .from("admin_users")
 .select("user_id,role,is_active")
 .eq("user_id",data.user.id)
 .eq("is_active",true)
 .maybeSingle();
 
-if(adminError||!admin){
+if(ae||!admin){
 await db.auth.signOut();
-throw new Error("This account is not an active admin.");
+throw Error("This account is not an active admin.");
 }
 
 currentAdmin=data.user;
@@ -1260,60 +1363,80 @@ if(event==="SIGNED_OUT")showLogin();
 });
 
 
-/* PRODUCT IMAGE PREVIEW */
-
 function previewProductImage(input){
 
-const file=input.files&&input.files[0];
+const f=input.files?.[0];
+const p=$("productImagePreview");
 
-const preview=$("productImagePreview");
-
-if(!file){
-preview.src="";
-preview.style.display="none";
+if(!f){
+p.style.display="none";
 return;
 }
 
-if(!file.type.startsWith("image/")){
+if(!f.type.startsWith("image/")||f.size>5*1024*1024){
 
 input.value="";
+p.style.display="none";
 
-preview.src="";
-preview.style.display="none";
+return msg("productMessage","Choose an image under 5 MB.","error");
 
-msg("productMessage","Please select a valid image file.","error");
+}
 
-return;
+if(p.dataset.url)URL.revokeObjectURL(p.dataset.url);
+
+p.dataset.url=URL.createObjectURL(f);
+p.src=p.dataset.url;
+p.style.display="block";
+
+msg("productMessage","Image selected.");
+
+}
+
+
+async function uploadImage(file,path){
+
+if(!file)return null;
+
+const types=[
+"image/jpeg",
+"image/png",
+"image/webp",
+"image/gif"
+];
+
+if(!types.includes(file.type)){
+throw Error("Choose JPG, PNG, WEBP or GIF.");
 }
 
 if(file.size>5*1024*1024){
-
-input.value="";
-
-preview.src="";
-preview.style.display="none";
-
-msg("productMessage","Image size must be less than 5 MB.","error");
-
-return;
+throw Error("Image must be under 5 MB.");
 }
 
-if(preview.dataset.objectUrl){
-URL.revokeObjectURL(preview.dataset.objectUrl);
+const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+
+const safe=["jpg","jpeg","png","webp","gif"].includes(ext)
+?ext:"jpg";
+
+const name=
+path+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+safe;
+
+/* Bucket ID matches your Supabase screenshot: Store-assets */
+
+const {data,error}=await db.storage
+.from("Store-assets")
+.upload(name,file,{
+upsert:false,
+contentType:file.type
+});
+
+if(error)throw error;
+
+return db.storage
+.from("Store-assets")
+.getPublicUrl(data.path).data.publicUrl;
+
 }
 
-const objectUrl=URL.createObjectURL(file);
-
-preview.dataset.objectUrl=objectUrl;
-preview.src=objectUrl;
-preview.style.display="block";
-
-msg("productMessage","Image selected. Preview is ready.");
-
-}
-
-
-/* ADD PRODUCT WITH GALLERY IMAGE */
 
 async function addProduct(){
 
@@ -1322,94 +1445,40 @@ const price=Number($("productPrice").value);
 const file=$("productImageFile").files[0];
 
 if(!name||$("productPrice").value===""||!Number.isFinite(price)||price<0){
-
-return msg(
-"productMessage",
-"Enter a valid product name and price.",
-"error"
-);
-
+return msg("productMessage","Enter a valid name and price.","error");
 }
 
 if(!file){
-
-return msg(
-"productMessage",
-"Please select a product image from your Gallery.",
-"error"
-);
-
-}
-
-if(!file.type.startsWith("image/")){
-
-return msg(
-"productMessage",
-"Please select a valid image.",
-"error"
-);
-
-}
-
-if(file.size>5*1024*1024){
-
-return msg(
-"productMessage",
-"Image size must be less than 5 MB.",
-"error"
-);
-
+return msg("productMessage","Select a product image.","error");
 }
 
 const b=$("addProductButton");
 
 b.disabled=true;
-b.textContent="Uploading Image...";
+b.textContent="Uploading...";
 
 try{
 
-/* Upload image to Supabase Storage */
-
-const imageUrl=await uploadImage(file,"products");
-
-if(!imageUrl){
-throw new Error("Image upload failed. Please try again.");
-}
-
-b.textContent="Saving Product...";
-
-/* Save product information */
+const image_url=await uploadImage(file,"products");
 
 await api("admin-products","POST",{
 
 name,
-
 description:$("productDescription").value.trim(),
-
 price,
-
 cost_price:Number($("costPrice").value||0),
-
 discount_price:$("productDiscount").value
 ?Number($("productDiscount").value)
 :null,
-
 stock:Number($("productStock").value||0),
-
 category:$("productCategory").value.trim(),
-
-image_url:imageUrl,
-
+image_url,
 is_active:true,
-
 active:true
 
 });
 
-msg(
-"productMessage",
-"Product and image uploaded successfully!"
-);
+msg("productMessage","Product and image saved.");
 
 clearProductForm();
 
@@ -1417,11 +1486,7 @@ await loadProducts();
 
 }catch(e){
 
-msg(
-"productMessage",
-e.message||"Product upload failed.",
-"error"
-);
+msg("productMessage",e.message,"error");
 
 }finally{
 
@@ -1432,8 +1497,6 @@ b.textContent="Add Product";
 
 }
 
-
-/* CLEAR PRODUCT FORM */
 
 function clearProductForm(){
 
@@ -1448,21 +1511,11 @@ function clearProductForm(){
 ].forEach(id=>$(id).value="");
 
 $("productImageFile").value="";
-
-const preview=$("productImagePreview");
-
-if(preview.dataset.objectUrl){
-URL.revokeObjectURL(preview.dataset.objectUrl);
-}
-
-preview.removeAttribute("src");
-preview.style.display="none";
-delete preview.dataset.objectUrl;
+$("productImagePreview").removeAttribute("src");
+$("productImagePreview").style.display="none";
 
 }
 
-
-/* LOAD PRODUCTS */
 
 async function loadProducts(){
 
@@ -1492,14 +1545,11 @@ function renderProducts(list){
 $("productsTable").innerHTML=list.map(p=>{
 
 const id=esc(p.id);
-
 const active=p.is_active!==false&&p.active!==false;
 
 return `<tr>
 
-<td>
-${p.image_url?`<img class="product-img" src="${esc(p.image_url)}">`:"—"}
-</td>
+<td>${p.image_url?`<img class="product-img" src="${esc(p.image_url)}">`:"—"}</td>
 
 <td>${esc(p.name)}</td>
 
@@ -1515,9 +1565,7 @@ ${p.image_url?`<img class="product-img" src="${esc(p.image_url)}">`:"—"}
 
 <button class="small secondary" onclick="editProduct('${id}')">Edit</button>
 
-<button class="small secondary" onclick="toggleProduct('${id}')">
-${active?"Hide":"Show"}
-</button>
+<button class="small secondary" onclick="toggleProduct('${id}')">${active?"Hide":"Show"}</button>
 
 <button class="small danger" onclick="deleteProduct('${id}')">Delete</button>
 
@@ -1560,17 +1608,11 @@ if(discount===null)return;
 try{
 
 await api("admin-products","PATCH",{
-
 id,
-
 name,
-
 price:Number(price),
-
 stock:Number(stock),
-
 discount_price:discount===""?null:Number(discount)
-
 });
 
 msg("productsMessage","Product updated.");
@@ -1632,8 +1674,6 @@ msg("productsMessage",e.message,"error");
 }
 
 
-/* ORDERS */
-
 const statusList=[
 "pending",
 "confirmed",
@@ -1678,10 +1718,12 @@ ordersCache=Array.isArray(r)?r:(r.orders||r.data||[]);
 $("statOrders").textContent=ordersCache.length;
 
 renderOrders();
-
+renderKanban();
+renderSchedule();
 updatePaymentOverview();
-
+updateSummary();
 drawChart();
+renderGrowth();
 
 }catch(e){
 
@@ -1697,21 +1739,15 @@ function renderOrders(){
 $("ordersTable").innerHTML=ordersCache.map(o=>{
 
 const c=customerOf(o);
-
 const id=esc(o.id);
 
 return `<tr>
 
 <td>${esc(o.order_number||o.id)}</td>
-
 <td>${esc(c.name||o.customer_name||"-")}</td>
-
 <td>${esc(c.phone||o.phone||"-")}</td>
-
 <td>${esc(c.address||o.address||"-")}</td>
-
 <td>${money(o.grand_total)}</td>
-
 <td>${esc(o.payment_method||"-")}</td>
 
 <td>
@@ -1737,21 +1773,87 @@ ${options(paymentList,o.payment_status||"pending")}
 }
 
 
+function renderKanban(){
+
+const cols=[
+"pending",
+"confirmed",
+"processing",
+"shipped",
+"delivered",
+"cancelled"
+];
+
+const el=$("orderKanban");
+
+if(!el)return;
+
+el.innerHTML=cols.map(s=>{
+
+const items=ordersCache.filter(o=>(o.order_status||"pending")===s);
+
+return `<div class="kanban-col">
+
+<div class="kanban-head">
+<span>${s[0].toUpperCase()+s.slice(1)}</span>
+<span class="pill">${items.length}</span>
+</div>
+
+${items.map(o=>{
+
+const c=customerOf(o);
+
+return `<div class="order-card">
+
+<b>${esc(o.order_number||o.id)}</b>
+
+<small>${esc(c.name||o.customer_name||"Customer")}</small>
+
+<small>${money(o.grand_total)} · ${esc(o.payment_status||"pending")}</small>
+
+<select onchange="quickOrderStatus('${esc(o.id)}',this.value)">
+${options(cols,s)}
+</select>
+
+</div>`;
+
+}).join("")||'<p class="muted">No orders</p>'}
+
+</div>`;
+
+}).join("");
+
+}
+
+
+async function quickOrderStatus(id,status){
+
+try{
+
+await api("admin-orders","PATCH",{id,order_status:status});
+
+await loadOrders();
+
+}catch(e){
+
+msg("ordersMessage",e.message,"error");
+
+}
+
+}
+
+
 async function updateOrder(id){
 
 try{
 
 await api("admin-orders","PATCH",{
-
 id,
-
 order_status:$("st-"+id).value,
-
 payment_status:$("pay-"+id).value
-
 });
 
-msg("ordersMessage","Order updated successfully.");
+msg("ordersMessage","Order updated.");
 
 await loadOrders();
 
@@ -1774,13 +1876,9 @@ ordersCache.forEach(o=>{
 if(o.order_status==="cancelled")return;
 
 if(o.payment_status==="paid"){
-
 paid+=Number(o.grand_total||0);
-
 }else{
-
 pending+=Number(o.grand_total||0);
-
 }
 
 });
@@ -1790,10 +1888,11 @@ $("paidPayments").textContent=money(paid);
 $("totalOrders").textContent=ordersCache.length;
 $("statSales").textContent=money(paid);
 
+$("deliveredCount").textContent=
+ordersCache.filter(o=>o.order_status==="delivered").length;
+
 }
 
-
-/* CUSTOMERS */
 
 async function loadCustomerAndPaymentViews(){
 
@@ -1820,17 +1919,11 @@ $("customerOrders").textContent=cs.reduce(
 $("customersTable").innerHTML=cs.map(c=>`
 
 <tr>
-
 <td>${esc(c.name||"-")}</td>
-
 <td>${esc(c.phone||"-")}</td>
-
 <td>${esc(c.address||"-")}</td>
-
 <td>${Number(c.total_orders||0)}</td>
-
 <td>${money(c.total_spent)}</td>
-
 </tr>
 
 `).join("")||'<tr><td colspan="5">No customers found.</td></tr>';
@@ -1844,78 +1937,84 @@ $("customersTable").innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`;
 }
 
 
-/* IMAGE PREVIEW FOR BRANDING */
+function renderSchedule(){
+
+const el=$("scheduleList");
+
+if(!el)return;
+
+const sorted=[...ordersCache]
+.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+.slice(0,20);
+
+el.innerHTML=sorted.map(o=>`
+
+<div class="summary-row">
+
+<span>
+<b>${esc(o.order_number||o.id)}</b>
+· ${esc(customerOf(o).name||o.customer_name||"Customer")}
+</span>
+
+<span>
+${new Date(o.created_at).toLocaleDateString()}
+· ${esc(o.order_status||"pending")}
+</span>
+
+</div>
+
+`).join("")||'<p class="empty">No order activity yet.</p>';
+
+}
+
+
+function renderGrowth(){
+
+const paid=ordersCache
+.filter(o=>o.payment_status==="paid"&&o.order_status!=="cancelled")
+.reduce((s,o)=>s+Number(o.grand_total||0),0);
+
+const pending=ordersCache
+.filter(o=>o.payment_status!=="paid"&&o.order_status!=="cancelled")
+.reduce((s,o)=>s+Number(o.grand_total||0),0);
+
+const del=ordersCache.filter(o=>o.order_status==="delivered").length;
+
+$("growthRevenue").textContent=money(paid);
+
+$("averageOrder").textContent=money(
+ordersCache.length
+?paid/Math.max(1,ordersCache.filter(o=>o.payment_status==="paid").length)
+:0
+);
+
+$("growthDelivered").textContent=del;
+$("growthPending").textContent=money(pending);
+
+drawChart("growthChart");
+
+}
+
 
 function previewFile(input,id){
 
-const f=input.files&&input.files[0];
+const f=input.files?.[0];
 
 if(!f)return;
 
 const img=$(id);
 
 img.src=URL.createObjectURL(f);
-
 img.style.display="block";
 
 }
 
-
-/* SUPABASE STORAGE IMAGE UPLOAD */
-
-async function uploadImage(file,path){
-
-if(!file)return null;
-
-const allowedTypes=[
-"image/jpeg",
-"image/png",
-"image/webp",
-"image/gif"
-];
-
-if(!allowedTypes.includes(file.type)){
-throw new Error("Please select JPG, PNG, WEBP or GIF image.");
-}
-
-if(file.size>5*1024*1024){
-throw new Error("Image size must be less than 5 MB.");
-}
-
-const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
-
-const safeExt=["jpg","jpeg","png","webp","gif"].includes(ext)
-?ext:"jpg";
-
-const name=
-path+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+safeExt;
-
-const {data,error}=await db.storage
-.from("store-assets")
-.upload(name,file,{
-upsert:true,
-contentType:file.type
-});
-
-if(error)throw error;
-
-const {data:publicData}=db.storage
-.from("store-assets")
-.getPublicUrl(data.path);
-
-return publicData.publicUrl;
-
-}
-
-
-/* STORE SETTINGS */
 
 async function loadStoreSettings(){
 
 try{
 
 const r=await api("admin-settings","GET");
-
 const s=r.settings||r.data||r;
 
 $("storeName").value=s.store_name||"";
@@ -1926,17 +2025,13 @@ $("storeEmail").value=s.email||"";
 $("primaryColor").value=s.primary_color||"#c6a34b";
 
 if(s.logo_url){
-
 $("logoPreview").src=s.logo_url;
 $("logoPreview").style.display="block";
-
 }
 
 if(s.banner_url){
-
 $("bannerPreview").src=s.banner_url;
 $("bannerPreview").style.display="block";
-
 }
 
 }catch(e){
@@ -1953,32 +2048,25 @@ async function saveStoreSettings(){
 try{
 
 const logo=await uploadImage($("logoFile").files[0],"logos");
-
 const banner=await uploadImage($("bannerFile").files[0],"banners");
 
 const payload={
 
 store_name:$("storeName").value.trim(),
-
 description:$("storeDescription").value.trim(),
-
 phone:$("storePhone").value.trim(),
-
 whatsapp:$("storeWhatsapp").value.trim(),
-
 email:$("storeEmail").value.trim(),
-
 primary_color:$("primaryColor").value
 
 };
 
 if(logo)payload.logo_url=logo;
-
 if(banner)payload.banner_url=banner;
 
 await api("admin-settings","PATCH",payload);
 
-msg("storeMessage","Store settings saved successfully.");
+msg("storeMessage","Store settings saved.");
 
 }catch(e){
 
@@ -1989,14 +2077,11 @@ msg("storeMessage",e.message,"error");
 }
 
 
-/* PAYMENT SETTINGS */
-
 async function loadPaymentSettings(){
 
 try{
 
 const r=await api("admin-settings","GET");
-
 const s=r.settings||r.data||r;
 
 $("bkashNumber").value=s.bkash_number||"";
@@ -2020,11 +2105,8 @@ try{
 await api("admin-settings","PATCH",{
 
 bkash_number:$("bkashNumber").value.trim(),
-
 nagad_number:$("nagadNumber").value.trim(),
-
 bank_details:$("bankDetails").value.trim(),
-
 payment_instructions:$("paymentInstructions").value.trim()
 
 });
@@ -2039,8 +2121,6 @@ msg("paymentMessage",e.message,"error");
 
 }
 
-
-/* REPEAT DISCOUNTS */
 
 async function loadRepeatDiscountTiers(){
 
@@ -2070,15 +2150,10 @@ return `<tr>
 </td>
 
 <td>
-
 <select id="ra-${id}">
-
 <option value="true" ${t.is_active?"selected":""}>Active</option>
-
 <option value="false" ${!t.is_active?"selected":""}>Inactive</option>
-
 </select>
-
 </td>
 
 <td>
@@ -2101,17 +2176,10 @@ msg("repeatDiscountMessage",e.message,"error");
 async function saveRepeatDiscountTier(id){
 
 const p=Number($("rp-"+id).value);
-
 const a=$("ra-"+id).value==="true";
 
 if(!Number.isFinite(p)||p<0||p>100){
-
-return msg(
-"repeatDiscountMessage",
-"Discount must be between 0 and 100%.",
-"error"
-);
-
+return msg("repeatDiscountMessage","Discount must be 0–100%.","error");
 }
 
 try{
@@ -2143,17 +2211,10 @@ msg("repeatDiscountMessage",e.message,"error");
 async function addRepeatDiscountTier(){
 
 const n=Number($("newRepeatOrders").value);
-
 const p=Number($("newRepeatPercent").value);
 
 if(!Number.isInteger(n)||n<1||!Number.isFinite(p)||p<0||p>100){
-
-return msg(
-"repeatDiscountMessage",
-"Enter valid order count and discount.",
-"error"
-);
-
+return msg("repeatDiscountMessage","Enter valid order count and discount.","error");
 }
 
 try{
@@ -2184,17 +2245,15 @@ msg("repeatDiscountMessage",e.message,"error");
 }
 
 
-/* SALES CHART */
+function drawChart(id="overviewChart"){
 
-function drawChart(){
-
-const c=$("overviewChart");
+const c=$(id);
 
 if(!c)return;
 
 const w=c.clientWidth||500;
-const h=240;
-const dpr=window.devicePixelRatio||1;
+const h=250;
+const dpr=devicePixelRatio||1;
 
 c.width=w*dpr;
 c.height=h*dpr;
@@ -2202,41 +2261,35 @@ c.height=h*dpr;
 const x=c.getContext("2d");
 
 x.scale(dpr,dpr);
-
 x.clearRect(0,0,w,h);
 
-const days=7;
-const values=[];
+const vals=[];
 
-for(let i=days-1;i>=0;i--){
+for(let i=6;i>=0;i--){
 
 const d=new Date();
 
 d.setHours(0,0,0,0);
 d.setDate(d.getDate()-i);
 
-const next=new Date(d);
+const n=new Date(d);
+n.setDate(n.getDate()+1);
 
-next.setDate(next.getDate()+1);
-
-values.push(
-
+vals.push(
 ordersCache
 .filter(o=>
 o.payment_status==="paid"&&
 o.order_status!=="cancelled"&&
 new Date(o.created_at)>=d&&
-new Date(o.created_at)<next
+new Date(o.created_at)<n
 )
 .reduce((s,o)=>s+Number(o.grand_total||0),0)
-
 );
 
 }
 
-const max=Math.max(1,...values)*1.2;
-
-const pad=35;
+const max=Math.max(1,...vals)*1.2;
+const pad=28;
 const cw=w-pad*2;
 const ch=h-55;
 
@@ -2244,10 +2297,9 @@ x.font="10px Arial";
 
 for(let i=0;i<5;i++){
 
-let y=15+ch*i/4;
+const y=12+ch*i/4;
 
-x.strokeStyle="#333";
-
+x.strokeStyle="#39362f";
 x.beginPath();
 x.moveTo(pad,y);
 x.lineTo(w-pad,y);
@@ -2255,39 +2307,32 @@ x.stroke();
 
 }
 
-const pts=values.map((v,i)=>({
-
+const pts=vals.map((v,i)=>({
 x:pad+cw*i/6,
-
-y:15+ch-(v/max)*ch
-
+y:12+ch-(v/max)*ch
 }));
 
 x.beginPath();
 
-pts.forEach((p,i)=>{
+pts.forEach((p,i)=>
+i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y)
+);
 
-i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y);
-
-});
-
-x.strokeStyle="#c6a34b";
-x.lineWidth=2;
+x.strokeStyle="#c6a56a";
+x.lineWidth=2.5;
 x.stroke();
 
 pts.forEach(p=>{
 
 x.beginPath();
-x.arc(p.x,p.y,4,0,7);
-x.fillStyle="#e0bd63";
+x.arc(p.x,p.y,3.5,0,7);
+x.fillStyle="#e0c28a";
 x.fill();
 
 });
 
 }
 
-
-/* ORDER SUMMARY */
 
 function updateSummary(){
 
@@ -2318,34 +2363,24 @@ if(el)el.textContent=counts[s];
 }
 
 
-/* REFRESH ALL */
-
 async function refreshAll(){
 
 await Promise.allSettled([
 
 loadStoreSettings(),
-
 loadPaymentSettings(),
-
 loadProducts(),
-
 loadOrders(),
-
 loadCustomerAndPaymentViews(),
-
 loadRepeatDiscountTiers()
 
 ]);
 
 updateSummary();
-
 drawChart();
 
 }
 
-
-/* START */
 
 $("todayLabel").textContent=new Date().toLocaleDateString(
 "en-GB",
@@ -2357,11 +2392,13 @@ year:"numeric"
 }
 );
 
-window.addEventListener("resize",drawChart);
+window.addEventListener("resize",()=>{
+drawChart();
+drawChart("growthChart");
+});
 
 checkAdmin();
 
 </script>
-
 </body>
 </html>
