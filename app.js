@@ -51,10 +51,7 @@ function getProductImages(product) {
   } else if (typeof product.image_urls === "string") {
     try {
       const parsed = JSON.parse(product.image_urls);
-
-      if (Array.isArray(parsed)) {
-        images = parsed;
-      }
+      if (Array.isArray(parsed)) images = parsed;
     } catch {
       images = [];
     }
@@ -69,10 +66,7 @@ function getProductImages(product) {
     images.push(product.image_url);
   }
 
-  if (
-    product.image_url &&
-    !images.includes(product.image_url)
-  ) {
+  if (product.image_url && !images.includes(product.image_url)) {
     images.unshift(product.image_url);
   }
 
@@ -87,7 +81,6 @@ function changeGallery(productId, direction) {
   if (!product) return;
 
   const images = getProductImages(product);
-
   if (images.length <= 1) return;
 
   const current = galleryIndexes[productId] || 0;
@@ -107,7 +100,6 @@ function goToGalleryImage(productId, index) {
   if (!product) return;
 
   const images = getProductImages(product);
-
   if (index < 0 || index >= images.length) return;
 
   galleryIndexes[productId] = index;
@@ -124,7 +116,6 @@ function installGalleryStyles() {
   if ($("#mr-gallery-styles")) return;
 
   const style = document.createElement("style");
-
   style.id = "mr-gallery-styles";
 
   style.textContent = `
@@ -164,13 +155,8 @@ function installGalleryStyles() {
       justify-content: center;
     }
 
-    .mr-gallery-prev {
-      left: 8px;
-    }
-
-    .mr-gallery-next {
-      right: 8px;
-    }
+    .mr-gallery-prev { left: 8px; }
+    .mr-gallery-next { right: 8px; }
 
     .mr-gallery-dots {
       position: absolute;
@@ -262,10 +248,7 @@ function loadWishlist() {
       localStorage.getItem(WISHLIST_KEY) || "[]"
     );
 
-    return Array.isArray(saved)
-      ? saved.map(String)
-      : [];
-
+    return Array.isArray(saved) ? saved.map(String) : [];
   } catch {
     return [];
   }
@@ -343,40 +326,31 @@ function updateCouponTotals() {
     couponDiscount + repeat
   );
 
-  const total = Math.max(
-    0,
-    subtotal - totalDiscount
-  );
+  const total = Math.max(0, subtotal - totalDiscount);
 
   if ($("#dialog-total")) {
     $("#dialog-total").textContent = money(subtotal);
   }
 
   if ($("#dialog-discount")) {
-    $("#dialog-discount").textContent =
-      money(couponDiscount);
+    $("#dialog-discount").textContent = money(couponDiscount);
   }
 
   if ($("#dialog-repeat-discount")) {
-    $("#dialog-repeat-discount").textContent =
-      money(repeat);
+    $("#dialog-repeat-discount").textContent = money(repeat);
   }
 
   if ($("#dialog-total-discount")) {
-    $("#dialog-total-discount").textContent =
-      money(totalDiscount);
+    $("#dialog-total-discount").textContent = money(totalDiscount);
   }
 
   if ($("#dialog-grand-total")) {
-    $("#dialog-grand-total").textContent =
-      money(total);
+    $("#dialog-grand-total").textContent = money(total);
   }
 
   if ($("#repeat-order-count")) {
     $("#repeat-order-count").textContent =
-      Number(
-        repeatDiscount.previous_delivered_orders || 0
-      );
+      Number(repeatDiscount.previous_delivered_orders || 0);
   }
 
   if ($("#repeat-discount-percent")) {
@@ -413,7 +387,6 @@ function resetRepeatDiscount(message = "") {
 
 function getCheckoutCustomer() {
   const form = $("#order-form");
-
   if (!form) return null;
 
   const formData = new FormData(form);
@@ -450,15 +423,11 @@ async function previewRepeatDiscount() {
     resetRepeatDiscount(
       "Complete your phone number and delivery address to check your reward."
     );
-
     return;
   }
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    resetRepeatDiscount(
-      "Discount service is currently unavailable."
-    );
-
+    resetRepeatDiscount("Discount service is currently unavailable.");
     return;
   }
 
@@ -477,9 +446,7 @@ async function previewRepeatDiscount() {
       coupon_discount: getCouponDiscount()
     });
 
-    if (requestNumber !== repeatPreviewRequest) {
-      return;
-    }
+    if (requestNumber !== repeatPreviewRequest) return;
 
     if (result.ok !== true) {
       throw new Error(
@@ -491,22 +458,15 @@ async function previewRepeatDiscount() {
       previous_delivered_orders: Number(
         result.previous_delivered_orders || 0
       ),
-      repeat_percent: Number(
-        result.repeat_percent || 0
-      ),
-      repeat_discount: Number(
-        result.repeat_discount || 0
-      )
+      repeat_percent: Number(result.repeat_percent || 0),
+      repeat_discount: Number(result.repeat_discount || 0)
     };
 
     if ($("#repeat-discount-message")) {
-      if (repeatDiscount.repeat_percent > 0) {
-        $("#repeat-discount-message").textContent =
-          `Congratulations! You have ${repeatDiscount.repeat_percent}% repeat customer discount.`;
-      } else {
-        $("#repeat-discount-message").textContent =
-          "Your next repeat customer reward is waiting. Keep shopping with MR PRODUCT!";
-      }
+      $("#repeat-discount-message").textContent =
+        repeatDiscount.repeat_percent > 0
+          ? `Congratulations! You have ${repeatDiscount.repeat_percent}% repeat customer discount.`
+          : "Your next repeat customer reward is waiting. Keep shopping with MR PRODUCT!";
     }
 
     updateCouponTotals();
@@ -514,9 +474,7 @@ async function previewRepeatDiscount() {
   } catch (error) {
     console.error("Repeat discount preview error:", error);
 
-    if (requestNumber !== repeatPreviewRequest) {
-      return;
-    }
+    if (requestNumber !== repeatPreviewRequest) return;
 
     resetRepeatDiscount(
       "Unable to check your reward right now. Your order can still be submitted."
@@ -541,9 +499,7 @@ function clearAppliedCoupon(showMessage = false) {
 
   const input = $("#coupon-code");
 
-  if (input) {
-    input.value = "";
-  }
+  if (input) input.value = "";
 
   if ($("#coupon-message")) {
     $("#coupon-message").textContent = showMessage
@@ -579,8 +535,7 @@ async function applyCoupon() {
   }
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    message.textContent =
-      "Store database is not configured.";
+    message.textContent = "Store database is not configured.";
     return;
   }
 
@@ -615,8 +570,7 @@ async function applyCoupon() {
     appliedCoupon = null;
     updateCouponTotals();
 
-    message.textContent =
-      error.message || "Invalid coupon code.";
+    message.textContent = error.message || "Invalid coupon code.";
 
   } finally {
     button.disabled = false;
@@ -624,22 +578,16 @@ async function applyCoupon() {
 }
 
 if ($("#apply-coupon")) {
-  $("#apply-coupon").addEventListener(
-    "click",
-    applyCoupon
-  );
+  $("#apply-coupon").addEventListener("click", applyCoupon);
 }
 
 if ($("#coupon-code")) {
-  $("#coupon-code").addEventListener(
-    "keydown",
-    (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        applyCoupon();
-      }
+  $("#coupon-code").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyCoupon();
     }
-  );
+  });
 }
 
 // =====================================
@@ -662,9 +610,7 @@ async function loadStoreSettings() {
     );
 
     if (!response.ok) {
-      throw new Error(
-        "Could not load store settings."
-      );
+      throw new Error("Could not load store settings.");
     }
 
     const result = await response.json();
@@ -690,15 +636,11 @@ function applyStoreBranding(settings) {
 
     document.title = `${storeName} — Premium Store`;
 
-    document.querySelectorAll(".brand b").forEach(
-      (element) => {
-        element.textContent = storeName;
-      }
-    );
+    document.querySelectorAll(".brand b").forEach((element) => {
+      element.textContent = storeName;
+    });
 
-    const footerText = document.querySelector(
-      "footer > span"
-    );
+    const footerText = document.querySelector("footer > span");
 
     if (footerText) {
       footerText.innerHTML =
@@ -707,46 +649,32 @@ function applyStoreBranding(settings) {
   }
 
   if (settings.logo_url) {
-    document.querySelectorAll(".brand-mark").forEach(
-      (element) => {
-        element.innerHTML = "";
+    document.querySelectorAll(".brand-mark").forEach((element) => {
+      element.innerHTML = "";
 
-        const image = document.createElement("img");
+      const image = document.createElement("img");
+      image.src = settings.logo_url;
+      image.alt = settings.store_name || "Store Logo";
 
-        image.src = settings.logo_url;
-        image.alt = settings.store_name || "Store Logo";
+      image.style.width = "100%";
+      image.style.height = "100%";
+      image.style.objectFit = "contain";
+      image.style.display = "block";
 
-        image.style.width = "100%";
-        image.style.height = "100%";
-        image.style.objectFit = "contain";
-        image.style.display = "block";
-
-        element.appendChild(image);
-      }
-    );
+      element.appendChild(image);
+    });
   }
 
   if (settings.primary_color) {
     const color = settings.primary_color.trim();
 
     if (/^#[0-9a-fA-F]{6}$/.test(color)) {
-      document.documentElement.style.setProperty(
-        "--gold",
-        color
-      );
+      document.documentElement.style.setProperty("--gold", color);
+      document.documentElement.style.setProperty("--primary-color", color);
 
-      document.documentElement.style.setProperty(
-        "--primary-color",
-        color
-      );
+      const themeColor = $('meta[name="theme-color"]');
 
-      const themeColor = $(
-        'meta[name="theme-color"]'
-      );
-
-      if (themeColor) {
-        themeColor.content = color;
-      }
+      if (themeColor) themeColor.content = color;
     }
   }
 
@@ -755,11 +683,7 @@ function applyStoreBranding(settings) {
 
     if (saleBanner) {
       saleBanner.style.backgroundImage = `
-        linear-gradient(
-          90deg,
-          rgba(13,13,13,.94),
-          rgba(13,13,13,.55)
-        ),
+        linear-gradient(90deg, rgba(13,13,13,.94), rgba(13,13,13,.55)),
         url("${settings.banner_url}")
       `;
 
@@ -772,11 +696,7 @@ function applyStoreBranding(settings) {
 
     if (hero) {
       hero.style.backgroundImage = `
-        linear-gradient(
-          90deg,
-          rgba(13,13,13,.94),
-          rgba(13,13,13,.48)
-        ),
+        linear-gradient(90deg, rgba(13,13,13,.94), rgba(13,13,13,.48)),
         url("${settings.banner_url}")
       `;
 
@@ -788,36 +708,20 @@ function applyStoreBranding(settings) {
   if (settings.description) {
     const description = settings.description.trim();
 
-    const saleDescription = $(
-      ".sale-content p:not(.eyebrow)"
-    );
+    const saleDescription = $(".sale-content p:not(.eyebrow)");
+    if (saleDescription) saleDescription.textContent = description;
 
-    if (saleDescription) {
-      saleDescription.textContent = description;
-    }
+    const heroDescription = $(".hero-copy > p:not(.eyebrow)");
+    if (heroDescription) heroDescription.textContent = description;
 
-    const heroDescription = $(
-      ".hero-copy > p:not(.eyebrow)"
-    );
-
-    if (heroDescription) {
-      heroDescription.textContent = description;
-    }
-
-    const aboutDescription = $(
-      "#about > p:not(.eyebrow)"
-    );
-
-    if (aboutDescription) {
-      aboutDescription.textContent = description;
-    }
+    const aboutDescription = $("#about > p:not(.eyebrow)");
+    if (aboutDescription) aboutDescription.textContent = description;
   }
 
   const contactSection = $("#contact");
 
   if (contactSection) {
-    const contactParagraph =
-      contactSection.querySelector("div + p");
+    const contactParagraph = contactSection.querySelector("div + p");
 
     if (contactParagraph) {
       const contactItems = [];
@@ -826,15 +730,12 @@ function applyStoreBranding(settings) {
         contactItems.push({
           label: "Phone",
           value: settings.phone,
-          href:
-            "tel:" +
-            settings.phone.replace(/[^\d+]/g, "")
+          href: "tel:" + settings.phone.replace(/[^\d+]/g, "")
         });
       }
 
       if (settings.whatsapp) {
-        const number =
-          settings.whatsapp.replace(/\D/g, "");
+        const number = settings.whatsapp.replace(/\D/g, "");
 
         contactItems.push({
           label: "WhatsApp",
@@ -852,21 +753,19 @@ function applyStoreBranding(settings) {
       }
 
       if (contactItems.length) {
-        contactParagraph.innerHTML =
-          contactItems.map((item) => `
-            <div style="margin:10px 0">
-              <strong style="color:var(--gold)">
-                ${escapeHTML(item.label)}:
-              </strong>
-
-              <a
-                href="${escapeHTML(item.href)}"
-                style="color:var(--cream);text-decoration:underline"
-              >
-                ${escapeHTML(item.value)}
-              </a>
-            </div>
-          `).join("");
+        contactParagraph.innerHTML = contactItems.map((item) => `
+          <div style="margin:10px 0">
+            <strong style="color:var(--gold)">
+              ${escapeHTML(item.label)}:
+            </strong>
+            <a
+              href="${escapeHTML(item.href)}"
+              style="color:var(--cream);text-decoration:underline"
+            >
+              ${escapeHTML(item.value)}
+            </a>
+          </div>
+        `).join("");
       }
     }
   }
@@ -878,13 +777,10 @@ function applyStoreBranding(settings) {
 
 async function loadProducts() {
   const grid = $("#product-grid");
-
   if (!grid) return;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    grid.textContent =
-      "Store database is not configured.";
-
+    grid.textContent = "Store database is not configured.";
     return;
   }
 
@@ -901,9 +797,7 @@ async function loadProducts() {
       }
     );
 
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
+    if (!response.ok) throw new Error(await response.text());
 
     products = await response.json();
 
@@ -922,10 +816,7 @@ async function loadProducts() {
     renderWishlist();
 
   } catch (error) {
-    console.error(
-      "Product loading error:",
-      error
-    );
+    console.error("Product loading error:", error);
 
     grid.textContent =
       "Products could not be loaded. Please try again later.";
@@ -940,11 +831,7 @@ function createProductGallery(product) {
   const images = getProductImages(product);
 
   if (!images.length) {
-    return `
-      <div class="product-image">
-        MR
-      </div>
-    `;
+    return `<div class="product-image">MR</div>`;
   }
 
   const id = String(product.id);
@@ -961,7 +848,6 @@ function createProductGallery(product) {
       class="product-image mr-product-gallery ${images.length === 1 ? "single-image" : ""}"
       data-gallery="${escapeHTML(id)}"
     >
-
       <img
         src="${escapeHTML(currentImage)}"
         alt="${escapeHTML(product.name)}"
@@ -977,18 +863,14 @@ function createProductGallery(product) {
               class="mr-gallery-arrow mr-gallery-prev"
               data-gallery-prev="${escapeHTML(id)}"
               aria-label="Previous image"
-            >
-              ‹
-            </button>
+            >‹</button>
 
             <button
               type="button"
               class="mr-gallery-arrow mr-gallery-next"
               data-gallery-next="${escapeHTML(id)}"
               aria-label="Next image"
-            >
-              ›
-            </button>
+            >›</button>
 
             <span class="mr-gallery-counter">
               ${index + 1}/${images.length}
@@ -1008,7 +890,6 @@ function createProductGallery(product) {
           `
           : ""
       }
-
     </div>
   `;
 }
@@ -1029,7 +910,6 @@ function createProductCard(product, isWishlist = false) {
 
   return `
     <article class="product-card">
-
       ${image}
 
       ${
@@ -1069,7 +949,6 @@ function createProductCard(product, isWishlist = false) {
         isWishlist
           ? `
             <div class="wishlist-actions">
-
               <button
                 class="button gold-button"
                 data-add="${escapeHTML(id)}"
@@ -1083,10 +962,7 @@ function createProductCard(product, isWishlist = false) {
                 class="remove-wishlist"
                 data-wishlist-remove="${escapeHTML(id)}"
                 type="button"
-              >
-                Remove
-              </button>
-
+              >Remove</button>
             </div>
           `
           : `
@@ -1100,7 +976,6 @@ function createProductCard(product, isWishlist = false) {
             </button>
           `
       }
-
     </article>
   `;
 }
@@ -1110,39 +985,21 @@ function createProductCard(product, isWishlist = false) {
 // =====================================
 
 function handleGalleryClick(event) {
-  const previous = event.target.closest(
-    "[data-gallery-prev]"
-  );
-
-  const next = event.target.closest(
-    "[data-gallery-next]"
-  );
-
-  const dot = event.target.closest(
-    "[data-gallery-dot]"
-  );
+  const previous = event.target.closest("[data-gallery-prev]");
+  const next = event.target.closest("[data-gallery-next]");
+  const dot = event.target.closest("[data-gallery-dot]");
 
   if (previous) {
     event.preventDefault();
     event.stopPropagation();
-
-    changeGallery(
-      previous.dataset.galleryPrev,
-      -1
-    );
-
+    changeGallery(previous.dataset.galleryPrev, -1);
     return true;
   }
 
   if (next) {
     event.preventDefault();
     event.stopPropagation();
-
-    changeGallery(
-      next.dataset.galleryNext,
-      1
-    );
-
+    changeGallery(next.dataset.galleryNext, 1);
     return true;
   }
 
@@ -1172,54 +1029,35 @@ function installGallerySwipe(container) {
 
   container.dataset.swipeReady = "true";
 
-  container.addEventListener(
-    "pointerdown",
-    (event) => {
-      if (event.target.closest("button")) return;
+  container.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("button")) return;
 
-      galleryTouchPositions.set(
-        container,
-        event.clientX
-      );
-    }
-  );
+    galleryTouchPositions.set(container, event.clientX);
+  });
 
-  container.addEventListener(
-    "pointerup",
-    (event) => {
-      const startX = galleryTouchPositions.get(
-        container
-      );
+  container.addEventListener("pointerup", (event) => {
+    const startX = galleryTouchPositions.get(container);
+    if (startX === undefined) return;
 
-      if (startX === undefined) return;
+    galleryTouchPositions.delete(container);
 
-      galleryTouchPositions.delete(container);
+    const difference = event.clientX - startX;
+    if (Math.abs(difference) < 35) return;
 
-      const difference = event.clientX - startX;
+    const id = container.dataset.gallery;
 
-      if (Math.abs(difference) < 35) return;
+    changeGallery(id, difference < 0 ? 1 : -1);
+  });
 
-      const id = container.dataset.gallery;
-
-      changeGallery(
-        id,
-        difference < 0 ? 1 : -1
-      );
-    }
-  );
-
-  container.addEventListener(
-    "pointercancel",
-    () => {
-      galleryTouchPositions.delete(container);
-    }
-  );
+  container.addEventListener("pointercancel", () => {
+    galleryTouchPositions.delete(container);
+  });
 }
 
 function setupGallerySwipe() {
-  document.querySelectorAll(
-    ".mr-product-gallery"
-  ).forEach(installGallerySwipe);
+  document.querySelectorAll(".mr-product-gallery").forEach(
+    installGallerySwipe
+  );
 }
 
 // =====================================
@@ -1228,22 +1066,17 @@ function setupGallerySwipe() {
 
 function renderProducts() {
   const grid = $("#product-grid");
-
   if (!grid) return;
 
-  const filteredProducts = products.filter(
-    (product) => {
-      const searchText = [
-        product.name,
-        product.description,
-        product.category
-      ].join(" ").toLowerCase();
+  const filteredProducts = products.filter((product) => {
+    const searchText = [
+      product.name,
+      product.description,
+      product.category
+    ].join(" ").toLowerCase();
 
-      return searchText.includes(
-        searchTerm.toLowerCase()
-      );
-    }
-  );
+    return searchText.includes(searchTerm.toLowerCase());
+  });
 
   if (!filteredProducts.length) {
     grid.innerHTML = `
@@ -1252,7 +1085,6 @@ function renderProducts() {
         <p>Try another search.</p>
       </div>
     `;
-
     return;
   }
 
@@ -1277,9 +1109,7 @@ if (searchInput) {
       searchTerm = searchInput.value.trim();
       renderProducts();
 
-      $("#shop")?.scrollIntoView({
-        behavior: "smooth"
-      });
+      $("#shop")?.scrollIntoView({ behavior: "smooth" });
     }
   });
 }
@@ -1289,9 +1119,7 @@ if (searchButton) {
     searchTerm = searchInput?.value.trim() || "";
     renderProducts();
 
-    $("#shop")?.scrollIntoView({
-      behavior: "smooth"
-    });
+    $("#shop")?.scrollIntoView({ behavior: "smooth" });
   });
 }
 
@@ -1306,12 +1134,10 @@ function renderWishlist() {
   if (!grid || !count) return;
 
   const savedProducts = products.filter(
-    (product) =>
-      wishlist.includes(String(product.id))
+    (product) => wishlist.includes(String(product.id))
   );
 
-  count.textContent =
-    `${savedProducts.length} Saved`;
+  count.textContent = `${savedProducts.length} Saved`;
 
   if (!savedProducts.length) {
     grid.innerHTML = `
@@ -1321,14 +1147,11 @@ function renderWishlist() {
         <p>Explore products and save your favorites.</p>
       </div>
     `;
-
     return;
   }
 
   grid.innerHTML = savedProducts
-    .map((product) =>
-      createProductCard(product, true)
-    )
+    .map((product) => createProductCard(product, true))
     .join("");
 
   setupGallerySwipe();
@@ -1342,9 +1165,7 @@ function toggleWishlist(id) {
   id = String(id);
 
   if (wishlist.includes(id)) {
-    wishlist = wishlist.filter(
-      (item) => item !== id
-    );
+    wishlist = wishlist.filter((item) => item !== id);
   } else {
     wishlist.push(id);
   }
@@ -1359,15 +1180,10 @@ if (productGrid) {
   productGrid.addEventListener("click", (event) => {
     if (handleGalleryClick(event)) return;
 
-    const button = event.target.closest(
-      "[data-wishlist-toggle]"
-    );
-
+    const button = event.target.closest("[data-wishlist-toggle]");
     if (!button) return;
 
-    toggleWishlist(
-      button.dataset.wishlistToggle
-    );
+    toggleWishlist(button.dataset.wishlistToggle);
   });
 }
 
@@ -1375,15 +1191,10 @@ if (wishlistGrid) {
   wishlistGrid.addEventListener("click", (event) => {
     if (handleGalleryClick(event)) return;
 
-    const button = event.target.closest(
-      "[data-wishlist-remove]"
-    );
-
+    const button = event.target.closest("[data-wishlist-remove]");
     if (!button) return;
 
-    toggleWishlist(
-      button.dataset.wishlistRemove
-    );
+    toggleWishlist(button.dataset.wishlistRemove);
   });
 }
 
@@ -1407,27 +1218,20 @@ async function loadPaymentSettings() {
     );
 
     if (!response.ok) {
-      throw new Error(
-        "Could not load payment information."
-      );
+      throw new Error("Could not load payment information.");
     }
 
     const result = await response.json();
-
     paymentSettings = result.settings || null;
 
   } catch (error) {
-    console.error(
-      "Payment settings error:",
-      error
-    );
-
+    console.error("Payment settings error:", error);
     paymentSettings = null;
   }
 }
 
 // =====================================
-// SHOW PAYMENT DETAILS
+// SSL COMMERZ PAYMENT INFORMATION
 // =====================================
 
 function showPaymentDetails() {
@@ -1435,9 +1239,7 @@ function showPaymentDetails() {
   const infoText = $("#payment-info-text");
   const paymentSelect = $('select[name="payment"]');
 
-  if (!detailsBox || !infoText || !paymentSelect) {
-    return;
-  }
+  if (!detailsBox || !infoText || !paymentSelect) return;
 
   const method = paymentSelect.value;
 
@@ -1447,67 +1249,22 @@ function showPaymentDetails() {
     return;
   }
 
-  if (!paymentSettings) {
-    detailsBox.hidden = false;
+  const methodNames = {
+    bkash: "bKash",
+    nagad: "Nagad",
+    bank: "Bank Transfer"
+  };
 
-    infoText.textContent =
-      "Payment information is currently unavailable. Please contact the store.";
-
+  if (!methodNames[method]) {
+    detailsBox.hidden = true;
+    infoText.textContent = "";
     return;
-  }
-
-  let details = "";
-
-  if (method === "bkash") {
-    details = paymentSettings.bkash_number || "";
-  }
-
-  if (method === "nagad") {
-    details = paymentSettings.nagad_number || "";
-  }
-
-  if (method === "bank") {
-    details = paymentSettings.bank_details || "";
-  }
-
-  const instructions =
-    paymentSettings.payment_instructions || "";
-
-  if (!details && !instructions) {
-    detailsBox.hidden = false;
-
-    infoText.textContent =
-      "Payment details have not been added yet.";
-
-    return;
-  }
-
-  const lines = [];
-
-  if (method === "bkash") {
-    lines.push("bKash Payment Details");
-  }
-
-  if (method === "nagad") {
-    lines.push("Nagad Payment Details");
-  }
-
-  if (method === "bank") {
-    lines.push("Bank Transfer Details");
-  }
-
-  if (details) {
-    lines.push(details);
-  }
-
-  if (instructions) {
-    lines.push("");
-    lines.push("Payment Instructions:");
-    lines.push(instructions);
   }
 
   detailsBox.hidden = false;
-  infoText.textContent = lines.join("\n");
+
+  infoText.textContent =
+    `${methodNames[method]} selected. You will be redirected to the secure payment gateway to complete your payment. Your order will be created only after successful payment verification.`;
 }
 
 // =====================================
@@ -1525,13 +1282,8 @@ function renderCart() {
     0
   );
 
-  if (cartCount) {
-    cartCount.textContent = totalQuantity;
-  }
-
-  if (mobileCartCount) {
-    mobileCartCount.textContent = totalQuantity;
-  }
+  if (cartCount) cartCount.textContent = totalQuantity;
+  if (mobileCartCount) mobileCartCount.textContent = totalQuantity;
 
   if (cartItems) {
     cartItems.innerHTML = cart.length
@@ -1539,14 +1291,12 @@ function renderCart() {
           <div class="cart-line">
             <div>
               <b>${escapeHTML(item.name)}</b>
-
               <div class="muted small">
                 ${money(item.price)} × ${item.qty}
               </div>
             </div>
 
             <div class="qty">
-
               <button
                 type="button"
                 data-dec="${escapeHTML(item.id)}"
@@ -1558,17 +1308,14 @@ function renderCart() {
                 type="button"
                 data-inc="${escapeHTML(item.id)}"
               >+</button>
-
             </div>
           </div>
         `).join("")
       : '<p class="muted">Your cart is empty.</p>';
   }
 
-  const total = getCartSubtotal();
-
   if (cartTotal) {
-    cartTotal.textContent = money(total);
+    cartTotal.textContent = money(getCartSubtotal());
   }
 
   updateCouponTotals();
@@ -1627,7 +1374,6 @@ function addToCart(id) {
 if (productGrid) {
   productGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-add]");
-
     if (!button) return;
 
     addToCart(button.dataset.add);
@@ -1637,7 +1383,6 @@ if (productGrid) {
 if (wishlistGrid) {
   wishlistGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-add]");
-
     if (!button) return;
 
     addToCart(button.dataset.add);
@@ -1649,46 +1394,39 @@ if (wishlistGrid) {
 // =====================================
 
 if ($("#cart-items")) {
-  $("#cart-items").addEventListener(
-    "click",
-    (event) => {
-      const button = event.target.closest(
-        "[data-inc], [data-dec]"
-      );
+  $("#cart-items").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-inc], [data-dec]");
+    if (!button) return;
 
-      if (!button) return;
+    const id = button.dataset.inc || button.dataset.dec;
 
-      const id =
-        button.dataset.inc || button.dataset.dec;
+    const item = cart.find(
+      (entry) => String(entry.id) === String(id)
+    );
 
-      const item = cart.find(
-        (entry) => String(entry.id) === String(id)
-      );
+    if (!item) return;
 
-      if (!item) return;
-
-      if (button.dataset.inc) {
-        if (item.qty >= item.stock) {
-          alert("Maximum available stock reached.");
-          return;
-        }
-
-        item.qty++;
-
-      } else {
-        item.qty--;
+    if (button.dataset.inc) {
+      if (item.qty >= item.stock) {
+        alert("Maximum available stock reached.");
+        return;
       }
 
-      if (item.qty <= 0) {
-        cart = cart.filter(
-          (entry) => String(entry.id) !== String(id)
-        );
-      }
+      item.qty++;
 
-      clearAppliedCoupon(true);
-      renderCart();
+    } else {
+      item.qty--;
     }
-  );
+
+    if (item.qty <= 0) {
+      cart = cart.filter(
+        (entry) => String(entry.id) !== String(id)
+      );
+    }
+
+    clearAppliedCoupon(true);
+    renderCart();
+  });
 }
 
 // =====================================
@@ -1696,61 +1434,37 @@ if ($("#cart-items")) {
 // =====================================
 
 function openCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) {
-    return;
-  }
+  if (!$("#overlay") || !$("#cart-drawer")) return;
 
   $("#overlay").hidden = false;
-
   $("#cart-drawer").classList.add("open");
 
-  $("#cart-drawer").setAttribute(
-    "aria-hidden",
-    "false"
-  );
+  $("#cart-drawer").setAttribute("aria-hidden", "false");
 }
 
 function closeCart() {
-  if (!$("#overlay") || !$("#cart-drawer")) {
-    return;
-  }
+  if (!$("#overlay") || !$("#cart-drawer")) return;
 
   $("#overlay").hidden = true;
-
   $("#cart-drawer").classList.remove("open");
 
-  $("#cart-drawer").setAttribute(
-    "aria-hidden",
-    "true"
-  );
+  $("#cart-drawer").setAttribute("aria-hidden", "true");
 }
 
 if ($("#cart-open")) {
-  $("#cart-open").addEventListener(
-    "click",
-    openCart
-  );
+  $("#cart-open").addEventListener("click", openCart);
 }
 
 if ($("#mobile-cart-open")) {
-  $("#mobile-cart-open").addEventListener(
-    "click",
-    openCart
-  );
+  $("#mobile-cart-open").addEventListener("click", openCart);
 }
 
 if ($("#cart-close")) {
-  $("#cart-close").addEventListener(
-    "click",
-    closeCart
-  );
+  $("#cart-close").addEventListener("click", closeCart);
 }
 
 if ($("#overlay")) {
-  $("#overlay").addEventListener(
-    "click",
-    closeCart
-  );
+  $("#overlay").addEventListener("click", closeCart);
 }
 
 // =====================================
@@ -1758,32 +1472,26 @@ if ($("#overlay")) {
 // =====================================
 
 if ($("#checkout-open")) {
-  $("#checkout-open").addEventListener(
-    "click",
-    () => {
-      if (!cart.length) {
-        alert("Your cart is empty.");
-        return;
-      }
-
-      closeCart();
-
-      $("#order-dialog").showModal();
-
-      renderCart();
-      showPaymentDetails();
-      scheduleRepeatPreview();
+  $("#checkout-open").addEventListener("click", () => {
+    if (!cart.length) {
+      alert("Your cart is empty.");
+      return;
     }
-  );
+
+    closeCart();
+
+    $("#order-dialog").showModal();
+
+    renderCart();
+    showPaymentDetails();
+    scheduleRepeatPreview();
+  });
 }
 
 if ($("#order-close")) {
-  $("#order-close").addEventListener(
-    "click",
-    () => {
-      $("#order-dialog").close();
-    }
-  );
+  $("#order-close").addEventListener("click", () => {
+    $("#order-dialog").close();
+  });
 }
 
 // =====================================
@@ -1791,31 +1499,21 @@ if ($("#order-close")) {
 // =====================================
 
 if ($("#order-form")) {
-  $("#order-form").addEventListener(
-    "input",
-    (event) => {
-      const name = event.target.name;
+  $("#order-form").addEventListener("input", (event) => {
+    const name = event.target.name;
 
-      if (
-        ["phone", "district", "area", "address"].includes(name)
-      ) {
-        scheduleRepeatPreview();
-      }
+    if (["phone", "district", "area", "address"].includes(name)) {
+      scheduleRepeatPreview();
     }
-  );
+  });
 
-  $("#order-form").addEventListener(
-    "change",
-    (event) => {
-      const name = event.target.name;
+  $("#order-form").addEventListener("change", (event) => {
+    const name = event.target.name;
 
-      if (
-        ["phone", "district", "area", "address"].includes(name)
-      ) {
-        scheduleRepeatPreview();
-      }
+    if (["phone", "district", "area", "address"].includes(name)) {
+      scheduleRepeatPreview();
     }
-  );
+  });
 }
 
 // =====================================
@@ -1825,14 +1523,46 @@ if ($("#order-form")) {
 const paymentSelect = $('select[name="payment"]');
 
 if (paymentSelect) {
-  paymentSelect.addEventListener(
-    "change",
-    showPaymentDetails
-  );
+  paymentSelect.addEventListener("change", showPaymentDetails);
 }
 
 // =====================================
-// PLACE ORDER
+// START SECURE PAYMENT
+// =====================================
+
+async function startSecurePayment(payload) {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/create-payment`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("Invalid response from payment server.");
+  }
+
+  if (!response.ok || result.ok !== true || !result.payment_url) {
+    throw new Error(
+      result.error || "Payment could not be started."
+    );
+  }
+
+  return result;
+}
+
+// =====================================
+// SSL COMMERZ CHECKOUT
 // =====================================
 
 if ($("#order-form")) {
@@ -1848,6 +1578,8 @@ if ($("#order-form")) {
         '[type="submit"]'
       );
 
+      if (!message || !submitButton) return;
+
       if (!cart.length) {
         message.textContent = "Your cart is empty.";
         return;
@@ -1856,36 +1588,18 @@ if ($("#order-form")) {
       if (!SUPABASE_URL || !SUPABASE_KEY) {
         message.textContent =
           "Store database is not configured.";
-
         return;
       }
 
       const formData = new FormData(form);
 
       const customer = {
-        name: String(
-          formData.get("name") || ""
-        ).trim(),
-
-        phone: String(
-          formData.get("phone") || ""
-        ).trim(),
-
-        whatsapp: String(
-          formData.get("whatsapp") || ""
-        ).trim(),
-
-        district: String(
-          formData.get("district") || ""
-        ).trim(),
-
-        area: String(
-          formData.get("area") || ""
-        ).trim(),
-
-        address: String(
-          formData.get("address") || ""
-        ).trim()
+        name: String(formData.get("name") || "").trim(),
+        phone: String(formData.get("phone") || "").trim(),
+        whatsapp: String(formData.get("whatsapp") || "").trim(),
+        district: String(formData.get("district") || "").trim(),
+        area: String(formData.get("area") || "").trim(),
+        address: String(formData.get("address") || "").trim()
       };
 
       const paymentMethod = String(
@@ -1905,104 +1619,55 @@ if ($("#order-form")) {
       ) {
         message.textContent =
           "Please complete all required fields.";
-
         return;
       }
 
-      if (
-        !["bkash", "nagad", "bank"].includes(
-          paymentMethod
-        )
-      ) {
+      if (!["bkash", "nagad", "bank"].includes(paymentMethod)) {
         message.textContent =
           "Please select a valid payment method.";
-
         return;
       }
 
+      const payload = {
+        customer,
+
+        payment_method: paymentMethod,
+
+        items: cart.map((item) => ({
+          product_id: item.id,
+          quantity: item.qty
+        })),
+
+        note,
+
+        coupon_code: appliedCoupon
+          ? appliedCoupon.code
+          : null
+      };
+
       submitButton.disabled = true;
+      submitButton.textContent = "Connecting to payment...";
 
       message.textContent =
-        "Submitting your order...";
+        "Preparing your secure payment. Please wait...";
 
       try {
-        const result = await postOrderAction({
-          customer,
-
-          payment_method: paymentMethod,
-
-          items: cart.map((item) => ({
-            product_id: item.id,
-            quantity: item.qty
-          })),
-
-          note,
-
-          coupon_code: appliedCoupon
-            ? appliedCoupon.code
-            : null
-        });
-
-        if (result.ok !== true) {
-          throw new Error(
-            result.error || "Order could not be completed."
-          );
-        }
-
-        const orderSubtotal = Number(
-          result.subtotal ?? getCartSubtotal()
-        );
-
-        const couponAmount = Number(
-          result.discount || 0
-        );
-
-        const repeatAmount = Number(
-          result.repeat_discount || 0
-        );
-
-        const finalTotal = Number(
-          result.total ??
-          Math.max(
-            0,
-            orderSubtotal - couponAmount - repeatAmount
-          )
-        );
-
-        cart = [];
-        appliedCoupon = null;
-
-        resetRepeatDiscount();
-
-        renderCart();
-
-        form.reset();
-
-        if ($("#coupon-message")) {
-          $("#coupon-message").textContent = "";
-        }
-
-        if ($("#coupon-code")) {
-          $("#coupon-code").value = "";
-        }
-
-        showPaymentDetails();
+        const result = await startSecurePayment(payload);
 
         message.textContent =
-          `Order successful! Order number: ${result.order_number}. Subtotal: ${money(orderSubtotal)}. Coupon Discount: ${money(couponAmount)}. Repeat Discount: ${money(repeatAmount)}. Final Total: ${money(finalTotal)}.`;
+          "Payment session ready. Redirecting...";
+
+        window.location.assign(result.payment_url);
 
       } catch (error) {
-        console.error(
-          "Order submission error:",
-          error
-        );
+        console.error("SSLCommerz checkout error:", error);
 
         message.textContent =
           error.message ||
-          "Something went wrong. Please try again.";
+          "Payment could not be started. Please try again.";
 
-      } finally {
         submitButton.disabled = false;
+        submitButton.textContent = "Pay Now";
       }
     }
   );
@@ -2015,13 +1680,10 @@ if ($("#order-form")) {
 installGalleryStyles();
 
 renderCart();
-
 renderWishlist();
 
 loadProducts();
-
 loadPaymentSettings();
-
 loadStoreSettings();
 
 // =====================================
@@ -2329,7 +1991,7 @@ loadStoreSettings();
 
   function openDetails(productId) {
     const product = products.find(
-      item => String(item.id) === String(productId)
+      (item) => String(item.id) === String(productId)
     );
 
     if (!product) return;
@@ -2367,9 +2029,7 @@ loadStoreSettings();
 
     content.innerHTML = `
       <div class="mr-details-main">
-
         <div class="mr-details-image-box">
-
           ${
             image
               ? `<img class="mr-details-main-image"
@@ -2389,11 +2049,9 @@ loadStoreSettings();
               </button>
             `).join("")}
           </div>
-
         </div>
 
         <div class="mr-details-info">
-
           <span class="mr-details-category">
             ${escapeHTML(product.category || "MR PRODUCT")}
           </span>
@@ -2420,7 +2078,6 @@ loadStoreSettings();
           </p>
 
           <div class="mr-details-actions">
-
             <button
               class="mr-details-add"
               id="mr-details-add"
@@ -2435,11 +2092,9 @@ loadStoreSettings();
               id="mr-details-wishlist"
               type="button"
             >
-              ${saved ? "♥ Saved" : "♡ Wishlist"}
+              ${saved ? "♥️ Saved" : "♡ Wishlist"}
             </button>
-
           </div>
-
         </div>
       </div>
     `;
@@ -2448,12 +2103,10 @@ loadStoreSettings();
   }
 
   function renderRelatedProducts(product) {
-    const grid = document.getElementById(
-      "mr-related-grid"
-    );
+    const grid = document.getElementById("mr-related-grid");
 
     const others = products
-      .filter(item => String(item.id) !== String(product.id))
+      .filter((item) => String(item.id) !== String(product.id))
       .sort((a, b) => {
         const aSame = a.category === product.category ? 1 : 0;
         const bSame = b.category === product.category ? 1 : 0;
@@ -2468,7 +2121,7 @@ loadStoreSettings();
       return;
     }
 
-    grid.innerHTML = others.map(item => {
+    grid.innerHTML = others.map((item) => {
       const images = getProductImages(item);
       const image = images[0] || "";
       const price = getProductPrice(item);
@@ -2490,12 +2143,11 @@ loadStoreSettings();
     }).join("");
   }
 
-  // Open details by clicking product card
-  ["product-grid", "wishlist-grid"].forEach(id => {
+  ["product-grid", "wishlist-grid"].forEach((id) => {
     const grid = document.getElementById(id);
     if (!grid) return;
 
-    grid.addEventListener("click", event => {
+    grid.addEventListener("click", (event) => {
       if (
         event.target.closest("button") ||
         event.target.closest("a") ||
@@ -2506,6 +2158,7 @@ loadStoreSettings();
       if (!card) return;
 
       const addButton = card.querySelector("[data-add]");
+
       const wishlistButton = card.querySelector(
         "[data-wishlist-toggle], [data-wishlist-remove]"
       );
@@ -2515,41 +2168,29 @@ loadStoreSettings();
         wishlistButton?.dataset.wishlistToggle ||
         wishlistButton?.dataset.wishlistRemove;
 
-      if (productId) {
-        openDetails(productId);
-      }
+      if (productId) openDetails(productId);
     });
   });
 
-  // Image thumbnails
-  overlay.addEventListener("click", event => {
-    const thumbnail = event.target.closest(
-      "[data-detail-image]"
-    );
+  overlay.addEventListener("click", (event) => {
+    const thumbnail = event.target.closest("[data-detail-image]");
 
     if (thumbnail) {
-      currentDetailImage = Number(
-        thumbnail.dataset.detailImage
-      );
-
+      currentDetailImage = Number(thumbnail.dataset.detailImage);
       renderDetails();
       return;
     }
 
-    const related = event.target.closest(
-      "[data-related-product]"
-    );
+    const related = event.target.closest("[data-related-product]");
 
     if (related) {
       openDetails(related.dataset.relatedProduct);
     }
   });
 
-  // Add to cart from details
-  overlay.addEventListener("click", event => {
+  overlay.addEventListener("click", (event) => {
     if (event.target.id === "mr-details-add") {
       if (!currentDetailProduct) return;
-
       addToCart(currentDetailProduct.id);
     }
 
@@ -2557,26 +2198,21 @@ loadStoreSettings();
       if (!currentDetailProduct) return;
 
       toggleWishlist(currentDetailProduct.id);
-
       renderDetails();
     }
   });
 
-  document.getElementById(
-    "mr-details-close"
-  ).addEventListener("click", closeDetails);
+  document.getElementById("mr-details-close")
+    .addEventListener("click", closeDetails);
 
-  document.getElementById(
-    "mr-details-back"
-  ).addEventListener("click", closeDetails);
+  document.getElementById("mr-details-back")
+    .addEventListener("click", closeDetails);
 
-  overlay.addEventListener("click", event => {
-    if (event.target === overlay) {
-      closeDetails();
-    }
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) closeDetails();
   });
 
-  document.addEventListener("keydown", event => {
+  document.addEventListener("keydown", (event) => {
     if (
       event.key === "Escape" &&
       overlay.classList.contains("active")
