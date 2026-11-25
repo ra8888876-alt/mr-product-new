@@ -2023,3 +2023,569 @@ loadProducts();
 loadPaymentSettings();
 
 loadStoreSettings();
+
+// =====================================
+// MR PRODUCT - PRODUCT DETAILS SYSTEM
+// =====================================
+
+(function () {
+  if (document.getElementById("mr-product-details-system")) return;
+
+  const detailStyle = document.createElement("style");
+  detailStyle.id = "mr-product-details-system";
+
+  detailStyle.textContent = `
+    .mr-details-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99990;
+      background: rgba(0,0,0,.82);
+      display: none;
+      overflow-y: auto;
+      padding: 25px 15px;
+      backdrop-filter: blur(5px);
+    }
+
+    .mr-details-overlay.active {
+      display: block;
+    }
+
+    .mr-details-container {
+      position: relative;
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 25px;
+      background: #171717;
+      color: #f5f0e6;
+      border: 1px solid #b89545;
+      border-radius: 16px;
+    }
+
+    .mr-details-close {
+      position: absolute;
+      right: 15px;
+      top: 12px;
+      width: 40px;
+      height: 40px;
+      border: 1px solid #c6a34b;
+      border-radius: 50%;
+      background: #222;
+      color: #fff;
+      font-size: 25px;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .mr-details-back {
+      display: inline-block;
+      margin-bottom: 22px;
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid #c6a34b;
+      color: #c6a34b;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .mr-details-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 35px;
+      align-items: start;
+    }
+
+    .mr-details-image-box {
+      width: 100%;
+      background: #242424;
+      border-radius: 13px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .mr-details-main-image {
+      width: 100%;
+      height: 450px;
+      object-fit: contain;
+      display: block;
+      background: #f5f2ed;
+    }
+
+    .mr-details-thumbnails {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      overflow-x: auto;
+    }
+
+    .mr-details-thumb {
+      width: 70px;
+      height: 70px;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+      border-radius: 7px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #333;
+    }
+
+    .mr-details-thumb.active {
+      border-color: #c6a34b;
+    }
+
+    .mr-details-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mr-details-info {
+      padding: 15px 0;
+    }
+
+    .mr-details-info h2 {
+      color: #f5f0e6;
+      font-size: 30px;
+      line-height: 1.3;
+      margin: 15px 0;
+    }
+
+    .mr-details-category {
+      color: #c6a34b;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .mr-details-price {
+      margin: 20px 0;
+      font-size: 27px;
+      color: #c6a34b;
+      font-weight: bold;
+    }
+
+    .mr-details-old-price {
+      color: #999;
+      font-size: 17px;
+      text-decoration: line-through;
+      margin-right: 10px;
+    }
+
+    .mr-details-stock {
+      display: inline-block;
+      padding: 7px 12px;
+      background: rgba(198,163,75,.12);
+      border: 1px solid #c6a34b;
+      border-radius: 6px;
+      color: #c6a34b;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .mr-details-description {
+      color: #c5c0b7;
+      line-height: 1.8;
+      white-space: pre-line;
+      margin: 15px 0 25px;
+    }
+
+    .mr-details-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mr-details-actions button {
+      padding: 13px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .mr-details-add {
+      background: #c6a34b;
+      color: #111;
+      border: 1px solid #c6a34b;
+      flex: 1;
+    }
+
+    .mr-details-wishlist {
+      background: transparent;
+      color: #c6a34b;
+      border: 1px solid #c6a34b;
+    }
+
+    .mr-related-section {
+      margin-top: 45px;
+      padding-top: 25px;
+      border-top: 1px solid #39342a;
+    }
+
+    .mr-related-section h3 {
+      color: #c6a34b;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .mr-related-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 15px;
+    }
+
+    .mr-related-card {
+      background: #222;
+      border: 1px solid #39342a;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .mr-related-card:hover {
+      border-color: #c6a34b;
+      transform: translateY(-3px);
+    }
+
+    .mr-related-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      background: #f5f2ed;
+    }
+
+    .mr-related-card h4 {
+      color: #f5f0e6;
+      padding: 10px 10px 3px;
+      font-size: 14px;
+    }
+
+    .mr-related-card p {
+      color: #c6a34b;
+      padding: 0 10px 12px;
+      font-weight: bold;
+    }
+
+    @media(max-width:700px) {
+      .mr-details-overlay {
+        padding: 8px;
+      }
+
+      .mr-details-container {
+        margin: 5px auto;
+        padding: 15px;
+      }
+
+      .mr-details-main {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .mr-details-main-image {
+        height: 320px;
+      }
+
+      .mr-details-info h2 {
+        font-size: 23px;
+      }
+
+      .mr-related-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+      }
+
+      .mr-related-card img {
+        height: 130px;
+      }
+    }
+  `;
+
+  document.head.appendChild(detailStyle);
+
+  const overlay = document.createElement("div");
+  overlay.className = "mr-details-overlay";
+  overlay.id = "mr-details-overlay";
+
+  overlay.innerHTML = `
+    <div class="mr-details-container">
+      <button class="mr-details-close" id="mr-details-close">×</button>
+
+      <button class="mr-details-back" id="mr-details-back">
+        ← Back to Shop
+      </button>
+
+      <div id="mr-details-content"></div>
+
+      <section class="mr-related-section">
+        <h3>You May Also Like</h3>
+        <div class="mr-related-grid" id="mr-related-grid"></div>
+      </section>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  let currentDetailProduct = null;
+  let currentDetailImage = 0;
+
+  function openDetails(productId) {
+    const product = products.find(
+      item => String(item.id) === String(productId)
+    );
+
+    if (!product) return;
+
+    currentDetailProduct = product;
+    currentDetailImage = 0;
+
+    renderDetails();
+
+    overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDetails() {
+    overlay.classList.remove("active");
+    document.body.style.overflow = "";
+    currentDetailProduct = null;
+  }
+
+  function renderDetails() {
+    const product = currentDetailProduct;
+    if (!product) return;
+
+    const images = getProductImages(product);
+    const image = images[currentDetailImage] || "";
+
+    const oldPrice = Number(product.price || 0);
+    const currentPrice = getProductPrice(product);
+    const stock = Number(product.stock || 0);
+    const saved = wishlist.includes(String(product.id));
+
+    const content = document.getElementById(
+      "mr-details-content"
+    );
+
+    content.innerHTML = `
+      <div class="mr-details-main">
+
+        <div class="mr-details-image-box">
+
+          ${
+            image
+              ? `<img class="mr-details-main-image"
+                   src="${escapeHTML(image)}"
+                   alt="${escapeHTML(product.name)}">`
+              : `<div class="mr-details-main-image"></div>`
+          }
+
+          <div class="mr-details-thumbnails">
+            ${images.map((url, index) => `
+              <button
+                class="mr-details-thumb ${index === currentDetailImage ? "active" : ""}"
+                data-detail-image="${index}"
+                type="button"
+              >
+                <img src="${escapeHTML(url)}" alt="">
+              </button>
+            `).join("")}
+          </div>
+
+        </div>
+
+        <div class="mr-details-info">
+
+          <span class="mr-details-category">
+            ${escapeHTML(product.category || "MR PRODUCT")}
+          </span>
+
+          <h2>${escapeHTML(product.name)}</h2>
+
+          <div class="mr-details-price">
+            ${
+              currentPrice < oldPrice
+                ? `<span class="mr-details-old-price">${money(oldPrice)}</span>`
+                : ""
+            }
+            ${money(currentPrice)}
+          </div>
+
+          <span class="mr-details-stock">
+            ${stock > 0 ? `In Stock: ${stock}` : "Out of Stock"}
+          </span>
+
+          <h3>Product Description</h3>
+
+          <p class="mr-details-description">
+            ${escapeHTML(product.description || "No description available.")}
+          </p>
+
+          <div class="mr-details-actions">
+
+            <button
+              class="mr-details-add"
+              id="mr-details-add"
+              type="button"
+              ${stock <= 0 ? "disabled" : ""}
+            >
+              ${stock > 0 ? "Add to Cart" : "Out of Stock"}
+            </button>
+
+            <button
+              class="mr-details-wishlist"
+              id="mr-details-wishlist"
+              type="button"
+            >
+              ${saved ? "♥ Saved" : "♡ Wishlist"}
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    renderRelatedProducts(product);
+  }
+
+  function renderRelatedProducts(product) {
+    const grid = document.getElementById(
+      "mr-related-grid"
+    );
+
+    const others = products
+      .filter(item => String(item.id) !== String(product.id))
+      .sort((a, b) => {
+        const aSame = a.category === product.category ? 1 : 0;
+        const bSame = b.category === product.category ? 1 : 0;
+        return bSame - aSame;
+      })
+      .slice(0, 8);
+
+    if (!others.length) {
+      grid.innerHTML = `
+        <p class="muted">More products coming soon.</p>
+      `;
+      return;
+    }
+
+    grid.innerHTML = others.map(item => {
+      const images = getProductImages(item);
+      const image = images[0] || "";
+      const price = getProductPrice(item);
+
+      return `
+        <article
+          class="mr-related-card"
+          data-related-product="${escapeHTML(item.id)}"
+        >
+          ${
+            image
+              ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(item.name)}" loading="lazy">`
+              : ""
+          }
+          <h4>${escapeHTML(item.name)}</h4>
+          <p>${money(price)}</p>
+        </article>
+      `;
+    }).join("");
+  }
+
+  // Open details by clicking product card
+  ["product-grid", "wishlist-grid"].forEach(id => {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+
+    grid.addEventListener("click", event => {
+      if (
+        event.target.closest("button") ||
+        event.target.closest("a") ||
+        event.target.closest("input")
+      ) return;
+
+      const card = event.target.closest(".product-card");
+      if (!card) return;
+
+      const addButton = card.querySelector("[data-add]");
+      const wishlistButton = card.querySelector(
+        "[data-wishlist-toggle], [data-wishlist-remove]"
+      );
+
+      const productId =
+        addButton?.dataset.add ||
+        wishlistButton?.dataset.wishlistToggle ||
+        wishlistButton?.dataset.wishlistRemove;
+
+      if (productId) {
+        openDetails(productId);
+      }
+    });
+  });
+
+  // Image thumbnails
+  overlay.addEventListener("click", event => {
+    const thumbnail = event.target.closest(
+      "[data-detail-image]"
+    );
+
+    if (thumbnail) {
+      currentDetailImage = Number(
+        thumbnail.dataset.detailImage
+      );
+
+      renderDetails();
+      return;
+    }
+
+    const related = event.target.closest(
+      "[data-related-product]"
+    );
+
+    if (related) {
+      openDetails(related.dataset.relatedProduct);
+    }
+  });
+
+  // Add to cart from details
+  overlay.addEventListener("click", event => {
+    if (event.target.id === "mr-details-add") {
+      if (!currentDetailProduct) return;
+
+      addToCart(currentDetailProduct.id);
+    }
+
+    if (event.target.id === "mr-details-wishlist") {
+      if (!currentDetailProduct) return;
+
+      toggleWishlist(currentDetailProduct.id);
+
+      renderDetails();
+    }
+  });
+
+  document.getElementById(
+    "mr-details-close"
+  ).addEventListener("click", closeDetails);
+
+  document.getElementById(
+    "mr-details-back"
+  ).addEventListener("click", closeDetails);
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) {
+      closeDetails();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (
+      event.key === "Escape" &&
+      overlay.classList.contains("active")
+    ) {
+      closeDetails();
+    }
+  });
+
+  window.openMRProductDetails = openDetails;
+  window.closeMRProductDetails = closeDetails;
+
+})();
