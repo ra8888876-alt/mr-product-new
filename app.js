@@ -38,6 +38,190 @@ let repeatPreviewTimer = null;
 let repeatPreviewRequest = 0;
 
 // =====================================
+// PRODUCT GALLERY STATE
+// =====================================
+
+const galleryIndexes = {};
+
+function getProductImages(product) {
+  let images = [];
+
+  if (Array.isArray(product.image_urls)) {
+    images = product.image_urls;
+  } else if (typeof product.image_urls === "string") {
+    try {
+      const parsed = JSON.parse(product.image_urls);
+
+      if (Array.isArray(parsed)) {
+        images = parsed;
+      }
+    } catch {
+      images = [];
+    }
+  }
+
+  images = images
+    .filter((url) => typeof url === "string")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  if (!images.length && product.image_url) {
+    images.push(product.image_url);
+  }
+
+  if (
+    product.image_url &&
+    !images.includes(product.image_url)
+  ) {
+    images.unshift(product.image_url);
+  }
+
+  return [...new Set(images)].slice(0, 10);
+}
+
+function changeGallery(productId, direction) {
+  const product = products.find(
+    (item) => String(item.id) === String(productId)
+  );
+
+  if (!product) return;
+
+  const images = getProductImages(product);
+
+  if (images.length <= 1) return;
+
+  const current = galleryIndexes[productId] || 0;
+
+  galleryIndexes[productId] =
+    (current + direction + images.length) % images.length;
+
+  renderProducts();
+  renderWishlist();
+}
+
+function goToGalleryImage(productId, index) {
+  const product = products.find(
+    (item) => String(item.id) === String(productId)
+  );
+
+  if (!product) return;
+
+  const images = getProductImages(product);
+
+  if (index < 0 || index >= images.length) return;
+
+  galleryIndexes[productId] = index;
+
+  renderProducts();
+  renderWishlist();
+}
+
+// =====================================
+// GALLERY CSS
+// =====================================
+
+function installGalleryStyles() {
+  if ($("#mr-gallery-styles")) return;
+
+  const style = document.createElement("style");
+
+  style.id = "mr-gallery-styles";
+
+  style.textContent = `
+    .mr-product-gallery {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      touch-action: pan-y;
+      user-select: none;
+      background: #f5f2ed;
+      border-radius: inherit;
+    }
+
+    .mr-product-gallery img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .mr-gallery-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mr-gallery-prev {
+      left: 8px;
+    }
+
+    .mr-gallery-next {
+      right: 8px;
+    }
+
+    .mr-gallery-dots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      z-index: 4;
+    }
+
+    .mr-gallery-dot {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,.6);
+      cursor: pointer;
+    }
+
+    .mr-gallery-dot.active {
+      width: 18px;
+      border-radius: 10px;
+      background: var(--gold, #c6a34b);
+    }
+
+    .mr-gallery-counter {
+      position: absolute;
+      right: 9px;
+      top: 9px;
+      z-index: 4;
+      padding: 4px 8px;
+      border-radius: 20px;
+      background: rgba(0,0,0,.65);
+      color: white;
+      font-size: 11px;
+    }
+
+    .mr-product-gallery.single-image .mr-gallery-arrow,
+    .mr-product-gallery.single-image .mr-gallery-dots,
+    .mr-product-gallery.single-image .mr-gallery-counter {
+      display: none;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+// =====================================
 // API HELPER
 // =====================================
 
@@ -708,7 +892,7 @@ async function loadProducts() {
 
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,discount_price,image_url,category,stock,active&active=eq.true&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,discount_price,image_url,image_urls,category,stock,active&active=eq.true&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -722,6 +906,17 @@ async function loadProducts() {
     }
 
     products = await response.json();
+
+    products.forEach((product) => {
+      const images = getProductImages(product);
+
+      if (
+        galleryIndexes[product.id] === undefined ||
+        galleryIndexes[product.id] >= images.length
+      ) {
+        galleryIndexes[product.id] = 0;
+      }
+    });
 
     renderProducts();
     renderWishlist();
@@ -738,6 +933,87 @@ async function loadProducts() {
 }
 
 // =====================================
+// PRODUCT GALLERY HTML
+// =====================================
+
+function createProductGallery(product) {
+  const images = getProductImages(product);
+
+  if (!images.length) {
+    return `
+      <div class="product-image">
+        MR
+      </div>
+    `;
+  }
+
+  const id = String(product.id);
+
+  const index = Math.min(
+    galleryIndexes[id] || 0,
+    images.length - 1
+  );
+
+  const currentImage = images[index];
+
+  return `
+    <div
+      class="product-image mr-product-gallery ${images.length === 1 ? "single-image" : ""}"
+      data-gallery="${escapeHTML(id)}"
+    >
+
+      <img
+        src="${escapeHTML(currentImage)}"
+        alt="${escapeHTML(product.name)}"
+        loading="lazy"
+        draggable="false"
+      >
+
+      ${
+        images.length > 1
+          ? `
+            <button
+              type="button"
+              class="mr-gallery-arrow mr-gallery-prev"
+              data-gallery-prev="${escapeHTML(id)}"
+              aria-label="Previous image"
+            >
+              ‹
+            </button>
+
+            <button
+              type="button"
+              class="mr-gallery-arrow mr-gallery-next"
+              data-gallery-next="${escapeHTML(id)}"
+              aria-label="Next image"
+            >
+              ›
+            </button>
+
+            <span class="mr-gallery-counter">
+              ${index + 1}/${images.length}
+            </span>
+
+            <div class="mr-gallery-dots">
+              ${images.map((image, dotIndex) => `
+                <button
+                  type="button"
+                  class="mr-gallery-dot ${dotIndex === index ? "active" : ""}"
+                  data-gallery-dot="${escapeHTML(id)}"
+                  data-gallery-index="${dotIndex}"
+                  aria-label="Show image ${dotIndex + 1}"
+                ></button>
+              `).join("")}
+            </div>
+          `
+          : ""
+      }
+
+    </div>
+  `;
+}
+
+// =====================================
 // PRODUCT CARD
 // =====================================
 
@@ -749,21 +1025,7 @@ function createProductCard(product, isWishlist = false) {
   const saved = wishlist.includes(id);
   const stock = Number(product.stock || 0);
 
-  const image = product.image_url
-    ? `
-      <div class="product-image">
-        <img
-          src="${escapeHTML(product.image_url)}"
-          alt="${escapeHTML(product.name)}"
-          loading="lazy"
-        >
-      </div>
-    `
-    : `
-      <div class="product-image">
-        MR
-      </div>
-    `;
+  const image = createProductGallery(product);
 
   return `
     <article class="product-card">
@@ -844,6 +1106,123 @@ function createProductCard(product, isWishlist = false) {
 }
 
 // =====================================
+// GALLERY BUTTON EVENTS
+// =====================================
+
+function handleGalleryClick(event) {
+  const previous = event.target.closest(
+    "[data-gallery-prev]"
+  );
+
+  const next = event.target.closest(
+    "[data-gallery-next]"
+  );
+
+  const dot = event.target.closest(
+    "[data-gallery-dot]"
+  );
+
+  if (previous) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    changeGallery(
+      previous.dataset.galleryPrev,
+      -1
+    );
+
+    return true;
+  }
+
+  if (next) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    changeGallery(
+      next.dataset.galleryNext,
+      1
+    );
+
+    return true;
+  }
+
+  if (dot) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    goToGalleryImage(
+      dot.dataset.galleryDot,
+      Number(dot.dataset.galleryIndex)
+    );
+
+    return true;
+  }
+
+  return false;
+}
+
+// =====================================
+// GALLERY SWIPE
+// =====================================
+
+const galleryTouchPositions = new WeakMap();
+
+function installGallerySwipe(container) {
+  if (!container || container.dataset.swipeReady) return;
+
+  container.dataset.swipeReady = "true";
+
+  container.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (event.target.closest("button")) return;
+
+      galleryTouchPositions.set(
+        container,
+        event.clientX
+      );
+    }
+  );
+
+  container.addEventListener(
+    "pointerup",
+    (event) => {
+      const startX = galleryTouchPositions.get(
+        container
+      );
+
+      if (startX === undefined) return;
+
+      galleryTouchPositions.delete(container);
+
+      const difference = event.clientX - startX;
+
+      if (Math.abs(difference) < 35) return;
+
+      const id = container.dataset.gallery;
+
+      changeGallery(
+        id,
+        difference < 0 ? 1 : -1
+      );
+    }
+  );
+
+  container.addEventListener(
+    "pointercancel",
+    () => {
+      galleryTouchPositions.delete(container);
+    }
+  );
+}
+
+function setupGallerySwipe() {
+  document.querySelectorAll(
+    ".mr-product-gallery"
+  ).forEach(installGallerySwipe);
+}
+
+// =====================================
 // SEARCH PRODUCTS
 // =====================================
 
@@ -880,6 +1259,8 @@ function renderProducts() {
   grid.innerHTML = filteredProducts
     .map((product) => createProductCard(product))
     .join("");
+
+  setupGallerySwipe();
 }
 
 const searchInput = $("#product-search");
@@ -949,6 +1330,8 @@ function renderWishlist() {
       createProductCard(product, true)
     )
     .join("");
+
+  setupGallerySwipe();
 }
 
 // =====================================
@@ -974,6 +1357,8 @@ const wishlistGrid = $("#wishlist-grid");
 
 if (productGrid) {
   productGrid.addEventListener("click", (event) => {
+    if (handleGalleryClick(event)) return;
+
     const button = event.target.closest(
       "[data-wishlist-toggle]"
     );
@@ -988,6 +1373,8 @@ if (productGrid) {
 
 if (wishlistGrid) {
   wishlistGrid.addEventListener("click", (event) => {
+    if (handleGalleryClick(event)) return;
+
     const button = event.target.closest(
       "[data-wishlist-remove]"
     );
@@ -1624,6 +2011,8 @@ if ($("#order-form")) {
 // =====================================
 // START STORE
 // =====================================
+
+installGalleryStyles();
 
 renderCart();
 
